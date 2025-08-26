@@ -1,4 +1,4 @@
-package com.finefinee.oneclass;
+package oneclass.oneclass;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
