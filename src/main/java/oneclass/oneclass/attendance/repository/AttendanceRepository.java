@@ -1,4 +1,4 @@
-package oneclass.oneclass.attendance;
+package oneclass.oneclass.attendance.repository;
 
 import oneclass.oneclass.attendance.entity.AttendanceEntity;
 import oneclass.oneclass.auth.entity.Member;
@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface AttendanceRepository extends JpaRepository<AttendanceEntity, Long> {
     List<AttendanceEntity> findByDate(LocalDate date);
     Optional<AttendanceEntity> findByMemberAndDate(Member member, LocalDate date);
+    List<AttendanceEntity> findByMember(Member member);
+    List<AttendanceEntity> findByDateAndPresent(LocalDate now, boolean b);
 }

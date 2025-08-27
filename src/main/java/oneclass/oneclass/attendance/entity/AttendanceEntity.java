@@ -1,8 +1,12 @@
 package oneclass.oneclass.attendance.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import oneclass.oneclass.auth.entity.Member;
+
 import java.time.LocalDate;
 
 @Entity

@@ -4,10 +4,10 @@ package oneclass.oneclass.auth.jwt;
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;
 import oneclass.oneclass.auth.dto.ResponseToken;
-import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.spec.SecretKeySpec;
