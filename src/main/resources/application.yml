@@ -16,5 +16,5 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
 jwt:
-  secret: my-super-secret-key
-  token-validity-in-seconds: 3600
+  secret: "0123456789ABCDEF0123456789ABCDEF" # 32??
+  token-validity-in-seconds: 1209600 # 14?
