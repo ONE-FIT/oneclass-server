@@ -1,4 +1,4 @@
-package oneclass.oneclass.auth.JWT;
+package oneclass.oneclass.auth.jwt;
 
 
 import io.jsonwebtoken.*;
