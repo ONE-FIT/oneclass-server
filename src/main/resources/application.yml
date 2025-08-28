@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: prod
+  datasource:
+    hikari:
+      max-lifetime: 170000 # 170초
+    url: root
+    username: root
+    password: Qwer1234!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  security:
+    user:
+      name: ${secrets.SECURITY_USER_NAME}
+      password: ${secrets.SECURITY_USER_PASSWORD}
+
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+application:
+  jwt:
+    secretKey: ${secrets.JWT_SECRET_KEY}
+    expiration: 172800000    # 48시간
+    refreshExpiration: 604800000   # 7일
+
+springdoc:
+  api-docs:
+    enabled: true
+    version: openapi_3_0
+    path: /v3/api-docs
+  default-consumes-media-type: application/json
+  auto-tag-classes: true
+  swagger-ui:
+    operationsSorter: method
+    path: /swagger-ui.html
+
+#logging:
+#  discord:
+#    webhook-url: ${secrets.DISCORD_WEBHOOK_URL}
+#  config: classpath:logback.xml
