@@ -20,6 +20,7 @@ public class Member {
     private String username;//이름
     private String password;//비번
 
+    @Enumerated(EnumType.STRING)
     @NotNull
     private Role role;
 }
