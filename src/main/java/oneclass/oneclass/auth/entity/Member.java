@@ -19,7 +19,8 @@ public class Member {
     @Column(nullable = false, unique = true)
     private String username;//이름
     private String password;//비번
-
+    private String phone;
+    private String email;
     @Enumerated(EnumType.STRING)
     @NotNull
     private Role role;
