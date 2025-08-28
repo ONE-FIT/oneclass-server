@@ -127,7 +127,7 @@ public class JWTProvider {
         } catch (ExpiredJwtException e) {
             logger.info("만료된 JWT");
         } catch (JwtException | IllegalArgumentException e) {
-            logger.error("잘못된 토큰", e);
+            logger.error("잘못된 JWT: {}", e.getMessage());
         }
         return false;
     }
