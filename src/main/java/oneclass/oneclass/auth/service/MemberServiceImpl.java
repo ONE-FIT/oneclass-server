@@ -4,11 +4,16 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.auth.dto.ResponseToken;
 import oneclass.oneclass.auth.dto.SignupRequest;
 import oneclass.oneclass.auth.entity.Member;
+import oneclass.oneclass.auth.entity.RefreshToken;
 import oneclass.oneclass.auth.entity.Role;
 import oneclass.oneclass.auth.jwt.JWTProvider;
 import oneclass.oneclass.auth.repository.MemberRepository;
+import oneclass.oneclass.auth.repository.RefreshTokenRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +22,8 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JWTProvider jwtProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailService emailService;
 
     @Override
     public void signup(SignupRequest request){
@@ -54,8 +61,15 @@ public class MemberServiceImpl implements MemberService {
         }
         // 토큰 생성 시
         String roleClaim = "ROLE_" + member.getRole().name();
-
         ResponseToken tokens = jwtProvider.generateToken(member.getUsername(), roleClaim);
+
+        refreshTokenRepository.deleteByUsername(username);
+        RefreshToken refreshToken = RefreshToken.builder()
+                .username(username)
+                .token(tokens.getRefreshToken())
+                .expiryDate(LocalDateTime.now().plusDays(28))
+                .build();
+        refreshTokenRepository.save(refreshToken);
 
         return tokens;
 
@@ -72,7 +86,8 @@ public class MemberServiceImpl implements MemberService {
     public void sendResetPasswordEmail(String usernameOrEmail) {
         Member member = memberRepository.findByEmailOrPhone(usernameOrEmail, usernameOrEmail)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
-        System.out.println("비밀번호 재설정 메일 전송" + member.getEmail());
+        String tempCode = UUID.randomUUID().toString().substring(0, 6);
+        emailService.sendSimpleMail(member.getEmail(),"비밀번호 재설정", "인증코드: " + tempCode);
     }
 
     @Override

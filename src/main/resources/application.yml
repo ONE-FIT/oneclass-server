@@ -15,6 +15,19 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: abcb090125@gmail.com
+    password: kim753107-   # Gmail 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 jwt:
-  secret: "0123456789ABCDEF0123456789ABCDEF" # 32??
-  token-validity-in-seconds: 1209600 # 14?
+  secret: "0123456789ABCDEF0123456789ABCDEF" # 32비트
+  token-validity-in-seconds: 1209600 # 14일
+
