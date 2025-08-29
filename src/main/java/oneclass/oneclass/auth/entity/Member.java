@@ -21,7 +21,7 @@ public class Member {
     private String password;//비번
     private String phone;
     private String email;
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.ORDINAL)
     @NotNull
     private Role role;
 }

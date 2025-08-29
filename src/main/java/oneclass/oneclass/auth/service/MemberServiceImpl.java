@@ -86,14 +86,15 @@ public class MemberServiceImpl implements MemberService {
         return member.getUsername();
     }
     @Override
-    public void sendResetPasswordEmail(String usernameOrEmail) {
-        Member member = memberRepository.findByEmailOrPhone(usernameOrEmail, usernameOrEmail)
+    public void sendResetPasswordEmail(String emailOrPhone) {
+        Member member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+        String username = member.getUsername(); // username을 인증코드 키로 사용
         String tempCode = UUID.randomUUID().toString().substring(0, 6);
-        // 인증코드 저장 (유효기간: 5분)
+
         verificationCodeRepository.save(
                 VerificationCode.builder()
-                        .usernameOrEmail(usernameOrEmail)
+                        .usernameOrEmail(username)
                         .code(tempCode)
                         .expiry(System.currentTimeMillis() + 5 * 60 * 1000)
                         .build()
@@ -104,25 +105,35 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void resetPassword(String username, String newPassword, String verificationCode) {
-        // 인증코드 검증
+        // 인증코드 조회
         VerificationCode codeEntry = verificationCodeRepository.findById(username)
                 .orElseThrow(() -> new IllegalArgumentException("인증코드가 없습니다."));
+
+        // 인증코드 확인
         if (!codeEntry.getCode().equals(verificationCode)) {
             throw new IllegalArgumentException("인증코드가 일치하지 않습니다.");
         }
+
+        // 인증코드 만료 확인
         if (codeEntry.getExpiry() < System.currentTimeMillis()) {
             throw new IllegalArgumentException("인증코드가 만료되었습니다.");
         }
-        // 인증 성공시 코드 삭제
+
+        // 인증코드 삭제
         verificationCodeRepository.deleteById(username);
 
-        // 비밀번호 재설정 로직
+        // 회원 조회
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
+
+        // 비밀번호 변경
         member.setPassword(passwordEncoder.encode(newPassword));
+
         memberRepository.save(member);
     }
+
     //로그아웃시 토큰 폐기
+    @Override
     public void logout(String username){
         refreshTokenRepository.deleteByUsername(username);
     }

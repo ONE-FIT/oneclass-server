@@ -11,4 +11,5 @@ public interface MemberService {
     String findUsername(String emailOrPhone); // 아이디 찾기
     void sendResetPasswordEmail(String usernameOrEmail); // 비번 재설정 메일 발송
     void resetPassword(String username, String newPassword, String verificationCode); // 비번 변경
+    void logout(String username);
 }

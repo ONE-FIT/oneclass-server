@@ -37,9 +37,11 @@ public class SecurityConfig {
                 .formLogin((auth) -> auth.disable())
                 .httpBasic((auth) -> auth.disable())
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/test/**").permitAll()// 로그인/회원가입이 들어갈 예정
-                        .requestMatchers("/").hasRole("")// 관리자
-                        .requestMatchers("/").hasAnyRole("")//유저
+                        .requestMatchers("/api/member/signup",
+                                "/api/member/login",
+                                "/api/member/find-username",
+                                "/api/member/send-reset-password-email",
+                                "/api/member/reset-password").permitAll()
                         .anyRequest().authenticated())
                         .addFilterBefore(new JWTFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
                         .sessionManagement((session) -> session
