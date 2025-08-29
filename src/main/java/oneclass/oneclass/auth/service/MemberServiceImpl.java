@@ -6,9 +6,11 @@ import oneclass.oneclass.auth.dto.SignupRequest;
 import oneclass.oneclass.auth.entity.Member;
 import oneclass.oneclass.auth.entity.RefreshToken;
 import oneclass.oneclass.auth.entity.Role;
+import oneclass.oneclass.auth.entity.VerificationCode;
 import oneclass.oneclass.auth.jwt.JWTProvider;
 import oneclass.oneclass.auth.repository.MemberRepository;
 import oneclass.oneclass.auth.repository.RefreshTokenRepository;
+import oneclass.oneclass.auth.repository.VerificationCodeRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,7 @@ public class MemberServiceImpl implements MemberService {
     private final JWTProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final EmailService emailService;
+    private final VerificationCodeRepository verificationCodeRepository;
 
     @Override
     public void signup(SignupRequest request){
@@ -87,15 +90,40 @@ public class MemberServiceImpl implements MemberService {
         Member member = memberRepository.findByEmailOrPhone(usernameOrEmail, usernameOrEmail)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
         String tempCode = UUID.randomUUID().toString().substring(0, 6);
-        emailService.sendSimpleMail(member.getEmail(),"비밀번호 재설정", "인증코드: " + tempCode);
+        // 인증코드 저장 (유효기간: 5분)
+        verificationCodeRepository.save(
+                VerificationCode.builder()
+                        .usernameOrEmail(usernameOrEmail)
+                        .code(tempCode)
+                        .expiry(System.currentTimeMillis() + 5 * 60 * 1000)
+                        .build()
+        );
+
+        emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode);
     }
 
     @Override
     public void resetPassword(String username, String newPassword, String verificationCode) {
-        //비번 재설정
+        // 인증코드 검증
+        VerificationCode codeEntry = verificationCodeRepository.findById(username)
+                .orElseThrow(() -> new IllegalArgumentException("인증코드가 없습니다."));
+        if (!codeEntry.getCode().equals(verificationCode)) {
+            throw new IllegalArgumentException("인증코드가 일치하지 않습니다.");
+        }
+        if (codeEntry.getExpiry() < System.currentTimeMillis()) {
+            throw new IllegalArgumentException("인증코드가 만료되었습니다.");
+        }
+        // 인증 성공시 코드 삭제
+        verificationCodeRepository.deleteById(username);
+
+        // 비밀번호 재설정 로직
         Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new  IllegalArgumentException("존재하지 않는 아이디입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 아이디입니다."));
         member.setPassword(passwordEncoder.encode(newPassword));
         memberRepository.save(member);
+    }
+    //로그아웃시 토큰 폐기
+    public void logout(String username){
+        refreshTokenRepository.deleteByUsername(username);
     }
 }
