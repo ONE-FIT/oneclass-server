@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/oneclass
     username: root
-    password: Abcde090125!!
+    password:
 
   jpa:
     hibernate:
@@ -15,6 +15,42 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: abcb090125@gmail.com
+    password: xvgvhswnzongbaiw
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust: smtp.gmail.com
+  mvc:
+    path match:
+      matching-strategy: ANT_PATH_MATCHER
+
+  http:
+    converters:
+      preferred-json-mapper: jackson
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
 jwt:
-  secret: my-super-secret-key
-  token-validity-in-seconds: 3600
+  secret: "0123456789ABCDEF0123456789ABCDEF" # 32비트
+  token-validity-in-seconds: 1209600 # 14일
+
+logging:
+  level:
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER

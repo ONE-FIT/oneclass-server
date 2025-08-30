@@ -16,6 +16,9 @@ public class Member {
     private String username; // 이름
     private String password; // 비번
 
+    private String phone;
+    private String email;
+
     @NotNull
     @Enumerated(EnumType.STRING)
     private Role role; // STUDENT / TEACHER / PARENT

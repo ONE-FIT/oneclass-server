@@ -1,5 +1,7 @@
 package oneclass.oneclass.domain.auth.member.entity;
 
-enum Role {
-    STUDENT, TEACHER, PARENT
+public enum Role {
+    STUDENT,
+    PARENT,
+    ADMIN
 }
