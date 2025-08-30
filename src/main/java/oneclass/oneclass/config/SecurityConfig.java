@@ -37,15 +37,17 @@ public class SecurityConfig {
                 .formLogin((auth) -> auth.disable())
                 .httpBasic((auth) -> auth.disable())
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/member/signup",
+                        .requestMatchers(
+                                "/api/member/signup",
                                 "/api/member/login",
                                 "/api/member/find-username",
                                 "/api/member/send-reset-password-email",
-                                "/api/member/reset-password").permitAll()
-                        .anyRequest().authenticated())
-                        .addFilterBefore(new JWTFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
-                        .sessionManagement((session) -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                                "/api/member/reset-password",
+                                "/api/consultations/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+                        .anyRequest().authenticated());
 
 
 
