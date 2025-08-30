@@ -2,7 +2,7 @@ package oneclass.oneclass.domain.admin.announce.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import oneclass.oneclass.domain.common.member.entity.Member;
+import oneclass.oneclass.domain.auth.member.entity.Member;
 
 @Entity
 @Data

@@ -2,7 +2,7 @@ package oneclass.oneclass.domain.parents.payment.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import oneclass.oneclass.domain.common.member.entity.Member;
+import oneclass.oneclass.domain.auth.member.entity.Member;
 import oneclass.oneclass.domain.parents.bill.entity.Bill;
 
 import java.time.LocalDateTime;
