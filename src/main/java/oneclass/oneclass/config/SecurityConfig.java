@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,11 +34,14 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JWTProvider jWTProvider) throws Exception {
         httpSecurity
                 .cors(cors -> {})
-                .csrf((auth) -> auth.disable())
-                .formLogin((auth) -> auth.disable())
-                .httpBasic((auth) -> auth.disable())
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/member/**").permitAll()
+                        .requestMatchers("/api/member/**",
+                                        "/api/consultations/request",
+                                        "/api/consultations/{id}/status").permitAll()
+                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")
                         .anyRequest().authenticated())
                         .addFilterBefore(new JWTFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
                         .sessionManagement((session) -> session

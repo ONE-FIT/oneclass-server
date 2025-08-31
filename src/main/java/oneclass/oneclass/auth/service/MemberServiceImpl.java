@@ -1,5 +1,6 @@
 package oneclass.oneclass.auth.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.auth.dto.ResponseToken;
 import oneclass.oneclass.auth.dto.SignupRequest;
@@ -54,6 +55,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
     public ResponseToken login(String username, String password){
         //회원정보 조회 with ID
         Member member = memberRepository.findByUsername(username)

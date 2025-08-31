@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,15 +19,12 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JWTFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JWTFilter.class);
 
     private final JWTProvider jwtProvider;
-
-    public JWTFilter(JWTProvider jwtProvider) {
-        this.jwtProvider = jwtProvider;
-    }
 
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
@@ -39,7 +37,8 @@ public class JWTFilter extends OncePerRequestFilter {
     // permitAll 경로는 여기서 바로 통과
     private boolean isPermitAllPath(String path) {
         return path.startsWith("/api/member/")// 로그인/회원가입
-                || path.startsWith("/api/auth/")
+                || path.startsWith("/api/consultations/request")
+                || path.startsWith("/api/consultations/{id}/status")
                 || path.startsWith("/swagger-ui/")    // 스웨거 UI
                 || path.startsWith("/v3/api-docs")    // 스웨거 문서
                 || path.startsWith("/error");         // 에러 엔드포인트
