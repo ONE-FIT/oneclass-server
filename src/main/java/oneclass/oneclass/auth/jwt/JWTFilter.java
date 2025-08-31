@@ -38,7 +38,8 @@ public class JWTFilter extends OncePerRequestFilter {
 
     // permitAll 경로는 여기서 바로 통과
     private boolean isPermitAllPath(String path) {
-        return path.startsWith("/api/auth/")      // 로그인/회원가입
+        return path.startsWith("/api/member/")// 로그인/회원가입
+                || path.startsWith("/api/auth/")
                 || path.startsWith("/swagger-ui/")    // 스웨거 UI
                 || path.startsWith("/v3/api-docs")    // 스웨거 문서
                 || path.startsWith("/error");         // 에러 엔드포인트
@@ -60,9 +61,11 @@ public class JWTFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
+        log.info("요청 경로: " + path);
 
         // CORS preflight 또는 permitAll 경로는 바로 통과
         if ("OPTIONS".equalsIgnoreCase(request.getMethod()) || isPermitAllPath(path)) {
+            log.info("permitAll 경로로 필터 통과: " + path);
             filterChain.doFilter(request, response);
             return;
         }
@@ -90,8 +93,9 @@ public class JWTFilter extends OncePerRequestFilter {
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 String username = jwtProvider.getUsername(plainJwt);
 
-                // TODO: 권한은 추후 실제 값으로 교체 (예: Claim 'auth' or DB 조회)
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+                // TODO: 권한은 추후 실제 값으로 교체
+                String role = jwtProvider.getRole(plainJwt);
+                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
