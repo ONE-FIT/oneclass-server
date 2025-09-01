@@ -85,6 +85,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
         return member.getUsername();
     }
+
     @Override
     public void sendResetPasswordEmail(String emailOrPhone) {
         Member member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
