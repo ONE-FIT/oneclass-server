@@ -1,6 +1,7 @@
 package oneclass.oneclass.domain.admin.task.service;
 
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.admin.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.domain.admin.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.admin.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.admin.task.dto.response.TaskResponse;
@@ -16,12 +17,12 @@ import java.util.stream.Collectors;
 public class TaskService {
     private final TaskRepository taskRepository;
 
-    public void createTask(CreateTaskRequest request) {
+    public TaskResponse createTask(CreateTaskRequest request) {
         Task task = Task.builder()
                 .title(request.title())
                 .description(request.description())
                 .build();
-        taskRepository.save(task);
+        return TaskResponse.of(taskRepository.save(task));
     }
 
     public TaskResponse findTaskById(Long id) {
