@@ -36,7 +36,7 @@ public class TaskController {
         return taskService.updateTask(request);
     }
 
-    @DeleteMapping("/delete")
+    @DeleteMapping("/{id}")
     public void deleteTask(@RequestParam Long id) {
         ResponseEntity.ok(Map.of("message", "과제가 삭제되었습니다."));
         taskService.deleteTask(id);
@@ -46,4 +46,5 @@ public class TaskController {
     public List<TaskResponse> findAll() {
         return taskService.findAll();
     }
+
 }

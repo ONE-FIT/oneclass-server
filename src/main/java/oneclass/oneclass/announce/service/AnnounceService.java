@@ -6,9 +6,11 @@ import oneclass.oneclass.announce.dto.request.UpdateAnnounceRequest;
 import oneclass.oneclass.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.announce.entity.Announce;
 import oneclass.oneclass.announce.repository.AnnounceRepository;
+import oneclass.oneclass.task.dto.response.TaskResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +55,7 @@ public class AnnounceService {
         announceRepository.delete(announce);
     }
 
-    public List<Announce> findAll() {
-        return announceRepository.findAll();
+    public List<AnnounceResponse> findAll() {
+        return announceRepository.findAll().stream().map(AnnounceResponse::of).collect(Collectors.toList());
     }
 }

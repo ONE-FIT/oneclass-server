@@ -6,9 +6,11 @@ import oneclass.oneclass.announce.dto.request.UpdateAnnounceRequest;
 import oneclass.oneclass.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.announce.repository.AnnounceRepository;
 import oneclass.oneclass.announce.service.AnnounceService;
+import oneclass.oneclass.task.dto.response.TaskResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -40,6 +42,11 @@ public class AnnounceController {
     @DeleteMapping("/{id}")
     public void deleteAnnounce(@PathVariable Long id) {
         ResponseEntity.ok(Map.of("message", "공지가 삭제되었습니다."));
-        announceRepository.deleteById(id);
+        announceService.deleteAnnounce(id);
+    }
+
+    @GetMapping()
+    public List<AnnounceResponse> findAll() {
+        return announceService.findAll();
     }
 }
