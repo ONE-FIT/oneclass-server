@@ -1,4 +1,4 @@
-package oneclass.oneclass.member.entity;
+package oneclass.oneclass.auth.member.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

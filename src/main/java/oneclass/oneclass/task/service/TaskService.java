@@ -20,6 +20,8 @@ public class TaskService {
         Task task = Task.builder()
                 .title(request.title())
                 .description(request.description())
+                .assignedTo(request.assignedTo())
+                .dueDate(request.dueDate())
                 .build();
         return TaskResponse.of(taskRepository.save(task));
     }

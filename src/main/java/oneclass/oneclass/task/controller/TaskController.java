@@ -20,25 +20,25 @@ public class TaskController {
 
     @PostMapping("/create")
     public TaskResponse createTask(@RequestParam CreateTaskRequest request) {
-        ResponseEntity.ok(Map.of("message", "공지가 생성되었습니다."));
+        ResponseEntity.ok(Map.of("message", "과제가 생성되었습니다."));
         return taskService.createTask(request);
     }
 
     @GetMapping("/{id}")
     public TaskResponse findTaskById(@PathVariable Long id) {
-        ResponseEntity.ok(Map.of("message", "공지가 제공되었습니다."));
+        ResponseEntity.ok(Map.of("message", "과제가 제공되었습니다."));
         return taskService.findTaskById(id);
     }
 
     @PatchMapping("/{id}")
     public TaskResponse updateTask( @RequestBody UpdateTaskRequest request) {
-        ResponseEntity.ok(Map.of("message", "공지가 수정되었습니다."));
+        ResponseEntity.ok(Map.of("message", "과제가 수정되었습니다."));
         return taskService.updateTask(request);
     }
 
     @DeleteMapping("/delete")
     public void deleteTask(@RequestParam Long id) {
-        ResponseEntity.ok(Map.of("message", "공지가 삭제되었습니다."));
+        ResponseEntity.ok(Map.of("message", "과제가 삭제되었습니다."));
         taskService.deleteTask(id);
     }
 

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import oneclass.oneclass.member.entity.Member;
+import oneclass.oneclass.auth.member.entity.Member;
 
 @Entity
 @Data
@@ -21,6 +21,7 @@ public class Announce {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    private Boolean important;
     @ManyToOne(fetch = FetchType.LAZY)
     private Member author;
 }

@@ -17,7 +17,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Table(name = "tb_check_code")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class QrCodeEntity extends BaseTimeEntity {
+public class QrCode extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

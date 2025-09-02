@@ -33,5 +33,4 @@ public class QrCodeController extends QrCodeMapper {
                 "출석 코드 생성 성공",
                 codes);
     }
-
 }
