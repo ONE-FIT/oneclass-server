@@ -30,6 +30,7 @@ public class ConsultationController {
         ConsultationDetailResponse response = consultationService.getConsultationDetail(name, phone);
         return ResponseEntity.ok(response);
     }
+    //
     //일단 필요없어 보여서 주석처리
 //    //@@의 상담 대기중 -> 확정
 //    @PatchMapping("/{id}/status")
