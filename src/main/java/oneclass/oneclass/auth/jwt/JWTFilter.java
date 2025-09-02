@@ -38,7 +38,7 @@ public class JWTFilter extends OncePerRequestFilter {
     private boolean isPermitAllPath(String path) {
         return path.startsWith("/api/member/")// 로그인/회원가입
                 || path.startsWith("/api/consultations/request")
-                || path.startsWith("/api/consultations/{id}/status")
+                || path.startsWith("/api/consultations/detail")
                 || path.startsWith("/swagger-ui/")    // 스웨거 UI
                 || path.startsWith("/v3/api-docs")    // 스웨거 문서
                 || path.startsWith("/error");         // 에러 엔드포인트

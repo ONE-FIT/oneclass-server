@@ -98,7 +98,7 @@ public class MemberServiceImpl implements MemberService {
                 VerificationCode.builder()
                         .usernameOrEmail(username)
                         .code(tempCode)
-                        .expiry(System.currentTimeMillis() + 5 * 60 * 1000)
+                        .expiry(System.currentTimeMillis() + 5 * 60 * 1000)//5분
                         .build()
         );
 

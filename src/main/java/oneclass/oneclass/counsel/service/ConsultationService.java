@@ -1,6 +1,7 @@
 package oneclass.oneclass.counsel.service;
 
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.counsel.dto.ConsultationDetailResponse;
 import oneclass.oneclass.counsel.dto.ConsultationRequest;
 import oneclass.oneclass.counsel.entity.Consultation;
 import oneclass.oneclass.counsel.repository.ConsultationRepository;
@@ -26,7 +27,14 @@ public class ConsultationService {
         con.setCreateAt(LocalDateTime.now());
         return consultationRepository.save(con);
     }
-    //상담조회
+
+    public ConsultationDetailResponse getConsultationDetail(String name, String phone) {
+        Consultation consultation = consultationRepository.findByNameAndPhone(name, phone)
+                .orElseThrow(() -> new IllegalArgumentException("상담 내역이 없습니다."));
+        return ConsultationDetailResponse.from(consultation);
+    }
+
+    //상태 변경
     public Consultation updateStatus(Long id, String status , String scheduleTime) {
         Consultation con = consultationRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("상담을 찾을 수 없습니다."));
