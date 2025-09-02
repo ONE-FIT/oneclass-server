@@ -17,10 +17,15 @@ import java.util.List;
 public class ConsultationController {
     private final ConsultationService consultationService;
 
-    //상담신청
+    //상담신청(학생)
     @PostMapping("/request")
     public ResponseEntity<Consultation> create(@RequestBody @Valid ConsultationRequest request){
         return ResponseEntity.ok(consultationService.createConsultation(request));
+    }
+      //상담신청(학부모)
+    @PostMapping("/parents-request")
+    public ResponseEntity<Consultation> parentsCreate(@RequestBody @Valid ConsultationRequest request){
+        return ResponseEntity.ok(consultationService.parentsCreateConsultation(request));
     }
     //상담 상세 조회
     @GetMapping("/detail")
