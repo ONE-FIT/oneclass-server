@@ -20,6 +20,7 @@ public class AnnounceService {
         Announce announce = Announce.builder()
                 .title(request.title())
                 .content(request.content())
+                .important(request.important())
                 .build();
         return AnnounceResponse.of(announceRepository.save(announce));
     }
@@ -39,6 +40,7 @@ public class AnnounceService {
         }
         announce.setTitle(request.title());
         announce.setContent(request.content());
+        announce.setImportant(request.important());
 
         return AnnounceResponse.of(announceRepository.save(announce));
     }
