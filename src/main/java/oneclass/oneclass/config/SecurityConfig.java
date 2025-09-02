@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/member/**",
                                         "/api/consultations/request",
                                         "/api/consultations/detail",
+                                "/api/consultations/parents-request",
                                 "/api/consultations/schedule").permitAll()
 //                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                             // 테스트 때매 잠시 permit all
