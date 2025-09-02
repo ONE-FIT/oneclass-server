@@ -40,8 +40,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/api/member/**",
                                         "/api/consultations/request",
-                                        "/api/consultations/detail").permitAll()
-                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
+                                        "/api/consultations/detail",
+                                "/api/consultations/schedule").permitAll()
+//                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
+                            // 테스트 때매 잠시 permit all
                         .anyRequest().authenticated())
                         .addFilterBefore(new JWTFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
                         .sessionManagement((session) -> session

@@ -47,6 +47,6 @@ public class ConsultationService {
 
     //전체조회
     public List<Consultation> getAllSchedule(){
-        return consultationRepository.findByStatus("CONFIRMED");
+        return consultationRepository.findAll();
     }
 }
