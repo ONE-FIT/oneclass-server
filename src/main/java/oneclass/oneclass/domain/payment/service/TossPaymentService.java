@@ -2,8 +2,8 @@ package oneclass.oneclass.domain.payment.service;
 
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.payment.entity.TossPayment;
-import oneclass.oneclass.domain.payment.entity.TossPaymentMethod;
-import oneclass.oneclass.domain.payment.entity.TossPaymentStatus;
+import oneclass.oneclass.domain.payment.entity.enums.TossPaymentMethod;
+import oneclass.oneclass.domain.payment.entity.enums.TossPaymentStatus;
 import oneclass.oneclass.domain.payment.repository.TossPaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

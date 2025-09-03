@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import oneclass.oneclass.domain.auth.member.entity.Member;
 import oneclass.oneclass.domain.bill.entity.Bill;
+import oneclass.oneclass.domain.payment.entity.enums.PaymentMethod;
+import oneclass.oneclass.domain.payment.entity.enums.PaymentStatus;
 
 import java.time.LocalDateTime;
 

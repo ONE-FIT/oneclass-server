@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.payment.entity;
+package oneclass.oneclass.domain.payment.entity.enums;
 
 public enum TossPaymentStatus {
     READY,       // 결제 대기

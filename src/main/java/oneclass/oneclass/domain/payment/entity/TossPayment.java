@@ -2,6 +2,8 @@ package oneclass.oneclass.domain.payment.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import oneclass.oneclass.domain.payment.entity.enums.TossPaymentMethod;
+import oneclass.oneclass.domain.payment.entity.enums.TossPaymentStatus;
 
 import java.time.LocalDateTime;
 

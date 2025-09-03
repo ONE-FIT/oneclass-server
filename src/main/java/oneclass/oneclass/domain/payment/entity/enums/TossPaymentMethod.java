@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.payment.entity;
+package oneclass.oneclass.domain.payment.entity.enums;
 
 public enum TossPaymentMethod {
     BANK_TRANSFER,  // 계좌이체(퀵계좌이체)
