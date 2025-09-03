@@ -17,4 +17,8 @@ public class AttendanceResponse {
 
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
+
+    public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate now) {
+
+    }
 }
