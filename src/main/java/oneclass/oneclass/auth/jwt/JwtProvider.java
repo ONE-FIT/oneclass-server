@@ -18,16 +18,16 @@ import java.security.Key;
 import java.util.Date;
 
 @Component
-public class JWTProvider {
+public class JwtProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(JWTProvider.class);
+    private static final Logger logger = LoggerFactory.getLogger(JwtProvider.class);
     private static final String AUTHORITIES_KEY = "auth";
 
     private final String secret;
     private final long tokenValidityInMilliseconds;
     private Key key;
 
-    public JWTProvider(
+    public JwtProvider(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds
     ) {
