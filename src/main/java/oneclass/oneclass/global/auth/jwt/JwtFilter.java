@@ -20,9 +20,9 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class JWTFilter extends OncePerRequestFilter {
+public class JwtFilter extends OncePerRequestFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(JWTFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
 
     private final JWTProvider jwtProvider;
 

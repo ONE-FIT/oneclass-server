@@ -1,7 +1,7 @@
 package oneclass.oneclass.global.config;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.global.auth.jwt.JWTFilter;
+import oneclass.oneclass.global.auth.jwt.JwtFilter;
 import oneclass.oneclass.global.auth.jwt.JWTProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,7 +43,7 @@ public class SecurityConfig {
                                         "/api/consultations/detail").permitAll()
                         .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
-                        .addFilterBefore(new JWTFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
+                        .addFilterBefore(new JwtFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
                         .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
