@@ -2,7 +2,7 @@ package oneclass.oneclass.global.config;
 
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.global.auth.jwt.JwtFilter;
-import oneclass.oneclass.global.auth.jwt.JWTProvider;
+import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,7 +31,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JWTProvider jWTProvider) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtProvider jWTProvider) throws Exception {
         httpSecurity
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
