@@ -69,7 +69,7 @@ public class JwtProvider {
 
 
     // JWE 암호화
-    public String encyptToken(String plainJwt) throws Exception {
+    public String encryptToken(String plainJwt) throws Exception {
         byte[] aesKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
         SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
         JWEHeader header = new JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A128CBC_HS256);
@@ -80,7 +80,7 @@ public class JwtProvider {
     }
 
     // JWE 복호화
-    public String decyptToken(String jwtToken) throws Exception {
+    public String decryptToken(String jwtToken) throws Exception {
         byte[] aesKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
         SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
         JWEObject jweObject = JWEObject.parse(jwtToken);
@@ -111,8 +111,8 @@ public class JwtProvider {
         String encryptedRefreshToken;
 
         try {
-            encryptedAccessToken = encyptToken(accessToken);
-            encryptedRefreshToken = encyptToken(refreshToken);
+            encryptedAccessToken = encryptToken(accessToken);
+            encryptedRefreshToken = encryptToken(refreshToken);
         } catch (Exception e) {
             throw new RuntimeException("토큰 암호화 실패", e);
         }
