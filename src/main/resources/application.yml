@@ -51,6 +51,3 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-  mvc:
-    pathmatch:
-      matching-strategy: ANT_PATH_MATCHER
