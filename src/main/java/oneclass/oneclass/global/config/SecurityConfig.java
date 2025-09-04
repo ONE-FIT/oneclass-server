@@ -1,8 +1,8 @@
 package oneclass.oneclass.global.config;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.global.auth.member.jwt.JwtFilter;
-import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.jwt.JWTFilter;
+import oneclass.oneclass.global.auth.jwt.JWTProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,7 +31,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtProvider jWTProvider) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JWTProvider jWTProvider) throws Exception {
         httpSecurity
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
@@ -39,12 +39,12 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/api/member/**",
-                                "/api/consultations/request",
-                                "/api/consultations/detail").permitAll()
-                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN") //상담 전체 확인이라서 관리자용
+                                        "/api/consultations/request",
+                                        "/api/consultations/detail").permitAll()
+                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
-                .sessionManagement((session) -> session
+                        .addFilterBefore(new JWTFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
+                        .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
 

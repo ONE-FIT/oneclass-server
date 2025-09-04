@@ -43,7 +43,7 @@ server:
 
 jwt:
   secret: "0123456789ABCDEF0123456789ABCDEF" # 32비트
-  token-validity-in-seconds: 1209600 # 14일
+  token-validity-in-seconds: 3600 # 1시간
 
 logging:
   level:
