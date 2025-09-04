@@ -113,6 +113,7 @@ public class JwtProvider {
         try {
             encryptedAccessToken = encryptToken(accessToken);
             encryptedRefreshToken = encryptToken(refreshToken);
+
         } catch (Exception e) {
             throw new RuntimeException("토큰 암호화 실패", e);
         }
