@@ -56,3 +56,4 @@ logging:
       matching-strategy: ANT_PATH_MATCHER
 
 toss:
+  secret-key: test_sk_xxxxxxxxxxxxxxxxx
