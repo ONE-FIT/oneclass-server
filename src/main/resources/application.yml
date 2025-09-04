@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/oneclass
     username: root
-    password: Abcde090125!!
+    password:
 
   jpa:
     hibernate:
@@ -30,7 +30,7 @@ spring:
             trust: smtp.gmail.com
   mvc:
     path match:
-       matching-strategy: ANT_PATH_MATCHER
+      matching-strategy: ANT_PATH_MATCHER
 
   http:
     converters:
