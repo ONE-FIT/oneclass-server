@@ -1,6 +1,6 @@
-package oneclass.oneclass.domain.auth.member.repository;
+package oneclass.oneclass.global.auth.member.repository;
 
-import oneclass.oneclass.domain.auth.member.entity.Member;
+import oneclass.oneclass.global.auth.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

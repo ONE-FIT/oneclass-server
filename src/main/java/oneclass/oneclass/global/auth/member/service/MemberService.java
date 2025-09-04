@@ -1,8 +1,8 @@
-package oneclass.oneclass.domain.auth.member.service;
+package oneclass.oneclass.global.auth.member.service;
 
 
-import oneclass.oneclass.domain.auth.member.dto.ResponseToken;
-import oneclass.oneclass.domain.auth.member.dto.SignupRequest;
+import oneclass.oneclass.global.auth.member.dto.ResponseToken;
+import oneclass.oneclass.global.auth.member.dto.SignupRequest;
 import org.springframework.stereotype.Service;
 
 @Service

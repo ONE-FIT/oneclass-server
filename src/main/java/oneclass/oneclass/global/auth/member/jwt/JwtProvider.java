@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.auth.member.jwt;
+package oneclass.oneclass.global.auth.member.jwt;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.DirectDecrypter;
@@ -6,7 +6,7 @@ import com.nimbusds.jose.crypto.DirectEncrypter;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import oneclass.oneclass.domain.auth.member.dto.ResponseToken;
+import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.auth.member.jwt;
+package oneclass.oneclass.global.auth.member.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

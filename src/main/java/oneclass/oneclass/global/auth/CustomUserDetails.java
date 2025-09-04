@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.auth;
+package oneclass.oneclass.global.auth;
 
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;

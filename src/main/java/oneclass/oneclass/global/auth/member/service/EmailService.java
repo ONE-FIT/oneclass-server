@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.auth.member.service;
+package oneclass.oneclass.global.auth.member.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;

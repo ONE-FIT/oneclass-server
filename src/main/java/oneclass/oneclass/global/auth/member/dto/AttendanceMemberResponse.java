@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.auth.member.dto;
+package oneclass.oneclass.global.auth.member.dto;
 
 public class AttendanceMemberResponse {
 

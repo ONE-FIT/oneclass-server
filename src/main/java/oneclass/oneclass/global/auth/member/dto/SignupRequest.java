@@ -1,9 +1,9 @@
-package oneclass.oneclass.domain.auth.member.dto;
+package oneclass.oneclass.global.auth.member.dto;
 
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import oneclass.oneclass.domain.auth.member.entity.Role;
+import oneclass.oneclass.global.auth.member.entity.Role;
 
 @Data
 @NoArgsConstructor

@@ -1,16 +1,16 @@
-package oneclass.oneclass.domain.auth.member.service;
+package oneclass.oneclass.global.auth.member.service;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.auth.member.dto.ResponseToken;
-import oneclass.oneclass.domain.auth.member.dto.SignupRequest;
-import oneclass.oneclass.domain.auth.member.entity.Member;
-import oneclass.oneclass.domain.auth.member.entity.RefreshToken;
-import oneclass.oneclass.domain.auth.member.entity.Role;
-import oneclass.oneclass.domain.auth.member.entity.VerificationCode;
-import oneclass.oneclass.domain.auth.member.jwt.JwtProvider;
-import oneclass.oneclass.domain.auth.member.repository.MemberRepository;
-import oneclass.oneclass.domain.auth.member.repository.RefreshTokenRepository;
-import oneclass.oneclass.domain.auth.member.repository.VerificationCodeRepository;
+import oneclass.oneclass.global.auth.member.dto.ResponseToken;
+import oneclass.oneclass.global.auth.member.dto.SignupRequest;
+import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.global.auth.member.entity.RefreshToken;
+import oneclass.oneclass.global.auth.member.entity.Role;
+import oneclass.oneclass.global.auth.member.entity.VerificationCode;
+import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.member.repository.MemberRepository;
+import oneclass.oneclass.global.auth.member.repository.RefreshTokenRepository;
+import oneclass.oneclass.global.auth.member.repository.VerificationCodeRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 

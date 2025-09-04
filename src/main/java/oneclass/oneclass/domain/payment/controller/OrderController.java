@@ -1,7 +1,7 @@
 package oneclass.oneclass.domain.payment.controller;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.auth.CustomUserDetails;
+import oneclass.oneclass.global.auth.CustomUserDetails;
 import oneclass.oneclass.domain.payment.entity.TossPayment;
 import oneclass.oneclass.domain.payment.service.TossPaymentService;
 import org.springframework.http.ResponseEntity;

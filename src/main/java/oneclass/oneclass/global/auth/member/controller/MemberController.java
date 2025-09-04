@@ -1,13 +1,13 @@
-package oneclass.oneclass.domain.auth.member.controller;
+package oneclass.oneclass.global.auth.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.auth.member.dto.LoginRequest;
-import oneclass.oneclass.domain.auth.member.dto.ResetPasswordRequest;
-import oneclass.oneclass.domain.auth.member.dto.ResponseToken;
-import oneclass.oneclass.domain.auth.member.dto.SignupRequest;
-import oneclass.oneclass.domain.auth.member.service.MemberService;
+import oneclass.oneclass.global.auth.member.dto.LoginRequest;
+import oneclass.oneclass.global.auth.member.dto.ResetPasswordRequest;
+import oneclass.oneclass.global.auth.member.dto.ResponseToken;
+import oneclass.oneclass.global.auth.member.dto.SignupRequest;
+import oneclass.oneclass.global.auth.member.service.MemberService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;

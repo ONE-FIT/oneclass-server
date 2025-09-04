@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.auth.member.entity;
+package oneclass.oneclass.global.auth.member.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
