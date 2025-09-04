@@ -151,4 +151,5 @@ public class JWTProvider {
                 .getBody()
                 .get("role", String.class);
     }
+
 }
