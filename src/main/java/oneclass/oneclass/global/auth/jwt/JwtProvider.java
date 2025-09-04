@@ -151,4 +151,5 @@ public class JwtProvider {
                 .getBody()
                 .get("role", String.class);
     }
+
 }
