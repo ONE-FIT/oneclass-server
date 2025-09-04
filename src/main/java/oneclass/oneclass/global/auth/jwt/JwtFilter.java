@@ -80,7 +80,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             // JWE면 복호화, 아니면 평문 JWT 그대로 사용
-            String plainJwt = looksLikeJwe(token) ? jwtProvider.decyptToken(token) : token;
+            String plainJwt = looksLikeJwe(token) ? jwtProvider.decryptToken(token) : token;
 
             // 검증 실패 시 컨텍스트 설정하지 않고 통과
             if (!jwtProvider.validateToken(plainJwt)) {
