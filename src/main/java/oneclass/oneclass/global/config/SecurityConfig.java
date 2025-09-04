@@ -1,8 +1,8 @@
 package oneclass.oneclass.global.config;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.global.auth.jwt.JWTFilter;
-import oneclass.oneclass.global.auth.jwt.JWTProvider;
+import oneclass.oneclass.global.auth.jwt.JwtFilter;
+import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,7 +31,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JWTProvider jWTProvider) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtProvider jWTProvider) throws Exception {
         httpSecurity
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
@@ -43,7 +43,7 @@ public class SecurityConfig {
                                         "/api/consultations/detail").permitAll()
                         .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
-                        .addFilterBefore(new JWTFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
+                        .addFilterBefore(new JwtFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
                         .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

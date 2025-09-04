@@ -20,11 +20,11 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class JWTFilter extends OncePerRequestFilter {
+public class JwtFilter extends OncePerRequestFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(JWTFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
 
-    private final JWTProvider jwtProvider;
+    private final JwtProvider jwtProvider;
 
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");

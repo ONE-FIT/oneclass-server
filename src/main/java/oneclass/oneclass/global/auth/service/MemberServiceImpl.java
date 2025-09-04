@@ -8,7 +8,7 @@ import oneclass.oneclass.global.auth.entity.Member;
 import oneclass.oneclass.global.auth.entity.RefreshToken;
 import oneclass.oneclass.global.auth.entity.Role;
 import oneclass.oneclass.global.auth.entity.VerificationCode;
-import oneclass.oneclass.global.auth.jwt.JWTProvider;
+import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.repository.MemberRepository;
 import oneclass.oneclass.global.auth.repository.RefreshTokenRepository;
 import oneclass.oneclass.global.auth.repository.VerificationCodeRepository;
@@ -24,7 +24,7 @@ public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JWTProvider jwtProvider;
+    private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final EmailService emailService;
     private final VerificationCodeRepository verificationCodeRepository;
