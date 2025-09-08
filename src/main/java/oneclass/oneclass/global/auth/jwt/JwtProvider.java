@@ -21,7 +21,7 @@ import java.util.Date;
 public class JwtProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtProvider.class);
-    private static final String AUTHORITIES_KEY = "auth";
+//    private static final String AUTHORITIES_KEY = "auth"; //현재는 필요없으나 나중에 쓸 일 있을 수 있으니까 남겨둠
 
     private final String secret;
     private final long tokenValidityInMilliseconds;
@@ -68,16 +68,6 @@ public class JwtProvider {
     }
 
 
-    // JWE 암호화
-    public String encryptToken(String plainJwt) throws Exception {
-        byte[] aesKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
-        JWEHeader header = new JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A128CBC_HS256);
-        Payload payload = new Payload(plainJwt);
-        JWEObject jweObject = new JWEObject(header, payload);
-        jweObject.encrypt(new DirectEncrypter(aesKey.getEncoded()));
-        return jweObject.serialize();
-    }
 
     // JWE 복호화
     public String decryptToken(String jwtToken) throws Exception {
