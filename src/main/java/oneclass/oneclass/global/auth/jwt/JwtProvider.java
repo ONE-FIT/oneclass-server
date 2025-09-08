@@ -88,37 +88,6 @@ public class JwtProvider {
         return jweObject.getPayload().toString();
     }
 
-    // 토큰 생성(JWE 적용)
-    public ResponseToken generateTokenJwe(String username) {
-        Date now = new Date();
-        Date accessExpiry = new Date(now.getTime() + tokenValidityInMilliseconds);
-        String accessToken = Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(accessExpiry)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-
-        Date refreshExpiry = new Date(now.getTime() + tokenValidityInMilliseconds * 2);
-        String refreshToken = Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(refreshExpiry)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-
-        String encryptedAccessToken;
-        String encryptedRefreshToken;
-
-
-        try {
-            encryptedAccessToken = encryptToken(accessToken);
-            encryptedRefreshToken = encryptToken(refreshToken);
-        } catch (Exception e) {
-            throw new RuntimeException("토큰 암호화 실패", e);
-        }
-        return new ResponseToken(encryptedAccessToken, encryptedRefreshToken);
-    }
 
     // 토큰 검증
     public boolean validateToken(String token) {
