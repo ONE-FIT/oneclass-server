@@ -135,6 +135,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     //로그아웃시 토큰 폐기
+    @Transactional
     @Override
     public void logout(String username){
         refreshTokenRepository.deleteByUsername(username);

@@ -7,6 +7,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ConsultationRepository extends JpaRepository<Consultation, Long> {
-    List<Consultation> findByStatus(String status);
     Optional<Consultation> findByNameAndPhone(String name, String phone);
 }

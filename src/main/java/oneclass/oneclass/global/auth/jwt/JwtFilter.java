@@ -36,7 +36,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     // permitAll 경로는 여기서 바로 통과
     private boolean isPermitAllPath(String path) {
-        return path.startsWith("/api/member/")// 로그인/회원가입
+        return path.startsWith("/api/member/signup")
+                || path.startsWith("/api/member/login")// 로그인/회원가입
                 || path.startsWith("/api/consultations/request")
                 || path.startsWith("/api/consultations/parents-request")
                 || path.startsWith("/api/consultations/detail")
