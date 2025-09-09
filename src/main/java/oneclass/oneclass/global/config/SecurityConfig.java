@@ -1,8 +1,8 @@
 package oneclass.oneclass.global.config;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.global.auth.jwt.JwtFilter;
-import oneclass.oneclass.global.auth.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.member.jwt.JwtFilter;
+import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
