@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping
+@RequestMapping("/announce")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AnnounceController {

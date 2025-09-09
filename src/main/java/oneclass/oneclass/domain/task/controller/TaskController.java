@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping
+@RequestMapping("/task")
 @RequiredArgsConstructor
 @CrossOrigin(origins ="*")
 public class TaskController {
     private final TaskService taskService;
 
     @PostMapping("/create")
-    public TaskResponse createTask(@RequestParam CreateTaskRequest request) {
+    public TaskResponse createTask(@RequestBody CreateTaskRequest request) {
         ResponseEntity.ok(Map.of("message", "과제가 생성되었습니다."));
         return taskService.createTask(request);
     }
