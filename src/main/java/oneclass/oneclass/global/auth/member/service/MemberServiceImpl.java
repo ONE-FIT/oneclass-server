@@ -1,6 +1,8 @@
 package oneclass.oneclass.global.auth.member.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import oneclass.oneclass.global.auth.member.dto.SignupRequest;
 import oneclass.oneclass.global.auth.member.entity.Member;
@@ -19,6 +21,8 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
@@ -51,6 +55,8 @@ public class MemberServiceImpl implements MemberService {
         member.setEmail(request.getEmail());
         member.setPhone(request.getPhone());
         memberRepository.save(member);
+
+        log.info("회원가입 성공");
     }
 
     @Override
@@ -73,6 +79,8 @@ public class MemberServiceImpl implements MemberService {
                 .expiryDate(LocalDateTime.now().plusDays(28))
                 .build();
         refreshTokenRepository.save(refreshToken);
+
+        log.info("로그인 성공");
 
         return tokens;
 
@@ -102,6 +110,8 @@ public class MemberServiceImpl implements MemberService {
         );
 
         emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode);
+
+        log.info(username+"에게 인증번호 보내기 성공");
     }
 
     @Override
@@ -136,6 +146,7 @@ public class MemberServiceImpl implements MemberService {
     //로그아웃시 토큰 폐기
     @Override
     public void logout(String username){
+        log.info("로그아웃 된 회원 " + username);
         refreshTokenRepository.deleteByUsername(username);
     }
 }

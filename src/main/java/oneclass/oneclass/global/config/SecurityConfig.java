@@ -31,19 +31,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtProvider jWTProvider) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtProvider jwtProvider) throws Exception {
         httpSecurity
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/member/**",
+                        .requestMatchers("/api/member/signup",
+                                        "/api/member/login",
                                         "/api/consultations/request",
                                         "/api/consultations/detail").permitAll()
                         .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
-                        .addFilterBefore(new JwtFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
+                        .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
                         .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

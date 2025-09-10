@@ -6,9 +6,11 @@ import com.nimbusds.jose.crypto.DirectEncrypter;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -150,5 +152,13 @@ public class JwtProvider {
                 .parseClaimsJws(token)
                 .getBody()
                 .get("role", String.class);
+    }
+    //로그아웃 로직
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }
