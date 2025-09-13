@@ -59,13 +59,9 @@ public class MemberController {
 
     @Operation(summary = "로그아웃", description = "Refresh Token을 폐기하여 로그아웃 처리합니다.")
     @PostMapping("/logout")
-    public void logout(@RequestHeader("Authorization") String authorizationHeader,
-                           @RequestParam String username) {
-        // 1. 헤더에서 토큰 추출
-        String token = null;
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            token = authorizationHeader.substring(7);
-        } else {
+    public void logout(HttpServletRequest request, @RequestParam String username) {
+        String token = jwtProvider.resolveToken(request);
+        if (token == null) {
             throw new IllegalArgumentException("유효한 토큰이 필요합니다.");
         }
 
