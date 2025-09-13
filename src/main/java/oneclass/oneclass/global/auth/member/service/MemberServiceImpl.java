@@ -1,17 +1,18 @@
-package oneclass.oneclass.global.auth.service;
+package oneclass.oneclass.global.auth.member.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.global.auth.dto.ResponseToken;
-import oneclass.oneclass.global.auth.dto.SignupRequest;
-import oneclass.oneclass.global.auth.entity.Member;
-import oneclass.oneclass.global.auth.entity.RefreshToken;
-import oneclass.oneclass.global.auth.entity.Role;
-import oneclass.oneclass.global.auth.entity.VerificationCode;
-import oneclass.oneclass.global.auth.jwt.JwtProvider;
-import oneclass.oneclass.global.auth.repository.MemberRepository;
-import oneclass.oneclass.global.auth.repository.RefreshTokenRepository;
-import oneclass.oneclass.global.auth.repository.VerificationCodeRepository;
+import lombok.extern.slf4j.Slf4j;
+import oneclass.oneclass.global.auth.member.dto.ResponseToken;
+import oneclass.oneclass.global.auth.member.dto.SignupRequest;
+import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.global.auth.member.entity.RefreshToken;
+import oneclass.oneclass.global.auth.member.entity.Role;
+import oneclass.oneclass.global.auth.member.entity.VerificationCode;
+import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.member.repository.MemberRepository;
+import oneclass.oneclass.global.auth.member.repository.RefreshTokenRepository;
+import oneclass.oneclass.global.auth.member.repository.VerificationCodeRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,8 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
+@Transactional
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
@@ -52,10 +55,11 @@ public class MemberServiceImpl implements MemberService {
         member.setEmail(request.getEmail());
         member.setPhone(request.getPhone());
         memberRepository.save(member);
+
+        log.info("회원가입 성공");
     }
 
     @Override
-    @Transactional
     public ResponseToken login(String username, String password){
         //회원정보 조회 with ID
         Member member = memberRepository.findByUsername(username)
@@ -76,6 +80,8 @@ public class MemberServiceImpl implements MemberService {
                 .build();
         refreshTokenRepository.save(refreshToken);
 
+        log.info("로그인 성공");
+
         return tokens;
 
     }
@@ -87,6 +93,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
         return member.getUsername();
     }
+
     @Override
     public void sendResetPasswordEmail(String emailOrPhone) {
         Member member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
@@ -98,11 +105,13 @@ public class MemberServiceImpl implements MemberService {
                 VerificationCode.builder()
                         .usernameOrEmail(username)
                         .code(tempCode)
-                        .expiry(System.currentTimeMillis() + 5 * 60 * 1000)//5분
+                        .expiry(System.currentTimeMillis() + 5 * 60 * 1000)
                         .build()
         );
 
         emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode);
+
+        log.info(username+"에게 인증번호 보내기 성공");
     }
 
     @Override
@@ -135,9 +144,10 @@ public class MemberServiceImpl implements MemberService {
     }
 
     //로그아웃시 토큰 폐기
-    @Transactional
     @Override
     public void logout(String username){
+        log.info("로그아웃 된 회원 " + username);
         refreshTokenRepository.deleteByUsername(username);
     }
 }
+

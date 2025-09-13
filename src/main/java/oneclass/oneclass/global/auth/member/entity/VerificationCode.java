@@ -1,4 +1,4 @@
-package oneclass.oneclass.global.auth.entity;
+package oneclass.oneclass.global.auth.member.entity;
 
 
 import jakarta.persistence.Entity;

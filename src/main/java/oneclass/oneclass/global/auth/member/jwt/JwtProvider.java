@@ -1,4 +1,4 @@
-package oneclass.oneclass.global.auth.jwt;
+package oneclass.oneclass.global.auth.member.jwt;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.DirectDecrypter;
@@ -6,9 +6,11 @@ import com.nimbusds.jose.crypto.DirectEncrypter;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import oneclass.oneclass.global.auth.dto.ResponseToken;
+import jakarta.servlet.http.HttpServletRequest;
+import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +23,7 @@ import java.util.Date;
 public class JwtProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtProvider.class);
-//    private static final String AUTHORITIES_KEY = "auth"; //현재는 필요없으나 나중에 쓸 일 있을 수 있으니까 남겨둠
+    private static final String AUTHORITIES_KEY = "auth";
 
     private final String secret;
     private final long tokenValidityInMilliseconds;
@@ -68,6 +70,16 @@ public class JwtProvider {
     }
 
 
+    // JWE 암호화
+    public String encryptToken(String plainJwt) throws Exception {
+        byte[] aesKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
+        JWEHeader header = new JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A128CBC_HS256);
+        Payload payload = new Payload(plainJwt);
+        JWEObject jweObject = new JWEObject(header, payload);
+        jweObject.encrypt(new DirectEncrypter(aesKey.getEncoded()));
+        return jweObject.serialize();
+    }
 
     // JWE 복호화
     public String decryptToken(String jwtToken) throws Exception {
@@ -78,6 +90,36 @@ public class JwtProvider {
         return jweObject.getPayload().toString();
     }
 
+    // 토큰 생성(JWE 적용)
+    public ResponseToken generateTokenJwe(String username) {
+        Date now = new Date();
+        Date accessExpiry = new Date(now.getTime() + tokenValidityInMilliseconds);
+        String accessToken = Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(accessExpiry)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        Date refreshExpiry = new Date(now.getTime() + tokenValidityInMilliseconds * 2);
+        String refreshToken = Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(refreshExpiry)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        String encryptedAccessToken;
+        String encryptedRefreshToken;
+
+        try {
+            encryptedAccessToken = encryptToken(accessToken);
+            encryptedRefreshToken = encryptToken(refreshToken);
+        } catch (Exception e) {
+            throw new RuntimeException("토큰 암호화 실패", e);
+        }
+        return new ResponseToken(encryptedAccessToken, encryptedRefreshToken);
+    }
 
     // 토큰 검증
     public boolean validateToken(String token) {
@@ -110,5 +152,13 @@ public class JwtProvider {
                 .parseClaimsJws(token)
                 .getBody()
                 .get("role", String.class);
+    }
+    //로그아웃 로직
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-package oneclass.oneclass.global.auth.service;
+package oneclass.oneclass.global.auth.member.service;
 
 
 import lombok.RequiredArgsConstructor;

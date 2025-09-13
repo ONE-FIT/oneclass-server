@@ -1,9 +1,8 @@
 package oneclass.oneclass.global.config;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.global.auth.jwt.JwtFilter;
-import oneclass.oneclass.global.auth.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.member.jwt.JwtFilter;
+import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,29 +31,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtProvider jWTProvider) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity httpSecurity, JwtProvider jwtProvider) throws Exception {
         httpSecurity
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests((auth) -> auth
                         .requestMatchers("/api/member/signup",
                                 "/api/member/login",
                                 "/api/consultations/request",
-                                "/api/consultations/detail",
-                                "/api/consultations/parents-request",
-                                "/api/consultations/schedule").permitAll()
+                                "/api/consultations/detail").permitAll()
+                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtFilter(jWTProvider), UsernamePasswordAuthenticationFilter.class)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .logout(logout -> logout
-                        .logoutUrl("/api/member/logout")  // 로그아웃 엔드포인트
-                        .logoutSuccessHandler((request, response, authentication) -> {
-                            response.setStatus(HttpServletResponse.SC_OK);
-                        })
-                        .permitAll());
+                .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+
 
         return httpSecurity.build();
     }

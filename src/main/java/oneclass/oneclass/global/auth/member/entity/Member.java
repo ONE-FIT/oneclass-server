@@ -1,4 +1,4 @@
-package oneclass.oneclass.global.auth.entity;
+package oneclass.oneclass.global.auth.member.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -21,7 +21,7 @@ public class Member {
     private String password;//비번
     private String phone;
     private String email;
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     @NotNull
     private Role role;
 }

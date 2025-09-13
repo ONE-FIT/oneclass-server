@@ -1,10 +1,9 @@
-package oneclass.oneclass.global.auth.jwt;
+package oneclass.oneclass.global.auth.member.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,12 +18,15 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
 
     private final JwtProvider jwtProvider;
+
+    public JwtFilter(JwtProvider jwtProvider) {
+        this.jwtProvider = jwtProvider;
+    }
 
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
@@ -37,10 +39,8 @@ public class JwtFilter extends OncePerRequestFilter {
     // permitAll 경로는 여기서 바로 통과
     private boolean isPermitAllPath(String path) {
         return path.startsWith("/api/member/signup")
-                || path.startsWith("/api/member/login")// 로그인/회원가입
-                || path.startsWith("/api/consultations/request")
-                || path.startsWith("/api/consultations/parents-request")
-                || path.startsWith("/api/consultations/detail")
+                || path.startsWith("/api/member/login") // 로그인/회원가입
+                || path.startsWith("/api/consultations/")
                 || path.startsWith("/swagger-ui/")    // 스웨거 UI
                 || path.startsWith("/v3/api-docs")    // 스웨거 문서
                 || path.startsWith("/error");         // 에러 엔드포인트
@@ -62,11 +62,9 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
-        log.info("요청 경로: " + path);
 
         // CORS preflight 또는 permitAll 경로는 바로 통과
         if ("OPTIONS".equalsIgnoreCase(request.getMethod()) || isPermitAllPath(path)) {
-            log.info("permitAll 경로로 필터 통과: " + path);
             filterChain.doFilter(request, response);
             return;
         }
@@ -94,9 +92,8 @@ public class JwtFilter extends OncePerRequestFilter {
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 String username = jwtProvider.getUsername(plainJwt);
 
-                // TODO: 권한은 추후 실제 값으로 교체
-                String role = jwtProvider.getRole(plainJwt);
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+                // TODO: 권한은 추후 실제 값으로 교체 (예: Claim 'auth' or DB 조회)
+                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(username, null, authorities);

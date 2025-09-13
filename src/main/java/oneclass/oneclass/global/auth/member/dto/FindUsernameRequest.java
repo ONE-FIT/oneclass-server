@@ -1,4 +1,4 @@
-package oneclass.oneclass.global.auth.dto;
+package oneclass.oneclass.global.auth.member.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
