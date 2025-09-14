@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -146,8 +147,12 @@ public class MemberServiceImpl implements MemberService {
     //로그아웃시 토큰 폐기
     @Override
     public void logout(String username){
-        log.info("로그아웃 된 회원 " + username);
+        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByUsername(username);
+        if (tokenOpt.isEmpty()) {
+            throw new IllegalArgumentException("이미 로그아웃된 사용자입니다.");
+        }
         refreshTokenRepository.deleteByUsername(username);
+        log.info("로그아웃 된 회원 " + username);
     }
 }
 

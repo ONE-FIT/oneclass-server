@@ -9,6 +9,7 @@ import oneclass.oneclass.global.auth.member.dto.ResetPasswordRequest;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import oneclass.oneclass.global.auth.member.dto.SignupRequest;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.global.auth.member.service.MemberService;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,7 @@ public class MemberController {
 
     private final MemberService memberService;
     private final JwtProvider jwtProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
@@ -59,30 +61,23 @@ public class MemberController {
 
     @Operation(summary = "로그아웃", description = "Refresh Token을 폐기하여 로그아웃 처리합니다.")
     @PostMapping("/logout")
-    public void logout(@RequestHeader("Authorization") String authorizationHeader,
-                       @RequestParam String username) {
-        // 1. 헤더에서 토큰 추출
-        String token = null;
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            token = authorizationHeader.substring(7);
-        } else {
+    public void logout(HttpServletRequest request, @RequestParam String username) {
+        String token = jwtProvider.resolveToken(request);
+        if (token == null) {
             throw new IllegalArgumentException("유효한 토큰이 필요합니다.");
         }
-
-        // 2. 토큰 검증
         if (!jwtProvider.validateToken(token)) {
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
-
-        // 3. 토큰에서 username 추출
         String tokenUsername = jwtProvider.getUsername(token);
-
-        // 4. 요청 username과 토큰 username 일치 확인
         if (!username.equals(tokenUsername)) {
             throw new IllegalArgumentException("토큰과 요청 username이 일치하지 않습니다.");
         }
+        // refreshToken이 DB에 존재하는지 체크
+        if (!refreshTokenRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("이미 로그아웃된 사용자입니다.");
+        }
 
-        // 5. 로그아웃 처리
         memberService.logout(username);
     }
 }
