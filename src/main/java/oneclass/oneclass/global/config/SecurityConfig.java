@@ -41,8 +41,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/member/signup",
                                 "/api/member/login",
                                 "/api/consultations/request",
-                                "/api/consultations/detail").permitAll()
-                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
+                                "/api/consultations/detail",
+                                "/api/consultations/schedule").permitAll()//테스트용으로 관리자 권한없이 전체 스케쥴 확인
+//                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement((session) -> session

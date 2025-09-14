@@ -20,6 +20,7 @@ public class ConsultationService {
         Consultation con = new Consultation();
         con.setName(request.getName());//학생이름
         con.setPhone(request.getPhone());//학생 전화번호
+        con.setParentPhone(request.getParentPhone());//학부모 전화번호
         con.setDate(request.getDate());//희망하는 날짜
         con.setType(request.getType());
         con.setSubject(request.getSubject());
@@ -28,20 +29,20 @@ public class ConsultationService {
         con.setCreateAt(LocalDateTime.now());
         return consultationRepository.save(con);
     }
-    //상담신청(학부모)
-    public Consultation parentsCreateConsultation(ConsultationRequest request){
-        Consultation con = new Consultation();
-        con.setName(request.getName());//학생이름
-        con.setPhone(request.getPhone());//학생 전화번호
-        con.setPhone(request.getParentPhone());//부모님 전화번호
-        con.setDate(request.getDate());//희망하는 날짜
-        con.setType(request.getType());
-        con.setSubject(request.getSubject());
-        con.setDescription(request.getDescription());
-        con.setStatus("REQUESTED");//상담 신청이 완료되었다 라는 것을 보여주기 위함(확정이 아님)
-        con.setCreateAt(LocalDateTime.now());
-        return consultationRepository.save(con);
-    }
+//    //상담신청(학부모)
+//    public Consultation parentsCreateConsultation(ConsultationRequest request){
+//        Consultation con = new Consultation();
+//        con.setName(request.getName());//학생이름
+//        con.setPhone(request.getPhone());//학생 전화번호
+//        con.setPhone(request.getParentPhone());//부모님 전화번호
+//        con.setDate(request.getDate());//희망하는 날짜
+//        con.setType(request.getType());
+//        con.setSubject(request.getSubject());
+//        con.setDescription(request.getDescription());
+//        con.setStatus("REQUESTED");//상담 신청이 완료되었다 라는 것을 보여주기 위함(확정이 아님)
+//        con.setCreateAt(LocalDateTime.now());
+//        return consultationRepository.save(con);
+//    }
 
     public ConsultationDetailResponse getConsultationDetail(String name, String phone) {
         Consultation consultation = consultationRepository.findByNameAndPhone(name, phone)

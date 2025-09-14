@@ -22,11 +22,11 @@ public class ConsultationController {
     public ResponseEntity<Consultation> create(@RequestBody @Valid ConsultationRequest request){
         return ResponseEntity.ok(consultationService.createConsultation(request));
     }
-      //상담신청(학부모)
-    @PostMapping("/parents-request")
-    public ResponseEntity<Consultation> parentsCreate(@RequestBody @Valid ConsultationRequest request){
-        return ResponseEntity.ok(consultationService.parentsCreateConsultation(request));
-    }
+//      //상담신청(학부모)
+//    @PostMapping("/parents-request")
+//    public ResponseEntity<Consultation> parentsCreate(@RequestBody @Valid ConsultationRequest request){
+//        return ResponseEntity.ok(consultationService.parentsCreateConsultation(request));
+//    }
     //상담 상세 조회
     @GetMapping("/detail")
     public ResponseEntity<ConsultationDetailResponse> getConsultationDetail(
