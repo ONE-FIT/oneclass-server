@@ -83,9 +83,9 @@ public class AcademyServiceImpl implements AcademyService {
         if (!academy.getAcademyName().equals(academyName)) {
             throw new IllegalArgumentException("학원코드와 학원이름이 일치하지 않습니다.");
         }
-        if (!academy.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, academy.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-       }
+        }
         String roleClaim = "role" +academy.getRole();
         ResponseToken token = jwtProvider.generateToken(academy.getAcademyCode(), roleClaim);
         AcademyRefreshToken refreshToken = AcademyRefreshToken.builder()
