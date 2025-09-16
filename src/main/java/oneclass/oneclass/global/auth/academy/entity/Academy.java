@@ -14,6 +14,7 @@ public class Academy {
     private String academyCode;
     private String academyName;
     private String password;
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @NotNull

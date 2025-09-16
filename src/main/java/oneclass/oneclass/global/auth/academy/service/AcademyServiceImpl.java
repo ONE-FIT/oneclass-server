@@ -13,6 +13,8 @@ import oneclass.oneclass.global.auth.academy.repository.AcademyRefreshTokenRepos
 import oneclass.oneclass.global.auth.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,7 @@ public class AcademyServiceImpl implements AcademyService {
     private final AcademyRefreshTokenRepository academyRefreshTokenRepository;
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JavaMailSender javaMailSender;
 
     //랜덤한 코드를 만드는 함수(학원코드만들기용)
     public String generateRandomCode(int length) {
@@ -115,6 +118,17 @@ public class AcademyServiceImpl implements AcademyService {
 
         academyVerificationCodeRepository.save(verificationCode);
 
+        String to = academy.getEmail();
+        String subject = "비밀번호 재설정 인증코드";
+        String text = "인증코드: " + tempCode + "\n10분 내에 입력해주세요.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(text);
+
+        javaMailSender.send(message);
+
     }
 
     @Override
@@ -131,7 +145,6 @@ public class AcademyServiceImpl implements AcademyService {
             throw new IllegalArgumentException("인증코드가 만료되었습니다.");
         }
 
-
         // 학원 정보 조회 및 이름 확인
         Academy academy = academyRepository.findByAcademyCode(academyCode)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 학원코드입니다."));
@@ -144,9 +157,19 @@ public class AcademyServiceImpl implements AcademyService {
         academy.setPassword(passwordEncoder.encode(tempPassword));
         academyRepository.save(academy);
 
-        //인증코드 사용 완료 시 삭제
+        // 인증코드 사용 완료 시 삭제
         academyVerificationCodeRepository.delete(codeEntity);
 
+        String to = academy.getEmail();
+        String subject = "임시 비밀번호 안내";
+        String text = "임시 비밀번호: " + tempPassword;
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(text);
+
+        javaMailSender.send(message);
     }
 
 }
