@@ -4,17 +4,17 @@ import io.sendon.Log;
 import io.sendon.sms.request.Reservation;
 import io.sendon.sms.response.CancelGroup;
 import io.sendon.sms.response.SendSms;
-import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.MessageBaseScenario;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-public class SmsCancelLongMessageScenario extends BaseScenario {
+public class SmsCancelLongMessageScenario extends MessageBaseScenario {
 
   @Override
-  public void execute() {
+  public void execute(String message) {
     OffsetDateTime reservationTime = OffsetDateTime.now().plusMinutes(60);
     Reservation reservation = new Reservation(reservationTime.toString());
-    SendSms sendSms = sendon.sms.sendLms(SMS_MOBILE_FROM, Arrays.asList(SMS_MOBILE_TO), "Title", "Hello, World!", true, reservation);
+    SendSms sendSms = sendon.sms.sendLms(SMS_MOBILE_FROM, Arrays.asList(SMS_MOBILE_TO), "Title", message, true, reservation);
     Log.d("SendSms: " + gson.toJson(sendSms));
 
     sleep(5000);

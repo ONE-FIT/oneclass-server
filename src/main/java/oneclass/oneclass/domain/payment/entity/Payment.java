@@ -2,10 +2,10 @@ package oneclass.oneclass.domain.payment.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import oneclass.oneclass.global.auth.member.entity.Member;
 import oneclass.oneclass.domain.bill.entity.Bill;
 import oneclass.oneclass.domain.payment.entity.enums.PaymentMethod;
 import oneclass.oneclass.domain.payment.entity.enums.PaymentStatus;
+import oneclass.oneclass.global.auth.member.entity.Member;
 
 import java.time.LocalDateTime;
 

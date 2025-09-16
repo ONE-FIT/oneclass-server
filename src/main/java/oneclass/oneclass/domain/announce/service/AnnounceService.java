@@ -6,7 +6,9 @@ import oneclass.oneclass.domain.announce.dto.request.UpdateAnnounceRequest;
 import oneclass.oneclass.domain.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.domain.announce.entity.Announce;
 import oneclass.oneclass.domain.announce.repository.AnnounceRepository;
+import oneclass.oneclass.domain.message.sms.longmessage.SmsSendLongMessageNowScenario;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,8 +18,13 @@ import java.util.stream.Collectors;
 
 public class AnnounceService {
     private final AnnounceRepository announceRepository;
+    private final SmsSendLongMessageNowScenario smsSendLongMessageNowScenario;
 
+    @Transactional
     public AnnounceResponse createAnnounce(CreateAnnounceRequest request) {
+
+        smsSendLongMessageNowScenario.execute(request.content());
+
         Announce announce = Announce.builder()
                 .title(request.title())
                 .content(request.content())
