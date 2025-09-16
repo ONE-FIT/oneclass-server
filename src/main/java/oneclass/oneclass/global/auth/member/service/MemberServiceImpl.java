@@ -45,14 +45,14 @@ public class MemberServiceImpl implements MemberService {
         if (memberRepository.findByUsername(request.getUsername()).isPresent()){
             throw new IllegalArgumentException("이미 사용중인 아이디입니다.");
         }
-        //비번 암호화
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+//        //비번 암호화
+//        String encodedPassword = passwordEncoder.encode(request.getPassword());
 
         //Entity 생성 및 저장
         Member member = new Member();
         member.setRole(selectRole);
         member.setUsername(request.getUsername());
-        member.setPassword(encodedPassword);
+        member.setPassword(passwordEncoder.encode(request.getPassword()));
         member.setEmail(request.getEmail());
         member.setPhone(request.getPhone());
         memberRepository.save(member);
@@ -73,7 +73,7 @@ public class MemberServiceImpl implements MemberService {
         String roleClaim = "ROLE_" + member.getRole().name();
         ResponseToken tokens = jwtProvider.generateToken(member.getUsername(), roleClaim);
 
-        refreshTokenRepository.deleteByUsername(username);
+        refreshTokenRepository.findByUsername(username);
         RefreshToken refreshToken = RefreshToken.builder()
                 .username(username)
                 .token(tokens.getRefreshToken())

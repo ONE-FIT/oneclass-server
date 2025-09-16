@@ -44,7 +44,7 @@ public class MemberController {
     }
 
     @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
-    @PostMapping("/send-reset-password-email")
+    @PostMapping("/send-reset-password")
     public void sendResetPasswordEmail(@RequestBody Map<String, String> request) {
         String emailOrPhone = request.get("emailOrPhone");
         memberService.sendResetPasswordEmail(emailOrPhone);
