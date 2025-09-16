@@ -45,6 +45,10 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+
+    implementation 'io.sendon:sendon-sdk-java:1.0.2'
+    implementation 'io.github.cdimascio:java-dotenv:5.2.2'
+
 }
 
 tasks.named('test') {
