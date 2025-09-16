@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.global.member.entity.Member;
 
 @Entity
 @Data
