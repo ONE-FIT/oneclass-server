@@ -39,7 +39,7 @@ public class AnnounceController {
     }
 
     @PatchMapping("/{id}")
-    public AnnounceResponse updateAnnounce(@PathVariable UpdateAnnounceRequest request) {
+    public AnnounceResponse updateAnnounce(@RequestBody UpdateAnnounceRequest request) {
         ResponseEntity.ok(Map.of("message", "과제가 수정되었습니다."));
         return announceService.updateAnnounce(request);
     }
