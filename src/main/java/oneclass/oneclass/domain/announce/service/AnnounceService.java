@@ -23,7 +23,7 @@ public class AnnounceService {
     @Transactional
     public AnnounceResponse createAnnounce(CreateAnnounceRequest request) {
 
-        smsSendLongMessageNowScenario.execute(request.content());
+        smsSendLongMessageNowScenario.execute(request.content(), request.title());
 
         Announce announce = Announce.builder()
                 .title(request.title())

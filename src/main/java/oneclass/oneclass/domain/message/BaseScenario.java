@@ -19,7 +19,6 @@ public abstract class BaseScenario {
   protected String KKO_SEND_PROFILE_ID;
   protected String KKO_CHANNEL_PHONE_NUMBER;
 
-  public abstract void execute() throws InterruptedException;
   public abstract String getDescription();
 
   protected Sendon sendon;

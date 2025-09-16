@@ -4,11 +4,12 @@ import io.sendon.Log;
 import io.sendon.sms.request.Reservation;
 import io.sendon.sms.request.SmsBuilder;
 import io.sendon.sms.response.SendSms;
-import oneclass.oneclass.domain.message.MessageBaseScenario;
+import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.ExecutableWithMessage;
 
 import java.util.Arrays;
 
-public class SmsSendShortMessageScheduleScenario extends MessageBaseScenario {
+public class SmsSendShortMessageScheduleScenario extends BaseScenario implements ExecutableWithMessage {
 
   @Override
   public void execute(String message) {

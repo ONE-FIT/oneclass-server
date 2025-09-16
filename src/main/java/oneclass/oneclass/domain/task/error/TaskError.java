@@ -23,4 +23,5 @@ public enum TaskError implements CustomError {
     public String getMessage() {
         return message;
     }
+
 }
