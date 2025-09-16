@@ -41,7 +41,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/member/signup",
                                         "/api/member/login",
                                         "/api/consultations/request",
-                                        "/api/consultations/detail").permitAll()
+                                        "/api/consultations/detail",
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**"
+                                ).permitAll()
                         .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
                         .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
