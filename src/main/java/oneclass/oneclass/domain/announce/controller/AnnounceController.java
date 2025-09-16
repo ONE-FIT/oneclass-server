@@ -32,6 +32,12 @@ public class AnnounceController {
         return announceService.findAnnounceById(id);
     }
 
+    @GetMapping("/{title}")
+    public AnnounceResponse findAnnounceByTitle(@RequestParam @PathVariable String title) {
+        ResponseEntity.ok(Map.of("message", "공지가 제공되었습니다."));
+        return announceService.findAnnounceByTitle(title);
+    }
+
     @PatchMapping("/{id}")
     public AnnounceResponse updateAnnounce(@PathVariable UpdateAnnounceRequest request) {
         ResponseEntity.ok(Map.of("message", "과제가 수정되었습니다."));

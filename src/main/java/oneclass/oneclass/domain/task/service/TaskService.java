@@ -36,6 +36,15 @@ public class TaskService {
         return TaskResponse.of(task);
     }
 
+    public TaskResponse findTaskByTitle(String title) {
+        Task task = taskRepository.findByTitle(title).orElse(null);
+        if (task == null) {
+            throw new IllegalArgumentException(title + "는 존재하지 않습니다");
+        }
+
+        return TaskResponse.of(task);
+    }
+
 
     public  TaskResponse updateTask(UpdateTaskRequest request) {
         Task task = taskRepository.findById(request.id()).orElse(null);
@@ -43,7 +52,8 @@ public class TaskService {
             throw new IllegalArgumentException(request.id()+"는 없는 과제 입니다.");
         }
         task.setDescription(request.description());
-
+        task.setAssignedTo(request.assignedTo());
+        task.setDueDate(request.dueDate());
         taskRepository.save(task);
 
         return TaskResponse.of(task);

@@ -29,6 +29,11 @@ public class TaskController {
         ResponseEntity.ok(Map.of("message", "과제가 제공되었습니다."));
         return taskService.findTaskById(id);
     }
+    @GetMapping("/{title}")
+    public TaskResponse findTaskByTitle(@PathVariable String title) {
+        ResponseEntity.ok(Map.of("message", "과제가 제공되었습니다."));
+        return taskService.findTaskByTitle(title);
+    }
 
     @PatchMapping("/{id}")
     public TaskResponse updateTask( @RequestBody UpdateTaskRequest request) {
@@ -37,7 +42,7 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTask(@RequestParam Long id) {
+    public void deleteTask(@PathVariable Long id) {
         ResponseEntity.ok(Map.of("message", "과제가 삭제되었습니다."));
         taskService.deleteTask(id);
     }

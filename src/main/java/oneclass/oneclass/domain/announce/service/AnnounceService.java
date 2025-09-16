@@ -36,6 +36,14 @@ public class AnnounceService {
         return AnnounceResponse.of(announce);
     }
 
+    public AnnounceResponse findAnnounceByTitle(String title) {
+        Announce announce = announceRepository.findByTitle(title).orElse(null);
+        if (announce == null) {
+            throw new IllegalArgumentException(title+"는 존재하지 않는 공지입니다");
+        }
+        return AnnounceResponse.of(announce);
+    }
+
     public AnnounceResponse updateAnnounce(UpdateAnnounceRequest request) {
         Announce announce = announceRepository.findById(request.id()).orElse(null);
         if (announce == null) {
