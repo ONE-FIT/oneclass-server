@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/attendance")
+@RequestMapping("/admin/attendance")
 @RequiredArgsConstructor
 public class AdminAttendanceController {
 
