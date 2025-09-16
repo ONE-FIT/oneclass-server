@@ -2,13 +2,21 @@ package oneclass.oneclass.domain.task.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import oneclass.oneclass.global.auth.member.entity.Member;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Data
+@SuperBuilder
+@NoArgsConstructor
+@Getter
+@Setter
+@Table(name =  "Task")
 public class Task {
 
     @Id
