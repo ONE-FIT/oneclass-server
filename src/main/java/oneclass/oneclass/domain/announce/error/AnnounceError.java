@@ -1,15 +1,15 @@
-package oneclass.oneclass.domain.task.error;
+package oneclass.oneclass.domain.announce.error;
 
 import oneclass.oneclass.global.exception.CustomError;
 
-public enum TaskError implements CustomError {
+public enum AnnounceError implements CustomError {
 
-    NOT_FOUND(404, "과제를 찾을 수 없습니다.");
+    NOT_FOUND(404, "공지를 찾을 수 없습니다.");
 
     private final int status;
     private final String message;
 
-    TaskError(int status, String message) {
+    AnnounceError(int status, String message) {
         this.status = status;
         this.message = message;
     }

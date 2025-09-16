@@ -25,12 +25,13 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public TaskResponse findTaskById(@PathVariable Long id) {
+    public TaskResponse findTaskById(@PathVariable Long id) { //우리가 잠시 사용할 기능
         ResponseEntity.ok(Map.of("message", "과제가 제공되었습니다."));
         return taskService.findTaskById(id);
     }
+
     @GetMapping("/{title}")
-    public TaskResponse findTaskByTitle(@PathVariable String title) {
+    public TaskResponse findTaskByTitle(@PathVariable String title) { //유저가 사용할 기능
         ResponseEntity.ok(Map.of("message", "과제가 제공되었습니다."));
         return taskService.findTaskByTitle(title);
     }
@@ -48,7 +49,7 @@ public class TaskController {
     }
 
     @GetMapping()
-    public List<TaskResponse> findAll() {
+    public List<TaskResponse> findAllTask() {
         return taskService.findAll();
     }
 

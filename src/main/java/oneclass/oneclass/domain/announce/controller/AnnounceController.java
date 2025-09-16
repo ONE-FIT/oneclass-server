@@ -17,7 +17,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AnnounceController {
-    private final AnnounceRepository announceRepository;
     private final AnnounceService announceService;
 
     @PostMapping("/create")
@@ -27,13 +26,13 @@ public class AnnounceController {
     }
 
     @GetMapping("/{id}")
-    public AnnounceResponse findAnnounceById(@RequestParam @PathVariable Long id) {
+    public AnnounceResponse findAnnounceById(@PathVariable Long id) {
         ResponseEntity.ok(Map.of("message", "공지가 제공되었습니다."));
         return announceService.findAnnounceById(id);
     }
 
     @GetMapping("/{title}")
-    public AnnounceResponse findAnnounceByTitle(@RequestParam @PathVariable String title) {
+    public AnnounceResponse findAnnounceByTitle(@PathVariable String title) {
         ResponseEntity.ok(Map.of("message", "공지가 제공되었습니다."));
         return announceService.findAnnounceByTitle(title);
     }
