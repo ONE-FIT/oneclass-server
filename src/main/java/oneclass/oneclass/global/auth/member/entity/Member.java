@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import oneclass.oneclass.global.auth.academy.entity.Academy;
 
 @Entity
 @Data
@@ -24,9 +25,12 @@ public class Member {
     private String phone;
     private String email;
 
-    private String academyCode;//선생님 회원가입용
-
     @Enumerated(EnumType.STRING)
     @NotNull
     private Role role;
+
+    // Academy와의 관계
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "academy_code")
+    private Academy academy;
 }

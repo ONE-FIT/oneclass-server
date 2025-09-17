@@ -85,6 +85,8 @@ public class MemberServiceImpl implements MemberService {
             if (academyCode == null) {
                 throw new IllegalArgumentException("학원 코드를 입력해주세요.");
             }
+            Academy academy = academyRepository.findByAcademyCode(academyCode)
+                    .orElseThrow(() -> new IllegalArgumentException("학원 정보를 찾을 수 없습니다."));
             if (userInputCode == null) {
                 throw new IllegalArgumentException("인증코드를 입력해주세요.");
             }
@@ -108,7 +110,7 @@ public class MemberServiceImpl implements MemberService {
                     .username(request.getUsername())
                     .password(passwordEncoder.encode(request.getPassword()))
                     .role(selectRole)
-                    .academyCode(academyCode)
+                    .academy(academy)
                     .phone(request.getPhone())
                     .email(request.getEmail())
                     .build();
