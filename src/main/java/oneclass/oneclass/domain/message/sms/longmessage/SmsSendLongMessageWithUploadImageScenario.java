@@ -18,6 +18,7 @@ public class SmsSendLongMessageWithUploadImageScenario extends BaseScenario impl
   private final MemberRepository memberRepository;
 
   @Override
+  @Deprecated
   public void execute(String message, String title) {
     List<File> images = Arrays.asList(new File("./img/aligo.png"));
     UploadImage uploadImage = sendon.sms.uploadImages(images);
@@ -25,7 +26,7 @@ public class SmsSendLongMessageWithUploadImageScenario extends BaseScenario impl
 
     sendon.sms.sendMms(new MmsBuilder()
         .setFrom(SMS_MOBILE_FROM)
-        .setTo(memberRepository.findAllPhones())
+        .setTo(Arrays.asList(SMS_MOBILE_TO))
         .setTitle(title)
         .setMessage(message)
         .setImages(Arrays.asList(uploadImage.data.images.get(0).id))

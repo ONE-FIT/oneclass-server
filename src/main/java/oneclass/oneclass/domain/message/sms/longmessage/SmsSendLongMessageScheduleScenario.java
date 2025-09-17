@@ -9,17 +9,20 @@ import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.ExecutableWithMessageAndTitle;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 
+import java.util.Arrays;
+
 @RequiredArgsConstructor
 public class SmsSendLongMessageScheduleScenario extends BaseScenario implements ExecutableWithMessageAndTitle {
 
   private final MemberRepository memberRepository;
 
   @Override
+  @Deprecated
   public void execute(String message, String title) {
-    Reservation reservation = new Reservation("2080-03-21 00:00:00");
+    Reservation reservation = new Reservation("2080-03-21 00:00:00"); // FIXME: 예약 전송이 하드코딩 되어있음
     SendSms sendSms = sendon.sms.sendMms(new MmsBuilder()
         .setFrom(SMS_MOBILE_FROM)
-        .setTo(memberRepository.findAllPhones())
+        .setTo(Arrays.asList(SMS_MOBILE_TO))
         .setTitle(title)
         .setMessage(message)
         .setReservation(reservation)

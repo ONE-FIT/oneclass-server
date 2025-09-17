@@ -10,18 +10,19 @@ import oneclass.oneclass.domain.message.ExecutableWithMessage;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 
 @RequiredArgsConstructor
 public class SmsCancelShortMessageScenario extends BaseScenario implements ExecutableWithMessage {
 
-
   private final MemberRepository memberRepository;
 
   @Override
+  @Deprecated
   public void execute(String message) {
     OffsetDateTime reservationTime = OffsetDateTime.now().plusMinutes(30);
     Reservation reservation = new Reservation(reservationTime.toString());
-    SendSms sendSms = sendon.sms.sendSms(SMS_MOBILE_FROM, memberRepository.findAllPhones(), message, true, reservation);
+    SendSms sendSms = sendon.sms.sendSms(SMS_MOBILE_FROM, Arrays.asList(SMS_MOBILE_TO), message, true, reservation);
     Log.d("SendSms: " + gson.toJson(sendSms));
 
     sleep(5000);
