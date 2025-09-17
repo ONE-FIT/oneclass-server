@@ -4,13 +4,14 @@ import io.sendon.Log;
 import io.sendon.kakao.request.FriendtalkBuilder;
 import io.sendon.kakao.response.SendFriendtalk;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
 import java.util.Arrays;
 
 /**
  * 친구톡 발송 (deprecated)
  */
-public class KakaoSendFriendTalk extends BaseScenario {
+public class KakaoSendFriendTalk extends BaseScenario implements Executable {
 
     @Override
     public void execute() throws InterruptedException {

@@ -3,8 +3,9 @@ package oneclass.oneclass.domain.message.point;
 import io.sendon.Log;
 import io.sendon.point.response.GetCosts;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class PointGetCost extends BaseScenario {
+public class PointGetCost extends BaseScenario implements Executable {
 
   @Override
   public void execute() throws InterruptedException {

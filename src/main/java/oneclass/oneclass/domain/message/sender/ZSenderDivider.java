@@ -1,8 +1,9 @@
 package oneclass.oneclass.domain.message.sender;
 
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class ZSenderDivider extends BaseScenario {
+public class ZSenderDivider extends BaseScenario implements Executable {
 
   @Override
   public void execute() throws InterruptedException {

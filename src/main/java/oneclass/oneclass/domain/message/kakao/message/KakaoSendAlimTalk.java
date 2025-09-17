@@ -4,10 +4,11 @@ import io.sendon.Log;
 import io.sendon.kakao.request.AlimtalkBuilder;
 import io.sendon.kakao.response.SendAlimtalk;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
 import java.util.Arrays;
 
-public class KakaoSendAlimTalk extends BaseScenario {
+public class KakaoSendAlimTalk extends BaseScenario implements Executable {
 
     @Override
     public void execute() throws InterruptedException {

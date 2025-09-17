@@ -4,8 +4,9 @@ import io.sendon.Log;
 import io.sendon.kakao.request.Profile;
 import io.sendon.kakao.response.RegisterProfile;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class KakaoRegisterProfile extends BaseScenario {
+public class KakaoRegisterProfile extends BaseScenario implements Executable {
 
   @Override
   public void execute() {

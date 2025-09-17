@@ -4,8 +4,9 @@ import io.sendon.Log;
 import io.sendon.payment.response.GetPaymentHistories;
 import io.sendon.payment.response.GetPaymentHistory;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class PaymentGetHistories extends BaseScenario {
+public class PaymentGetHistories extends BaseScenario implements Executable {
 
   @Override
   public void execute() throws InterruptedException {

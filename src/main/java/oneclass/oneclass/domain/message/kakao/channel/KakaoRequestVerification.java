@@ -3,8 +3,9 @@ package oneclass.oneclass.domain.message.kakao.channel;
 import io.sendon.Log;
 import io.sendon.kakao.response.RequestAuthToken;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class KakaoRequestVerification extends BaseScenario {
+public class KakaoRequestVerification extends BaseScenario implements Executable {
 
     @Override
     public void execute() {

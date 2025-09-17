@@ -4,8 +4,9 @@ import io.sendon.Log;
 import io.sendon.kakao.request.TemplateStatus;
 import io.sendon.kakao.response.GetTemplates;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class KakaoGetTemplateList extends BaseScenario {
+public class KakaoGetTemplateList extends BaseScenario implements Executable {
 
   @Override
   public void execute() throws InterruptedException {

@@ -65,7 +65,7 @@ public abstract class BaseScenario {
       StringBuilder dots = new StringBuilder();
       try {
         while (true) {
-          Thread.sleep(1000);
+          Thread.sleep(1000); // TODO: 다른 방법 사용하기
           seconds++;
           dots.append("😎");
           System.out.print("\r[" + seconds + "]" + dots);

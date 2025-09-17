@@ -3,8 +3,9 @@ package oneclass.oneclass.domain.message.kakao.template;
 import io.sendon.Log;
 import io.sendon.kakao.response.GetTemplateDetail;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class KakaoGetTemplate extends BaseScenario {
+public class KakaoGetTemplate extends BaseScenario implements Executable {
 
   @Override
   public void execute() throws InterruptedException {

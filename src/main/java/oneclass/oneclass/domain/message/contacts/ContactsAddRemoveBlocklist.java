@@ -4,8 +4,9 @@ import io.sendon.Log;
 import io.sendon.contacts.response.AddBlocklist;
 import io.sendon.contacts.response.DeleteBlocklist;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class ContactsAddRemoveBlocklist extends BaseScenario {
+public class ContactsAddRemoveBlocklist extends BaseScenario implements Executable {
 
   @Override
   public void execute() throws InterruptedException {

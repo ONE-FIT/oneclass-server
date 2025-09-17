@@ -7,8 +7,9 @@ import io.sendon.kakao.request.Template;
 import io.sendon.kakao.request.WlButton;
 import io.sendon.kakao.response.CreateTemplate;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class KakaoCreateTemplate extends BaseScenario {
+public class KakaoCreateTemplate extends BaseScenario implements Executable {
 
   @Override
   public void execute() throws InterruptedException {

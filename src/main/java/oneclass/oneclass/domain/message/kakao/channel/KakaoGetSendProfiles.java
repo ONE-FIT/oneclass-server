@@ -3,8 +3,9 @@ package oneclass.oneclass.domain.message.kakao.channel;
 import io.sendon.Log;
 import io.sendon.kakao.response.GetProfiles;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class KakaoGetSendProfiles extends BaseScenario {
+public class KakaoGetSendProfiles extends BaseScenario implements Executable {
 
   @Override
   public void execute() {

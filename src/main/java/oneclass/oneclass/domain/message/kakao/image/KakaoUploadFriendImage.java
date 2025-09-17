@@ -3,13 +3,14 @@ package oneclass.oneclass.domain.message.kakao.image;
 import io.sendon.Log;
 import io.sendon.kakao.response.UploadFriendtalkImage;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
 import java.io.File;
 
 /**
  * 친구톡 이미지 업로드 (deprecated)
  */
-public class KakaoUploadFriendImage extends BaseScenario {
+public class KakaoUploadFriendImage extends BaseScenario implements Executable {
 
     @Override
     public void execute() {

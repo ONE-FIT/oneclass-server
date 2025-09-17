@@ -3,8 +3,9 @@ package oneclass.oneclass.domain.message.contacts;
 import io.sendon.Log;
 import io.sendon.contacts.response.GetBlocklist;
 import oneclass.oneclass.domain.message.BaseScenario;
+import oneclass.oneclass.domain.message.Executable;
 
-public class ContactsGetBlocklist extends BaseScenario {
+public class ContactsGetBlocklist extends BaseScenario implements Executable {
 
   @Override
   public void execute() throws InterruptedException {
