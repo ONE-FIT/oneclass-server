@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/academy")
+@RequestMapping("/academy")
 public class AcademyController {
     private final AcademyService academyService;
     private final AcademyRefreshTokenRepository academyRefreshTokenRepository;
