@@ -4,19 +4,18 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.global.auth.academy.dto.AcademyLoginRequest;
 import oneclass.oneclass.global.auth.academy.dto.MadeRequest;
 import oneclass.oneclass.global.auth.academy.dto.ResetAcademyPasswordRequest;
+import oneclass.oneclass.global.auth.academy.repository.AcademyRefreshTokenRepository;
 import oneclass.oneclass.global.auth.academy.service.AcademyService;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/academy")
 public class AcademyController {
     private final AcademyService academyService;
+    private final AcademyRefreshTokenRepository academyRefreshTokenRepository;
 
     //학원 계정 만들기
     @PostMapping("/new-academy")
@@ -34,7 +33,7 @@ public class AcademyController {
 
     // 인증코드 발송
     @PostMapping("/send-reset-password")
-    public ResponseEntity<Void> sendResetPasswordEmail(@RequestBody ResetAcademyPasswordRequest request ) {
+    public ResponseEntity<Void> sendResetPasswordEmail(@RequestBody ResetAcademyPasswordRequest request) {
         academyService.sendResetPasswordEmail(request.getAcademyCode(), request.getAcademyName());
         return ResponseEntity.ok().build();
     }

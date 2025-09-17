@@ -2,7 +2,11 @@ package oneclass.oneclass.global.auth.member.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import oneclass.oneclass.global.auth.academy.dto.AcademyLoginRequest;
+import oneclass.oneclass.global.auth.academy.entity.Academy;
+import oneclass.oneclass.global.auth.academy.entity.AcademyVerificationCode;
+import oneclass.oneclass.global.auth.academy.repository.AcademyRepository;
+import oneclass.oneclass.global.auth.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import oneclass.oneclass.global.auth.member.dto.SignupRequest;
 import oneclass.oneclass.global.auth.member.entity.Member;
@@ -13,6 +17,8 @@ import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import oneclass.oneclass.global.auth.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.global.auth.member.repository.VerificationCodeRepository;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +28,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class MemberServiceImpl implements MemberService {
 
@@ -32,32 +37,98 @@ public class MemberServiceImpl implements MemberService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final EmailService emailService;
     private final VerificationCodeRepository verificationCodeRepository;
+    private final AcademyRepository academyRepository;
+    private final JavaMailSender javaMailSender;
+    private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
 
     @Override
-    public void signup(SignupRequest request){
+    public void sendSignupVerificationCode(String academyCode) {
+        if (academyCode == null) {
+            throw new IllegalArgumentException("학원 코드를 입력해주세요.");
+        }
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new IllegalArgumentException("학원 정보를 찾을 수 없습니다."));
+        String email = academy.getEmail();
+
+        // 인증코드 생성 및 저장
+        String tempCode = UUID.randomUUID().toString().substring(0, 13);
+        AcademyVerificationCode verificationCode = AcademyVerificationCode.builder()
+                .academyCode(academyCode)
+                .code(tempCode)
+                .expiry(LocalDateTime.now().plusMinutes(10))
+                .build();
+        academyVerificationCodeRepository.save(verificationCode);
+
+        // 메일 발송
+        String subject = "회원가입 인증코드 안내";
+        String text = "인증코드: " + tempCode + "\n10분 내에 입력해주세요.";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject(subject);
+        message.setText(text);
+
+        javaMailSender.send(message);
+    }
+
+    @Override
+    public void signup(SignupRequest request) {
         Role selectRole = request.getRole();
-        if(selectRole == null){
-            selectRole = Role.STUDENT;//선택 안하면 기본 STUDENT
-        }else if(!(selectRole == Role.STUDENT ||  selectRole == Role.PARENT)){
+        if (selectRole == null) {
+            throw new IllegalArgumentException("멤버 유형을 선택해주세요.");
+        }
+
+        // 선생님 회원가입 로직
+        if (selectRole == Role.TEACHER) {
+            String academyCode = request.getAcademyCode();
+            String userInputCode = request.getVerificationCode();
+            if (academyCode == null) {
+                throw new IllegalArgumentException("학원 코드를 입력해주세요.");
+            }
+            if (userInputCode == null) {
+                throw new IllegalArgumentException("인증코드를 입력해주세요.");
+            }
+
+            // 인증코드 검증
+            AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
+                    .orElseThrow(() -> new IllegalArgumentException("인증코드가 존재하지 않습니다."));
+            if (!savedCode.getCode().equals(userInputCode)) {
+                throw new IllegalArgumentException("인증코드가 일치하지 않습니다.");
+            }
+            if (savedCode.getExpiry().isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("인증코드가 만료되었습니다.");
+            }
+            academyVerificationCodeRepository.delete(savedCode);
+
+            if (memberRepository.findByUsername(request.getUsername()).isPresent()) {
+                throw new IllegalArgumentException("이미 사용중인 아이디입니다.");
+            }
+
+            Member member = Member.builder()
+                    .username(request.getUsername())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .role(selectRole)
+                    .academyCode(academyCode)
+                    .phone(request.getPhone())
+                    .email(request.getEmail())
+                    .build();
+            memberRepository.save(member);
+        }
+        // 그 외 회원가입 (학생/학부모 등)
+        else if (!(selectRole == Role.STUDENT || selectRole == Role.PARENT)) {
             throw new IllegalArgumentException("허용되지 않은 유형입니다.");
+        } else {
+            if (memberRepository.findByUsername(request.getUsername()).isPresent()) {
+                throw new IllegalArgumentException("이미 사용중인 아이디입니다.");
+            }
+            Member member = new Member();
+            member.setRole(selectRole);
+            member.setUsername(request.getUsername());
+            member.setPassword(passwordEncoder.encode(request.getPassword()));
+            member.setEmail(request.getEmail());
+            member.setPhone(request.getPhone());
+            memberRepository.save(member);
         }
-        //회원가입 중복체크
-        if (memberRepository.findByUsername(request.getUsername()).isPresent()){
-            throw new IllegalArgumentException("이미 사용중인 아이디입니다.");
-        }
-//        //비번 암호화
-//        String encodedPassword = passwordEncoder.encode(request.getPassword());
-
-        //Entity 생성 및 저장
-        Member member = new Member();
-        member.setRole(selectRole);
-        member.setUsername(request.getUsername());
-        member.setPassword(passwordEncoder.encode(request.getPassword()));
-        member.setEmail(request.getEmail());
-        member.setPhone(request.getPhone());
-        memberRepository.save(member);
-
-        log.info("회원가입 성공");
     }
 
     @Override
@@ -81,7 +152,7 @@ public class MemberServiceImpl implements MemberService {
                 .build();
         refreshTokenRepository.save(refreshToken);
 
-        log.info("로그인 성공");
+
 
         return tokens;
 
@@ -111,8 +182,6 @@ public class MemberServiceImpl implements MemberService {
         );
 
         emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode);
-
-        log.info(username+"에게 인증번호 보내기 성공");
     }
 
     @Override
@@ -152,7 +221,6 @@ public class MemberServiceImpl implements MemberService {
             throw new IllegalArgumentException("이미 로그아웃된 사용자입니다.");
         }
         refreshTokenRepository.deleteByUsername(username);
-        log.info("로그아웃 된 회원 " + username);
     }
 }
 

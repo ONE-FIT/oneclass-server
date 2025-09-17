@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface AcademyRefreshTokenRepository extends JpaRepository<AcademyRefreshToken, Long> {
     Optional<AcademyRefreshToken> findByAcademyCode(String academyCode);
+    void deleteByAcademyCode(String academyCode);
 
 }

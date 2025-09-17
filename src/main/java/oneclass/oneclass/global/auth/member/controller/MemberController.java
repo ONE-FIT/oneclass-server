@@ -4,10 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.global.auth.member.dto.LoginRequest;
-import oneclass.oneclass.global.auth.member.dto.ResetPasswordRequest;
-import oneclass.oneclass.global.auth.member.dto.ResponseToken;
-import oneclass.oneclass.global.auth.member.dto.SignupRequest;
+import oneclass.oneclass.global.auth.academy.dto.AcademyLoginRequest;
+import oneclass.oneclass.global.auth.member.dto.*;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.global.auth.member.service.MemberService;
@@ -24,6 +22,11 @@ public class MemberController {
     private final MemberService memberService;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+
+    @PostMapping("/signup-code")
+    public void sendSignupVerificationCode(@RequestParam String academyCode) {
+        memberService.sendSignupVerificationCode(academyCode);
+    }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")

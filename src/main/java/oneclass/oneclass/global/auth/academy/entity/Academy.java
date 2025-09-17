@@ -17,6 +17,5 @@ public class Academy {
     private String email;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
     private Role role;
 }
