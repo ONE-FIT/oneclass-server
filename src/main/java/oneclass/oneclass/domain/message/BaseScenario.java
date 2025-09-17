@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.sendon.Sendon;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public abstract class BaseScenario {
   private static final Dotenv dotenv = Dotenv.load();
 
@@ -46,7 +48,7 @@ public abstract class BaseScenario {
 
   protected void handleException(Exception e) {
     System.err.println("에러 응답:");
-    e.printStackTrace();
+    log.error("에러 응답 발생", e);
   }
 
   protected static String generateRandomCode() {
@@ -80,7 +82,7 @@ public abstract class BaseScenario {
     try {
       Thread.sleep(ms);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      log.error("에러 응답 발생", e);
     }
 
     thread.interrupt();
