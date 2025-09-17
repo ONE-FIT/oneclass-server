@@ -5,7 +5,9 @@ import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
 import oneclass.oneclass.domain.task.entity.Task;
+import oneclass.oneclass.domain.task.error.TaskError;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
+import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,7 +22,6 @@ public class TaskService {
         Task task = Task.builder()
                 .title(request.title())
                 .description(request.description())
-                .assignedTo(request.assignedTo())
                 .dueDate(request.dueDate())
                 .build();
         return TaskResponse.of(taskRepository.save(task));
@@ -28,31 +29,22 @@ public class TaskService {
     }
 
     public TaskResponse findTaskById(Long id) {
-        Task task = taskRepository.findById(id).orElse(null);
-        if (task == null) {
-            throw new IllegalArgumentException(id + "는 존재하지 않습니다");
-        }
-
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
         return TaskResponse.of(task);
     }
 
     public TaskResponse findTaskByTitle(String title) {
-        Task task = taskRepository.findByTitle(title).orElse(null);
-        if (task == null) {
-            throw new IllegalArgumentException(title + "는 존재하지 않습니다");
-        }
-
+        Task task = taskRepository.findByTitle(title)
+                .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
         return TaskResponse.of(task);
     }
 
 
-    public  TaskResponse updateTask(UpdateTaskRequest request) {
-        Task task = taskRepository.findById(request.id()).orElse(null);
-        if (task == null) {
-            throw new IllegalArgumentException(request.id()+"는 없는 과제 입니다.");
-        }
+    public TaskResponse updateTask(UpdateTaskRequest request) {
+        Task task = taskRepository.findById(request.id())
+                .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
         task.setDescription(request.description());
-        task.setAssignedTo(request.assignedTo());
         task.setDueDate(request.dueDate());
         taskRepository.save(task);
 
@@ -60,10 +52,8 @@ public class TaskService {
     }
 
     public void deleteTask(Long id) {
-        Task task = taskRepository.findById(id).orElse(null);
-        if (task == null) {
-            throw new IllegalArgumentException(id+"는 없는 과제 입니다.");
-        }
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() ->new CustomException(TaskError.NOT_FOUND));
         taskRepository.delete(task);
 
     }

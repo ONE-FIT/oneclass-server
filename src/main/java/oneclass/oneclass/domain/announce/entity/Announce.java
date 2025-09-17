@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import oneclass.oneclass.global.member.entity.Member;
+import oneclass.oneclass.global.auth.member.entity.Member;
 
 @Entity
 @Data
@@ -18,10 +18,12 @@ public class Announce {
     private Long id;
 
     private String title;
+
     @Column(columnDefinition = "TEXT")
     private String content;
 
     private Boolean important;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Member author;
 }

@@ -5,9 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import oneclass.oneclass.global.member.entity.Member;
+import oneclass.oneclass.global.auth.member.entity.Member;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @SuperBuilder
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 @Setter
 @Table(name =  "Task")
 public class Task {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,12 +30,11 @@ public class Task {
     @JoinColumn(name = "assigned_by_id")
     private Member assignedBy; // 출제자
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to_id")
-    private Member assignedTo; // 대상 학생
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TaskAssignment> assignments;
 
     private LocalDate dueDate; // 마감 기한
 
     @Enumerated(EnumType.STRING)
-    private TaskStatus status; // ASSIGNED / SUBMITTED / GRADED
+    private TaskStatus taskStatus; // ASSIGNED / SUBMITTED / GRADED
 }
