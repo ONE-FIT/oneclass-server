@@ -1,6 +1,8 @@
 package oneclass.oneclass.domain.message.sms.longmessage;
 
+import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.ExecutableWithMessageAndTitle;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
@@ -11,8 +13,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
-public class SmsSendLongMessageNowScenario extends BaseScenario implements ExecutableWithMessageAndTitle {
+public class SmsSendLongMessageNow extends BaseScenario implements ExecutableWithMessageAndTitle {
 
   private final MemberRepository memberRepository;
 
@@ -20,18 +23,23 @@ public class SmsSendLongMessageNowScenario extends BaseScenario implements Execu
   public void execute(String message, String title) {
 
     // In your service
-    Pageable pageable = PageRequest.of(0, 1000); // Process 1000 at a time
+    Pageable pageable = PageRequest.of(0, 1000); // 1번에 1000개 불러오기
     Page<String> phonePage;
     do {
       phonePage = memberRepository.findAllPhones(pageable);
       if (!phonePage.getContent().isEmpty()) {
-        sendon.sms.sendLms(SMS_MOBILE_FROM, phonePage.getContent(), title, message, false, null);
+        SendSms sendSms = sendon.sms.sendLms(
+                SMS_MOBILE_FROM,
+                phonePage.getContent(),
+                title,
+                message,
+                false,
+                null);
+
+        log.debug("응답: {}", gson.toJson(sendSms));
       }
       pageable = phonePage.nextPageable();
     } while (phonePage.hasNext());
-
-//    SendSms sendSms = sendon.sms.sendLms(SMS_MOBILE_FROM, memberRepository.findAllPhones(), title, message, true, null);
-//    Log.d("SendSms: " + gson.toJson(sendSms));
   }
 
   @Override

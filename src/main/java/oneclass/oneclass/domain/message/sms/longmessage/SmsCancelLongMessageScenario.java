@@ -11,22 +11,25 @@ import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import java.util.List;
-
-
 
 @RequiredArgsConstructor
+@Deprecated
 public class SmsCancelLongMessageScenario extends BaseScenario implements ExecutableWithMessage {
 
   private final MemberRepository memberRepository;
 
-  @Deprecated
   @Override
   public void execute(String message) {
     OffsetDateTime reservationTime = OffsetDateTime.now().plusMinutes(60);
     Reservation reservation = new Reservation(reservationTime.toString());
-    SendSms sendSms = sendon.sms.sendLms(SMS_MOBILE_FROM, Arrays.asList(SMS_MOBILE_TO), "Title", message, true, reservation);
-    Log.d("SendSms: " + gson.toJson(sendSms));
+    SendSms sendSms = sendon.sms.sendLms(
+            SMS_MOBILE_FROM,
+            Arrays.asList(SMS_MOBILE_TO),
+            "Title",
+            message,
+            true,
+            reservation);
+    Log.d("SendSms: " + gson.toJson(sendSms)); // sendon의 Log는 베포에 적합하지 않습니다.
 
     sleep(5000);
 

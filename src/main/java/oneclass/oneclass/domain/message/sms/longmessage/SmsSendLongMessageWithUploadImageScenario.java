@@ -13,16 +13,16 @@ import java.util.Arrays;
 import java.util.List;
 
 @RequiredArgsConstructor
+@Deprecated
 public class SmsSendLongMessageWithUploadImageScenario extends BaseScenario implements ExecutableWithMessageAndTitle {
 
   private final MemberRepository memberRepository;
 
   @Override
-  @Deprecated
   public void execute(String message, String title) {
     List<File> images = Arrays.asList(new File("./img/aligo.png"));
     UploadImage uploadImage = sendon.sms.uploadImages(images);
-    Log.d("UploadImage: " + gson.toJson(uploadImage));
+    Log.d("UploadImage: " + gson.toJson(uploadImage)); // sendon의 Log는 베포에 적합하지 않습니다.
 
     sendon.sms.sendMms(new MmsBuilder()
         .setFrom(SMS_MOBILE_FROM)
