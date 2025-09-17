@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/admin/task")
+@RequestMapping("/admin/task")
 public class AdminTaskController {
 
     private final AdminTaskService adminTaskService;

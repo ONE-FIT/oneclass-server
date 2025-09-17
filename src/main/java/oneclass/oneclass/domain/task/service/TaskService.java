@@ -3,12 +3,10 @@ package oneclass.oneclass.domain.task.service;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
-import oneclass.oneclass.domain.task.dto.response.MemberTaskResponse;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
 import oneclass.oneclass.domain.task.entity.Task;
 import oneclass.oneclass.domain.task.error.TaskError;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
-import oneclass.oneclass.global.exception.CustomError;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 

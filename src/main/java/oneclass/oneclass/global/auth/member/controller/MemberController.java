@@ -17,7 +17,7 @@ import java.util.Map;
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/member")
+@RequestMapping("/member")
 public class MemberController {
 
     private final MemberService memberService;
