@@ -18,10 +18,12 @@ public class Announce {
     private Long id;
 
     private String title;
+
     @Column(columnDefinition = "TEXT")
     private String content;
 
     private Boolean important;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Member author;
 }
