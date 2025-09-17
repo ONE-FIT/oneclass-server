@@ -40,7 +40,7 @@ public class SmsSendLongMessageNowScenario extends BaseScenario implements Execu
   }
 
   @Async
-  public void smsSendLongMessageNow(String message, String title) {
+  public void send(String message, String title) {
     execute(message, title);
   }
 }

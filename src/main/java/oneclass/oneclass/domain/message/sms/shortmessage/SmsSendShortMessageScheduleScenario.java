@@ -30,7 +30,6 @@ public class SmsSendShortMessageScheduleScenario extends BaseScenario implements
     Log.d("SendSms: " + gson.toJson(sendSms));
   }
 
-
   @Override
   public String getDescription() {
     return "[SMS] 예약문자 발송";

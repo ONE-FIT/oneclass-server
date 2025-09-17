@@ -11,6 +11,7 @@ import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 
 @RequiredArgsConstructor
 public class SmsSendShortMessageNowScenario extends BaseScenario implements ExecutableWithMessage {
@@ -46,5 +47,10 @@ public class SmsSendShortMessageNowScenario extends BaseScenario implements Exec
   @Override
   public String getDescription() {
     return "[SMS] 즉시문자 발송";
+  }
+
+  @Async
+  public void send(String message) {
+    execute(message);
   }
 }

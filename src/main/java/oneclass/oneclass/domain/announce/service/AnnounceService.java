@@ -34,7 +34,7 @@ public class AnnounceService {
         // 만약 메세지 발송 코드가 저장 코드 위에 있을 경우, 저장에 실패했지만 메세지는 전송되는 경우가 있을 수 있음
         Announce savedAnnounce = announceRepository.save(announce);
 
-        smsSendLongMessageNowScenario.smsSendLongMessageNow(request.content(), request.title());
+        smsSendLongMessageNowScenario.send(request.content(), request.title());
 
         return AnnounceResponse.of(savedAnnounce);
         // 만들었을 때 모두에게 메세지 발송
