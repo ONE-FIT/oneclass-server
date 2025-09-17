@@ -24,19 +24,19 @@ public class AnnounceController {
         return announceService.createAnnounce(request);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public AnnounceResponse findAnnounceById(@PathVariable Long id) {
         ResponseEntity.ok(Map.of("message", "공지가 제공되었습니다."));
         return announceService.findAnnounceById(id);
     }
 
-    @GetMapping("/{title}")
+    @GetMapping("/title/{title}")
     public AnnounceResponse findAnnounceByTitle(@PathVariable String title) {
         ResponseEntity.ok(Map.of("message", "공지가 제공되었습니다."));
         return announceService.findAnnounceByTitle(title);
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping()
     public AnnounceResponse updateAnnounce(@RequestBody UpdateAnnounceRequest request) {
         ResponseEntity.ok(Map.of("message", "과제가 수정되었습니다."));
         return announceService.updateAnnounce(request);
@@ -48,7 +48,7 @@ public class AnnounceController {
         announceService.deleteAnnounce(id);
     }
 
-    @GetMapping()
+    @GetMapping("/all")
     public List<AnnounceResponse> findAll() {
         return announceService.findAll();
     }

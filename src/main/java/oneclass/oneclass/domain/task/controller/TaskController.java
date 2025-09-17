@@ -24,19 +24,19 @@ public class TaskController {
         return taskService.createTask(request);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public TaskResponse findTaskById(@PathVariable Long id) { //우리가 잠시 사용할 기능
         ResponseEntity.ok(Map.of("message", "과제가 제공되었습니다."));
         return taskService.findTaskById(id);
     }
 
-    @GetMapping("/{title}")
+    @GetMapping("/title/{title}")
     public TaskResponse findTaskByTitle(@PathVariable String title) { //유저가 사용할 기능
         ResponseEntity.ok(Map.of("message", "과제가 제공되었습니다."));
         return taskService.findTaskByTitle(title);
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping()
     public TaskResponse updateTask(@RequestBody UpdateTaskRequest request) {
         ResponseEntity.ok(Map.of("message", "과제가 수정되었습니다."));
         return taskService.updateTask(request);
@@ -48,7 +48,7 @@ public class TaskController {
         taskService.deleteTask(id);
     }
 
-    @GetMapping()
+    @GetMapping("/all")
     public List<TaskResponse> findAllTask() {
         return taskService.findAll();
     }
