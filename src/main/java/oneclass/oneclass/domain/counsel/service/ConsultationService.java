@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.counsel.dto.ConsultationDetailResponse;
 import oneclass.oneclass.domain.counsel.dto.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
+import oneclass.oneclass.domain.counsel.error.CounselError;
 import oneclass.oneclass.domain.counsel.repository.ConsultationRepository;
+import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,7 +17,7 @@ import java.util.List;
 public class ConsultationService {
     private final ConsultationRepository consultationRepository;
 
-    //상담신청(학생)
+    //상담신청
     public Consultation createConsultation(ConsultationRequest request){
         Consultation con = new Consultation();
         con.setName(request.getName());//학생이름
@@ -33,7 +35,7 @@ public class ConsultationService {
 
     public ConsultationDetailResponse getConsultationDetail(String name, String phone) {
         Consultation consultation = consultationRepository.findByNameAndPhone(name, phone)
-                .orElseThrow(() -> new IllegalArgumentException("상담 내역이 없습니다."));
+                .orElseThrow(() -> new CustomException(CounselError.NOT_FOUND));
         return ConsultationDetailResponse.from(consultation);
     }
 
