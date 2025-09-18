@@ -11,8 +11,10 @@ import oneclass.oneclass.global.auth.academy.entity.Role;
 import oneclass.oneclass.global.auth.academy.repository.AcademyRepository;
 import oneclass.oneclass.global.auth.academy.repository.AcademyRefreshTokenRepository;
 import oneclass.oneclass.global.auth.academy.repository.AcademyVerificationCodeRepository;
+import oneclass.oneclass.global.auth.academy.error.AuthError;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
+import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -81,13 +83,12 @@ public class AcademyServiceImpl implements AcademyService {
     @Override
     public ResponseToken login(String academyCode, String academyName , String password){
         Academy academy = academyRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 학원코드입니다"));
-
+                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
         if (!academy.getAcademyName().equals(academyName)) {
-            throw new IllegalArgumentException("학원코드와 학원이름이 일치하지 않습니다.");
+            throw new CustomException(AuthError.NOT_FOUND);
         }
         if (!passwordEncoder.matches(password, academy.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new CustomException(AuthError.UNAUTHORIZED);
         }
         String roleClaim = "role" +academy.getRole();
         ResponseToken token = jwtProvider.generateToken(academy.getAcademyCode(), roleClaim);
@@ -106,7 +107,7 @@ public class AcademyServiceImpl implements AcademyService {
     @Override
     public void sendResetPasswordEmail(String code, String name){
         Academy academy = academyRepository.findByAcademyCodeAndAcademyName(code , name)
-                .orElseThrow(() -> new IllegalArgumentException("학원 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
         String academyCode = academy.getAcademyCode();
         String tempCode = UUID.randomUUID().toString().substring(0, 13);
 
@@ -135,21 +136,21 @@ public class AcademyServiceImpl implements AcademyService {
     public void resetPassword(String academyCode, String academyName, String verificationCode){
         // 인증코드 검증
         AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new IllegalArgumentException("인증 코드가 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
 
         if (!codeEntity.getCode().equals(verificationCode)) {
-            throw new IllegalArgumentException("인증 코드가 일치하지 않습니다.");
+            throw new CustomException(AuthError.UNAUTHORIZED);
         }
         // 인증코드 만료 검증
         if (codeEntity.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("인증코드가 만료되었습니다.");
+            throw new CustomException(AuthError.UNAUTHORIZED);
         }
 
         // 학원 정보 조회 및 이름 확인
         Academy academy = academyRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 학원코드입니다."));
+                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
         if (!academy.getAcademyName().equals(academyName)) {
-            throw new IllegalArgumentException("학원이름이 일치하지 않습니다.");
+            throw new CustomException(AuthError.NOT_FOUND);
         }
 
         // 임시 비밀번호 생성 및 변경

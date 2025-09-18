@@ -16,6 +16,7 @@ import java.util.ArrayList;
 public class Academy {
     @Id
     private String academyCode;
+
     private String academyName;
     private String password;
     private String email;

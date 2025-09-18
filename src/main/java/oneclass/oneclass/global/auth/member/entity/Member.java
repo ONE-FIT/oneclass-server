@@ -29,8 +29,14 @@ public class Member {
     @NotNull
     private Role role;
 
+    @ManyToOne
+    private Member teacher; // 학생, 선생님용
+
+    @ManyToOne
+    private Member student; // 부모용(자녀 Member 참조)
+
     // Academy와의 관계
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "academy_code")
+    @JoinColumn(name = "academy_code", referencedColumnName = "academyCode")
     private Academy academy;
 }

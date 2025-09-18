@@ -22,11 +22,7 @@ public class ConsultationController {
     public ResponseEntity<Consultation> create(@RequestBody @Valid ConsultationRequest request){
         return ResponseEntity.ok(consultationService.createConsultation(request));
     }
-//      //상담신청(학부모)
-//    @PostMapping("/parents-request")
-//    public ResponseEntity<Consultation> parentsCreate(@RequestBody @Valid ConsultationRequest request){
-//        return ResponseEntity.ok(consultationService.parentsCreateConsultation(request));
-//    }
+
     //상담 상세 조회
     @GetMapping("/detail")
     public ResponseEntity<ConsultationDetailResponse> getConsultationDetail(
@@ -35,18 +31,7 @@ public class ConsultationController {
         ConsultationDetailResponse response = consultationService.getConsultationDetail(name, phone);
         return ResponseEntity.ok(response);
     }
-    //
-    //일단 필요없어 보여서 주석처리
-//    //@@의 상담 대기중 -> 확정
-//    @PatchMapping("/{id}/status")
-//    public ResponseEntity<Consultation> updateStatus(
-//            @PathVariable Long id,
-//            @RequestBody Map<String, String> request) {
-//
-//        String status = request.get("status");
-//        String scheduleTime = request.get("scheduleTime");
-//        return ResponseEntity.ok(consultationService.updateStatus(id, status, scheduleTime));
-//    }
+
     //전체상담조회
     @GetMapping("/schedule")
     public ResponseEntity<List<Consultation>> getAllSchedule(){
