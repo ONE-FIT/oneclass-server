@@ -22,6 +22,11 @@ public class ConsultationController {
     public ResponseEntity<Consultation> create(@RequestBody @Valid ConsultationRequest request){
         return ResponseEntity.ok(consultationService.createConsultation(request));
     }
+    //상담 상태 변경 ex) 상담신청이 됨 -> 상담신청 날짜 확정
+    @PostMapping("/change-status")
+    public ResponseEntity<Consultation> changeStatus(@RequestBody @Valid ConsultationRequest request){
+        return ResponseEntity.ok(consultationService.changeStatus(request));
+    }
 
     //상담 상세 조회
     @GetMapping("/detail")

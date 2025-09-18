@@ -19,7 +19,7 @@ public class Consultation {
     private String phone;//학생전번
     private String parentPhone;//학부모전번
 
-    private String date;//희망 날짜
+    private LocalDateTime date;//희망 날짜
 
     private String type;// 신규 or 재학생
     private String subject;//과목

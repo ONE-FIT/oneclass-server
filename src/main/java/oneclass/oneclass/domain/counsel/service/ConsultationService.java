@@ -31,6 +31,21 @@ public class ConsultationService {
         con.setCreateAt(LocalDateTime.now());
         return consultationRepository.save(con);
     }
+    public Consultation changeStatus(ConsultationRequest request) {
+        // 이름과 전화번호로 상담 정보 조회
+        Consultation consultation = consultationRepository.findByNameAndPhone(request.getName(), request.getPhone())
+                .orElseThrow(() -> new CustomException(CounselError.NOT_FOUND));
+
+        // status 필드 변경
+        consultation.setStatus(request.getStatus()); // request에 status 필드가 있다고 가정
+
+        if (request.getDate() != null) {
+            consultation.setDate(request.getDate());
+        }
+
+        // 변경된 정보 저장 후 반환
+        return consultationRepository.save(consultation);
+    }
 
 
     public ConsultationDetailResponse getConsultationDetail(String name, String phone) {

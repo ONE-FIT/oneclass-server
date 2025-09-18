@@ -13,7 +13,6 @@ public class ConsultationDetailResponse {
     private String status;
     private String scheduleTime;
 
-    // 생성자 혹은 static from(Entity) 메서드
     public static ConsultationDetailResponse from(Consultation consultation) {
         ConsultationDetailResponse res = new ConsultationDetailResponse();
         res.setName(consultation.getName());

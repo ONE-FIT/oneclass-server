@@ -44,6 +44,7 @@ public class SecurityConfig {
                                 "/consultations/request",
                                 "/consultations/detail",
                                 "/consultations/schedule",
+                                "/consultations/change-status", //원래 상태변경은 관리자용인데 일단 테스트로 permitAll
                                 "/academy/**").permitAll()//테스트용으로 관리자 권한없이 전체 스케쥴 확인
 //                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
