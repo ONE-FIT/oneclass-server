@@ -28,15 +28,18 @@ public class SmsSendLongMessageNow extends BaseScenario implements ExecutableWit
     do {
       phonePage = memberRepository.findAllPhones(pageable);
       if (!phonePage.getContent().isEmpty()) {
-        SendSms sendSms = sendon.sms.sendLms(
-                SMS_MOBILE_FROM,
-                phonePage.getContent(),
-                title,
-                message,
-                false,
-                null);
-
-        log.debug("응답: {}", gson.toJson(sendSms));
+        try {
+          SendSms sendSms = sendon.sms.sendLms(
+                  SMS_MOBILE_FROM,
+                  phonePage.getContent(),
+                  title,
+                  message,
+                  false,
+                  null);
+          log.debug("응답: {}", gson.toJson(sendSms));
+        } catch (Exception e) {
+          log.error("LMS 메시지 발송 중 오류 발생. Page: {}, Size: {}", phonePage.getNumber(), phonePage.getSize(), e);
+        }
       }
       pageable = phonePage.nextPageable();
     } while (phonePage.hasNext());
