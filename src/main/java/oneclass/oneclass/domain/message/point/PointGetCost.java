@@ -5,6 +5,7 @@ import io.sendon.point.response.GetCosts;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class PointGetCost extends BaseScenario implements Executable {
 
   @Override

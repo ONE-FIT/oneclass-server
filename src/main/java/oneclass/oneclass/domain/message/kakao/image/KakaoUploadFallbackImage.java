@@ -8,6 +8,7 @@ import oneclass.oneclass.domain.message.Executable;
 import java.io.File;
 import java.util.Arrays;
 
+@Deprecated
 public class KakaoUploadFallbackImage extends BaseScenario implements Executable {
 
     @Override

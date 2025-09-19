@@ -6,6 +6,7 @@ import io.sendon.payment.response.GetPaymentHistory;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class PaymentGetHistories extends BaseScenario implements Executable {
 
   @Override

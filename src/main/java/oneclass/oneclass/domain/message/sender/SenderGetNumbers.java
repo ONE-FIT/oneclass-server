@@ -5,6 +5,7 @@ import io.sendon.sender.response.GetUserNumbers;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class SenderGetNumbers extends BaseScenario implements Executable {
 
   @Override

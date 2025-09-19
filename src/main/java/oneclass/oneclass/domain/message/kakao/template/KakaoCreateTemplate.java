@@ -9,6 +9,7 @@ import io.sendon.kakao.response.CreateTemplate;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class KakaoCreateTemplate extends BaseScenario implements Executable {
 
   @Override

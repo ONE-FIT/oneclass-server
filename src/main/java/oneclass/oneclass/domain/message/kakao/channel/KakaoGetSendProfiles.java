@@ -5,6 +5,7 @@ import io.sendon.kakao.response.GetProfiles;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class KakaoGetSendProfiles extends BaseScenario implements Executable {
 
   @Override

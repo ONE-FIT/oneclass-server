@@ -5,6 +5,7 @@ import io.sendon.kakao.response.RequestAuthToken;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class KakaoRequestVerification extends BaseScenario implements Executable {
 
     @Override

@@ -10,6 +10,7 @@ import java.io.File;
 /**
  * 친구톡 와이드 이미지 업로드 (deprecated)
  */
+@Deprecated
 public class KakaoUploadFriendWideImage extends BaseScenario implements Executable {
 
     @Override

@@ -11,6 +11,7 @@ import java.util.Arrays;
 /**
  * 친구톡 발송 (deprecated)
  */
+@Deprecated
 public class KakaoSendFriendTalk extends BaseScenario implements Executable {
 
     @Override

@@ -5,6 +5,7 @@ import io.sendon.contacts.response.GetBlocklist;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class ContactsGetBlocklist extends BaseScenario implements Executable {
 
   @Override

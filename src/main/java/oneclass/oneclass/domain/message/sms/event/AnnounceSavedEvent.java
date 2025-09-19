@@ -1,11 +1,11 @@
-package oneclass.oneclass.domain.announce.dto.event;
+package oneclass.oneclass.domain.message.sms.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class AnnounceCreatedEvent {
+public class AnnounceSavedEvent {
     private final String content;
     private final String title;
 

@@ -66,7 +66,7 @@ public abstract class BaseScenario {
       StringBuilder dots = new StringBuilder();
       try {
         while (true) {
-          Thread.sleep(1000); // TODO: 다른 방법 사용하기
+          Thread.sleep(1000); // TODO: 다른 방법 사용하기 (현재는 사용되지는 않으나 나중에 sleep()이 사용될 시 주의)
           seconds++;
           dots.append("😎");
           log.debug("[{}]{}", seconds, dots);

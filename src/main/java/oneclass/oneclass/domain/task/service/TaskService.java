@@ -1,6 +1,7 @@
 package oneclass.oneclass.domain.task.service;
 
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.message.sms.event.TaskSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
@@ -8,6 +9,7 @@ import oneclass.oneclass.domain.task.entity.Task;
 import oneclass.oneclass.domain.task.error.TaskError;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskService {
     private final TaskRepository taskRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TaskResponse createTask(CreateTaskRequest request) {
         Task task = Task.builder()
@@ -24,7 +27,13 @@ public class TaskService {
                 .description(request.description())
                 .dueDate(request.dueDate())
                 .build();
-        return TaskResponse.of(taskRepository.save(task));
+
+        Task savedTask = taskRepository.save(task);
+
+        // TODO: 메세지의 내용을 팀원과 토론하세요.
+        eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
+
+        return TaskResponse.of(savedTask);
         // 리턴시 assignedTo 에게 메세지 발송
     }
 

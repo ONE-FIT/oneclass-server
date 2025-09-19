@@ -6,6 +6,7 @@ import io.sendon.contacts.response.DeleteBlocklist;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class ContactsAddRemoveBlocklist extends BaseScenario implements Executable {
 
   @Override

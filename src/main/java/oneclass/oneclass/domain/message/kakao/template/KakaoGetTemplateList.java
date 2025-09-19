@@ -6,6 +6,7 @@ import io.sendon.kakao.response.GetTemplates;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class KakaoGetTemplateList extends BaseScenario implements Executable {
 
   @Override

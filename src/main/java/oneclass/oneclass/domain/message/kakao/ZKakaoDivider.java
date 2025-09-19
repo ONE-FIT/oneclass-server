@@ -1,9 +1,9 @@
 package oneclass.oneclass.domain.message.kakao;
 
-
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class ZKakaoDivider extends BaseScenario implements Executable {
 
   @Override

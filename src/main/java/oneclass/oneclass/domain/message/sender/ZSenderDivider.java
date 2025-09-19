@@ -3,6 +3,7 @@ package oneclass.oneclass.domain.message.sender;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class ZSenderDivider extends BaseScenario implements Executable {
 
   @Override

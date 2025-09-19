@@ -8,6 +8,7 @@ import oneclass.oneclass.domain.message.Executable;
 
 import java.util.Arrays;
 
+@Deprecated
 public class KakaoSendAlimTalk extends BaseScenario implements Executable {
 
     @Override

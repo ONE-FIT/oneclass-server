@@ -5,6 +5,7 @@ import io.sendon.point.response.GetPoints;
 import oneclass.oneclass.domain.message.BaseScenario;
 import oneclass.oneclass.domain.message.Executable;
 
+@Deprecated
 public class PointGetPoint extends BaseScenario implements Executable {
 
   @Override
