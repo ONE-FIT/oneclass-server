@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/oneclass
     username: root
-    password: Abcde090125!!
+    password: 
 
   jpa:
     hibernate:
@@ -19,7 +19,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: abcb090125@gmail.com
-    password: xvgvhswnzongbaiw
+    password:   
     properties:
       mail:
         smtp:
