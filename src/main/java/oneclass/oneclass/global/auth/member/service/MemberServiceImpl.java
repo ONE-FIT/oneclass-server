@@ -117,9 +117,16 @@ public class MemberServiceImpl implements MemberService {
                         .password(passwordEncoder.encode(request.getPassword()))
                         .role(selectRole)
                         .academy(academy)
+                        .name(request.getName())
                         .phone(request.getPhone())
                         .email(request.getEmail())
                         .build();
+
+                //이메일 전번 중복검사
+                if(memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()){
+                    throw new CustomException(MemberError.CONFLICT,"이미 사용중인 이메일 또는 전화번호입니다.");
+                }
+
                 memberRepository.save(member);
                 break;
             }
@@ -136,9 +143,16 @@ public class MemberServiceImpl implements MemberService {
                         .password(passwordEncoder.encode(request.getPassword()))
                         .role(selectRole)
                         .academy(academy)
+                        .name(request.getName())
                         .phone(request.getPhone())
                         .email(request.getEmail())
                         .build();
+
+                //이메일 전번 중복검사
+                if(memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()){
+                    throw new CustomException(MemberError.CONFLICT,"이미 사용중인 이메일 또는 전화번호입니다.");
+                }
+
                 memberRepository.save(member);
                 break;
             }
@@ -154,10 +168,16 @@ public class MemberServiceImpl implements MemberService {
                         .username(request.getUsername())
                         .password(passwordEncoder.encode(request.getPassword()))
                         .role(selectRole)
+                        .name(request.getName())
                         .phone(request.getPhone())
                         .email(request.getEmail())
                         .student(student)
                         .build();
+                //이메일 전번 중복검사
+                if(memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()){
+                    throw new CustomException(MemberError.CONFLICT,"이미 사용중인 이메일 또는 전화번호입니다.");
+                }
+
                 memberRepository.save(parent);
                 break;
             }

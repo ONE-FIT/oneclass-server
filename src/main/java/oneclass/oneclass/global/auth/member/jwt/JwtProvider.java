@@ -2,7 +2,6 @@ package oneclass.oneclass.global.auth.member.jwt;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.DirectDecrypter;
-import com.nimbusds.jose.crypto.DirectEncrypter;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;

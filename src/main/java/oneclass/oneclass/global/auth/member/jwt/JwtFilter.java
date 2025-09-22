@@ -46,7 +46,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/error")         // 에러 엔드포인트
                 || path.startsWith("/academy/**")
                 || path.startsWith("/member/signup-code")
-                || path.startsWith("/member/change-status");
+                || path.startsWith("/member/change-status")
+                || path.startsWith("/member/send-reset-password");
     }
 
     // JWE compact serialization 은 점(.) 이 4개라 5개 조각

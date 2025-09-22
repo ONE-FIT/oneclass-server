@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.global.auth.academy.dto.AcademyLoginRequest;
 import oneclass.oneclass.global.auth.academy.dto.MadeRequest;
 import oneclass.oneclass.global.auth.academy.dto.ResetAcademyPasswordRequest;
-import oneclass.oneclass.global.auth.academy.repository.AcademyRefreshTokenRepository;
 import oneclass.oneclass.global.auth.academy.service.AcademyService;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/academy")
 public class AcademyController {
     private final AcademyService academyService;
-    private final AcademyRefreshTokenRepository academyRefreshTokenRepository;
 
     //학원 계정 만들기
     @PostMapping("/new-academy")
