@@ -18,7 +18,7 @@ public abstract class AbstractLongMessage extends BaseScenario implements Execut
         Page<String> phonePage;
 
         do {
-            phonePage = findTargets(pageable); // <-- 핵심: 추상 메서드로 대상 가져오기
+            phonePage = findTargets(pageable); // 추상 메서드로 대상 가져오기
             if (!phonePage.getContent().isEmpty()) {
                 try {
                     SendSms sendSms = sendon.sms.sendLms(

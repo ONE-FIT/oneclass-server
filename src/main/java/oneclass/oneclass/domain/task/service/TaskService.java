@@ -30,7 +30,6 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
 
-        // TODO: 메세지의 내용을 팀원과 토론하세요.
         eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
 
         return TaskResponse.of(savedTask);
@@ -61,10 +60,10 @@ public class TaskService {
     }
 
     public void deleteTask(Long id) {
+
         Task task = taskRepository.findById(id)
                 .orElseThrow(() ->new CustomException(TaskError.NOT_FOUND));
         taskRepository.delete(task);
-
     }
 
     public List<TaskResponse> findAll() {

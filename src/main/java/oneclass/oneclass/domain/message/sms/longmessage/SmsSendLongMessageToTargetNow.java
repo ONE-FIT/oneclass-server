@@ -1,14 +1,12 @@
 package oneclass.oneclass.domain.message.sms.longmessage;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
-@Slf4j
 @RequiredArgsConstructor
 public class SmsSendLongMessageToTargetNow extends AbstractLongMessage {
 
