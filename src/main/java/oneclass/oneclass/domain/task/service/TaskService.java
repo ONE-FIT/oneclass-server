@@ -33,7 +33,6 @@ public class TaskService {
         eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
 
         return TaskResponse.of(savedTask);
-        // 리턴시 assignedTo 에게 메세지 발송
     }
 
     public TaskResponse findTaskById(Long id) {

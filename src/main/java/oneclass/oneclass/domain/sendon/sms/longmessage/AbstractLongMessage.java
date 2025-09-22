@@ -14,7 +14,7 @@ public abstract class AbstractLongMessage extends BaseScenario implements Execut
 
     @Override
     public void execute(String message, String title) {
-        Pageable pageable = PageRequest.of(0, 1000);
+        Pageable pageable = PageRequest.of(0, PHONE_PAGE_SIZE);
         Page<String> phonePage;
 
         do {

@@ -8,7 +8,6 @@ import oneclass.oneclass.domain.announce.entity.Announce;
 import oneclass.oneclass.domain.announce.error.AnnounceError;
 import oneclass.oneclass.domain.announce.repository.AnnounceRepository;
 import oneclass.oneclass.domain.sendon.sms.event.AnnounceSavedEvent;
-import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToAllNow;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ import java.util.stream.Collectors;
 
 public class AnnounceService {
     private final AnnounceRepository announceRepository;
-    private final SmsSendLongMessageToAllNow smsSendLongMessageNowScenario;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional

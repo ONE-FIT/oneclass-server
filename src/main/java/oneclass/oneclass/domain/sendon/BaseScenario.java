@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class BaseScenario {
+
+  protected static final int PHONE_PAGE_SIZE = 1000;
+
   private static final Dotenv dotenv = Dotenv.load();
 
   protected final String USER_ID;

@@ -14,7 +14,7 @@ public class LongMessageScheduleController {
     private final SmsSendLongMessageSchedule smsSendLongMessageScheduleScenario;
 
     // @param reservation 예약 시간 (yyyy-MM-dd HH:mm:ss)
-    @PostMapping("/sendon/lms/schedule")
+    @PostMapping("/admin/lms/schedule")
     public ResponseEntity<?> sendLongMessage(
             @RequestParam String message,
             @RequestParam String title,

@@ -22,7 +22,7 @@ public class SmsSendLongMessageSchedule extends BaseScenario {
 
   public void execute(String message, String title, String reservationTime) {
     Reservation reservation = new Reservation(reservationTime); // 동적으로 받은 예약 시간
-    Pageable pageable = PageRequest.of(0, 1000);
+    Pageable pageable = PageRequest.of(0, PHONE_PAGE_SIZE);
     Page<String> phonePage;
 
     do {
@@ -35,7 +35,7 @@ public class SmsSendLongMessageSchedule extends BaseScenario {
                   .setTitle(title)
                   .setMessage(message)
                   .setReservation(reservation)
-                  .setIsAd(true)
+                  .setIsAd(false)
           );
           log.info("예약 LMS 발송 완료. Page: {}, Count: {}, Reservation: {}",
                   phonePage.getNumber(), phonePage.getNumberOfElements(), reservationTime);
