@@ -24,7 +24,7 @@ public class Member {
     private String password;//비번
 
     @Column(nullable = false)
-    private String name;
+    private String name;//이름
 
 
     private String phone;
