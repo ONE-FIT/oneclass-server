@@ -22,18 +22,17 @@ public class AnnounceController {
 
     @PostMapping("/create")
     public AnnounceResponse createAnnounce(@RequestBody CreateAnnounceRequest request) {
-        ResponseEntity.ok(Map.of("message", "공지가 생성되었습니다."));
         return announceService.createAnnounce(request);
     }
 
     @GetMapping("/id/{id}")
-    public AnnounceResponse findAnnounceById(@RequestParam @PathVariable Long id) {
+    public AnnounceResponse findAnnounceById(@PathVariable Long id) {
         ResponseEntity.ok(Map.of("message", "공지가 제공되었습니다."));
         return announceService.findAnnounceById(id);
     }
 
     @GetMapping("/title/{title}")
-    public AnnounceResponse findAnnounceByTitle(@RequestParam @PathVariable String title) {
+    public AnnounceResponse findAnnounceByTitle(@PathVariable String title) {
         ResponseEntity.ok(Map.of("message", "공지가 제공되었습니다."));
         return announceService.findAnnounceByTitle(title);
     }

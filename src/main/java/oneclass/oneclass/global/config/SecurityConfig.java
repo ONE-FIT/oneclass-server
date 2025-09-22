@@ -22,7 +22,7 @@ import org.springframework.web.filter.CorsFilter;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-
+    private final JwtProvider jwtProvider;
 
     // PasswordEncoder는 BCryptPasswordEncoder를 사용
     @Bean
