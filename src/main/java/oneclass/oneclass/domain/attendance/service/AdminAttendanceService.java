@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -24,13 +25,13 @@ public class AdminAttendanceService {
 
     public List<AttendanceResponse> getMembersByDateAndStatus(LocalDate date, AttendanceStatus status) {
         if (status == AttendanceStatus.ABSENT) {
-            // 결석 처리
-            List<Long> presentMemberIds = attendanceRepository.findByDateAndAttendanceStatus(date, AttendanceStatus.PRESENT)
+            // 결석 처리: 출석, 지각, 공결이 아닌 모든 학생을 결석으로 처리합니다.
+            Set<Long> attendedMemberIds = attendanceRepository.findByDate(date)
                     .stream()
                     .map(a -> a.getMember().getId())
-                    .toList();
+                    .collect(java.util.stream.Collectors.toSet());
             return memberRepository.findAll().stream()
-                    .filter(m -> !presentMemberIds.contains(m.getId()))
+                    .filter(m -> !attendedMemberIds.contains(m.getId()))
                     .map(m -> new AttendanceResponse(m.getUsername(), AttendanceStatus.ABSENT, date))
                     .toList();
         } else {
