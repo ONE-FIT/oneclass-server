@@ -4,6 +4,6 @@ import oneclass.oneclass.global.auth.member.entity.Member;
 
 public record CreateLessonRequest(
         String title,
-        Member assignedBy
+        Member teacher
 ) {
 }

@@ -4,9 +4,9 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/oneclass
-    username: root
-    password:
-
+    username: gnlandkmg
+    password: Qwer1234!
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update

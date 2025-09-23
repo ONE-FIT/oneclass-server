@@ -46,7 +46,7 @@ public class TaskService {
                 .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
         task.setDescription(request.description());
         task.setDueDate(request.dueDate());
-        task.setLid(task.getLid());
+        task.setLesson(task.getLesson());
         taskRepository.save(task);
 
         return TaskResponse.of(task);

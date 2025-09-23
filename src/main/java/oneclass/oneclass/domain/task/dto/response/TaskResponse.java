@@ -18,7 +18,7 @@ public record TaskResponse(
                 task.getTitle(),
                 task.getDescription(),
                 task.getDueDate(),
-                task.getLid()
+                task.getLesson()
         );
     }
 }
