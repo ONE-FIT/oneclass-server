@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 public abstract class AbstractLongMessage extends BaseScenario implements ExecutableWithMessageAndTitle {
 
     @Override
-    public void execute(String message, String title) {
+    public void execute(String message, String title){
         Pageable pageable = PageRequest.of(0, PHONE_PAGE_SIZE);
         Page<String> phonePage;
 

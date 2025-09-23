@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 
+@Deprecated
 @Slf4j
 @RequiredArgsConstructor
 public class SmsSendShortMessageNow extends BaseScenario implements ExecutableWithMessage {

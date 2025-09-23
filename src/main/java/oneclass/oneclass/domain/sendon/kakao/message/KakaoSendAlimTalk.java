@@ -21,7 +21,6 @@ public class KakaoSendAlimTalk extends BaseScenario implements Executable {
       Log.d("SendAlimtalk: " + gson.toJson(sendAlimtalkResult));
     }
 
-
     @Override
     public String getDescription() {
         return "[카카오] 알림톡 발송";
