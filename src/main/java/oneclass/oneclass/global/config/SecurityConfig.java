@@ -22,7 +22,7 @@ import org.springframework.web.filter.CorsFilter;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-
+    private final JwtProvider jwtProvider;
 
     // PasswordEncoder는 BCryptPasswordEncoder를 사용
     @Bean
@@ -38,10 +38,11 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/api/member/signup",
-                                        "/api/member/login",
-                                        "/api/consultations/request",
-                                        "/api/consultations/detail",
+                        .requestMatchers("/member/signup",
+                                        "/member/login",
+                                        "/consultations/request",
+                                        "/consultations/detail",
+                                        "/lesson/**",
                                         "/v3/api-docs/**",
                                         "/swagger-ui/**"
                                 ).permitAll()
