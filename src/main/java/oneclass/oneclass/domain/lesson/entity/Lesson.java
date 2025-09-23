@@ -2,8 +2,9 @@ package oneclass.oneclass.domain.lesson.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import oneclass.oneclass.domain.task.entity.Task;
 import oneclass.oneclass.global.auth.member.entity.Member;
@@ -13,7 +14,8 @@ import java.util.List;
 
 
 @Entity
-@Data
+@Getter
+@Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,7 +24,7 @@ public class Lesson {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long lid;
+    private Long id;
 
     private String title;
 

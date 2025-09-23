@@ -2,10 +2,10 @@ package oneclass.oneclass.domain.attendance.service;
 
 
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.attendance.dto.response.QrCodeResponse;
 import oneclass.oneclass.domain.attendance.entity.QrCode;
 import oneclass.oneclass.domain.attendance.mapper.QrCodeMapper;
 import oneclass.oneclass.domain.attendance.repository.jpa.QrCodeRepository;
-import oneclass.oneclass.domain.attendance.dto.response.QrCodeResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

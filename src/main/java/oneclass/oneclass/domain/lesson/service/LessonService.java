@@ -16,12 +16,10 @@ import oneclass.oneclass.global.auth.member.entity.Member;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
 @Service
 @RequiredArgsConstructor
 public class LessonService {

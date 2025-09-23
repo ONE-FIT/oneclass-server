@@ -1,7 +1,7 @@
 package oneclass.oneclass.domain.attendance.mapper;
 
-import oneclass.oneclass.domain.attendance.entity.QrCode;
 import oneclass.oneclass.domain.attendance.annotation.Mapper;
+import oneclass.oneclass.domain.attendance.entity.QrCode;
 
 import java.util.UUID;
 @Mapper

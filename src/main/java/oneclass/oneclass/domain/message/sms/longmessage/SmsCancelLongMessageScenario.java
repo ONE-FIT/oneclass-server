@@ -11,7 +11,6 @@ import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import java.util.List;
 
 
 
