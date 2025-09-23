@@ -10,7 +10,8 @@ public enum MemberError implements CustomError {
     TOKEN_EXPIRED(401, "만료된 토큰입니다."),
     BAD_REQUEST(400,"요청형식에 맞게 써주세요."),
     CONFLICT(409, "이미 사용중입니다."),
-    NO_CONTENT(204,"존재하지 않는 코드입니다.");
+    NO_CONTENT(204,"존재하지 않는 코드입니다."),
+    FORBIDDEN(403, "접근 권한이 없습니다.") ;
 
     private final int status;
     private final String message;

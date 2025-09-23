@@ -5,11 +5,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.global.auth.member.dto.*;
+import oneclass.oneclass.global.auth.member.entity.Member;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.global.auth.member.service.MemberService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
@@ -21,6 +24,23 @@ public class MemberController {
     private final MemberService memberService;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+
+
+    @DeleteMapping("/parent/{parentId}")
+    public ResponseEntity<Void> deleteParent(@PathVariable Long parentId) {
+        memberService.deleteParent(parentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/add-students")
+    public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
+        memberService.addStudentsToParent(
+                request.getUsername(),
+                request.getPassword(),
+                request.getStudentId()
+        );
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping("/signup-code")
     public void sendSignupVerificationCode(@RequestParam String academyCode) {

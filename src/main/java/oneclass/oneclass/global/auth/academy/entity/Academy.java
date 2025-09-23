@@ -7,12 +7,10 @@ import oneclass.oneclass.global.auth.member.entity.Member;
 import java.util.List;
 import java.util.ArrayList;
 
-@Entity
+@NoArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
-@Builder
-@AllArgsConstructor
+@Entity
 public class Academy {
     @Id
     private String academyCode;
@@ -27,4 +25,14 @@ public class Academy {
     // 학원에 속한 멤버들
     @OneToMany(mappedBy = "academy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Member> members = new ArrayList<>();
+
+    @Builder
+    public Academy(String academyCode, String academyName, String password, String email, Role role, List<Member> members) {
+        this.academyCode = academyCode;
+        this.academyName = academyName;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+        this.members = (members == null) ? new ArrayList<>() : members;
+    }
 }

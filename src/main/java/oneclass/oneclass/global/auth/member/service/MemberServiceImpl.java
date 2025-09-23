@@ -25,6 +25,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -72,6 +74,39 @@ public class MemberServiceImpl implements MemberService {
 
         javaMailSender.send(message);
     }
+    @Transactional
+    @Override
+    public void deleteParent(Long parentId) {
+        Member parent = memberRepository.findById(parentId)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+
+        // 1. 부모와 자녀 연결 해제
+        parent.getStudents().clear();
+        memberRepository.save(parent); // 변경 사항 반영 (optional)
+
+        // 2. 부모 삭제
+        memberRepository.delete(parent);
+    }
+    @Override
+    @Transactional
+    public void addStudentsToParent(String username, String password, List<Long> studentIds) {
+        // 부모 인증: username, password로 부모 조회
+        Member parent = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        if (!passwordEncoder.matches(password, parent.getPassword())) {
+            throw new CustomException(MemberError.INVALID_PASSWORD);
+        }
+
+        // 학생 목록 추가
+        for (Long studentId : studentIds) {
+            Member student = memberRepository.findById(studentId)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+            if (!parent.getStudents().contains(student)) { // 중복 방지
+                parent.getStudents().add(student);
+            }
+        }
+        memberRepository.save(parent);
+    }
 
     @Override
     @Transactional
@@ -100,8 +135,6 @@ public class MemberServiceImpl implements MemberService {
                 if (userInputCode == null || userInputCode.trim().isEmpty()) {
                     throw new CustomException(MemberError.BAD_REQUEST);
                 }
-
-                // 인증코드 검증
                 AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
                         .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
                 if (!savedCode.getCode().equals(userInputCode)) {
@@ -122,9 +155,8 @@ public class MemberServiceImpl implements MemberService {
                         .email(request.getEmail())
                         .build();
 
-                //이메일 전번 중복검사
-                if(memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()){
-                    throw new CustomException(MemberError.CONFLICT,"이미 사용중인 이메일 또는 전화번호입니다.");
+                if (memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()) {
+                    throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");
                 }
 
                 memberRepository.save(member);
@@ -148,21 +180,29 @@ public class MemberServiceImpl implements MemberService {
                         .email(request.getEmail())
                         .build();
 
-                //이메일 전번 중복검사
-                if(memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()){
-                    throw new CustomException(MemberError.CONFLICT,"이미 사용중인 이메일 또는 전화번호입니다.");
+                if (memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()) {
+                    throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");
                 }
 
                 memberRepository.save(member);
                 break;
             }
             case PARENT: {
-                String studentUsername = request.getStudentId();
-                if (studentUsername == null || studentUsername.trim().isEmpty()) {
+                // 여러 자녀를 받을 수 있도록 수정 (List<String> studentId)
+                List<String> studentUsernames = request.getStudentId();
+                if (studentUsernames == null || studentUsernames.isEmpty()) {
                     throw new CustomException(MemberError.BAD_REQUEST); // 자녀 정보 필수
                 }
-                Member student = memberRepository.findByUsername(studentUsername)
-                        .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND)); // 자녀 존재 확인
+
+                List<Member> students = new ArrayList<>();
+                for (String username : studentUsernames) {
+                    if (username == null || username.trim().isEmpty()) {
+                        throw new CustomException(MemberError.BAD_REQUEST); // 빈 값 체크
+                    }
+                    Member student = memberRepository.findByUsername(username)
+                            .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND)); // 자녀 존재 확인
+                    students.add(student);
+                }
 
                 Member parent = Member.builder()
                         .username(request.getUsername())
@@ -171,11 +211,11 @@ public class MemberServiceImpl implements MemberService {
                         .name(request.getName())
                         .phone(request.getPhone())
                         .email(request.getEmail())
-                        .student(student)
+                        .students(students) // 여러 자녀 연결 (Member 엔티티에 List<Member> students 필드 필요)
                         .build();
-                //이메일 전번 중복검사
-                if(memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()){
-                    throw new CustomException(MemberError.CONFLICT,"이미 사용중인 이메일 또는 전화번호입니다.");
+
+                if (memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()) {
+                    throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");
                 }
 
                 memberRepository.save(parent);
