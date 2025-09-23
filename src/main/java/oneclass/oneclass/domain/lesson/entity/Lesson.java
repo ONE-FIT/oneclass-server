@@ -22,7 +22,7 @@ public class Lesson {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long lid;  // 필드명은 관례상 소문자로 시작
+    private Long lid;
 
     private String title;
 

@@ -12,7 +12,6 @@ import oneclass.oneclass.domain.task.entity.Task;
 import oneclass.oneclass.domain.task.entity.TaskAssignment;
 import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.repository.TaskAssignmentRepository;
-import oneclass.oneclass.domain.task.repository.TaskRepository;
 import oneclass.oneclass.global.auth.member.entity.Member;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
@@ -28,6 +27,7 @@ import java.util.stream.Collectors;
 public class LessonService {
     private final LessonRepository lessonRepository;
     private final TaskAssignmentRepository taskAssignmentRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public void assignLessonTasks(Long lid) {
@@ -89,6 +89,18 @@ public class LessonService {
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
         lessonRepository.delete(lesson);
+    }
+
+    @Transactional
+    public void addStudentToLesson(Long lessonId, Long studentId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
+
+        Member student = memberRepository.findById(studentId)
+                .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
+
+        lesson.getStudents().add(student);
+        lessonRepository.save(lesson);
     }
 
     public List<LessonResponse> findAll() {

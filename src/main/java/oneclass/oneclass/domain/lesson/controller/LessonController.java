@@ -1,10 +1,11 @@
 package oneclass.oneclass.domain.lesson.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.dto.request.CreateLessonRequest;
 import oneclass.oneclass.domain.lesson.dto.request.UpdateLessonRequest;
 import oneclass.oneclass.domain.lesson.dto.response.LessonResponse;
-import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.service.LessonService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +16,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/lesson")
 @CrossOrigin("*")
+@Tag(name = "Lesson API", description = "레슨 관련 API")
 public class LessonController {
     private final LessonService lessonService;
 
+    @Operation(summary = "만들기", description = "강의를 만들었습니다.")
     @PostMapping("/create")
     public LessonResponse createLesson(@RequestBody CreateLessonRequest request) {
         return lessonService.createLesson(request);
@@ -46,12 +49,20 @@ public class LessonController {
     /**
      * 특정 수업의 모든 학생에게 과제 배정
      */
-    @PostMapping("/{lessonId}/assign-tasks")
-    public ResponseEntity<String> assignTasks(@PathVariable Long lessonId) {
-        lessonService.assignLessonTasks(lessonId);
+    @PostMapping("/assign-tasks/{lid}")
+    public ResponseEntity<String> assignTasks(@PathVariable Long lid) {
+        lessonService.assignLessonTasks(lid);
         return ResponseEntity.ok("과제가 모든 학생에게 배정되었습니다.");
     }
 
     @GetMapping("/all")
     public List<LessonResponse> findAllLessons() {return lessonService.findAll();}
+
+    @PostMapping("/{lid}/students/{id}")
+    public ResponseEntity<String> addStudentToLesson(
+            @PathVariable Long lid,
+            @PathVariable Long id) {
+        lessonService.addStudentToLesson(lid, id);
+        return ResponseEntity.ok("학생이 수업에 등록되었습니다.");
+    }
 }
