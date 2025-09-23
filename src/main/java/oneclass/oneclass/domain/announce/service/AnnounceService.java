@@ -7,8 +7,9 @@ import oneclass.oneclass.domain.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.domain.announce.entity.Announce;
 import oneclass.oneclass.domain.announce.error.AnnounceError;
 import oneclass.oneclass.domain.announce.repository.AnnounceRepository;
-import oneclass.oneclass.domain.message.sms.longmessage.SmsSendLongMessageNow;
+import oneclass.oneclass.domain.sendon.sms.event.AnnounceSavedEvent;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class AnnounceService {
     private final AnnounceRepository announceRepository;
-    private final SmsSendLongMessageNow smsSendLongMessageNowScenario;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public AnnounceResponse createAnnounce(CreateAnnounceRequest request) {
@@ -35,8 +36,7 @@ public class AnnounceService {
         // 만약 메세지 발송 코드가 저장 코드 위에 있을 경우, 저장에 실패했지만 메세지는 전송되는 경우가 있을 수 있음
         Announce savedAnnounce = announceRepository.save(announce);
 
-        // 만들었을 때 모두에게 메세지 발송
-        smsSendLongMessageNowScenario.send(request.content(), request.title());
+        eventPublisher.publishEvent(new AnnounceSavedEvent(request.content(), request.title()));
 
         return AnnounceResponse.of(savedAnnounce);
     }
