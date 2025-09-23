@@ -26,4 +26,5 @@ public class Announce {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Member author;
+
 }

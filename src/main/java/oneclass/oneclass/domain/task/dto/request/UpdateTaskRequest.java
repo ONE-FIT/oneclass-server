@@ -1,10 +1,14 @@
 package oneclass.oneclass.domain.task.dto.request;
 
+import oneclass.oneclass.domain.lesson.entity.Lesson;
+
 import java.time.LocalDate;
 
 public record UpdateTaskRequest(
         Long id,
+        String title,
         String description,
-        LocalDate dueDate
+        LocalDate dueDate,
+        Lesson lid
 ) {
 }

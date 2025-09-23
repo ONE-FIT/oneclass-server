@@ -4,9 +4,9 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/oneclass
-    username: root
-    password:
-
+    username: gnlandkmg
+    password: Qwer1234!
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -29,7 +29,7 @@ spring:
           ssl:
             trust: smtp.gmail.com
   mvc:
-    path match:
+    pathmatch:
       matching-strategy: ANT_PATH_MATCHER
 
   http:

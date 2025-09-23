@@ -20,7 +20,6 @@ public class AnnounceController {
 
     @PostMapping("/create")
     public AnnounceResponse createAnnounce(@RequestBody CreateAnnounceRequest request) {
-        ResponseEntity.ok(Map.of("message", "공지가 생성되었습니다."));
         return announceService.createAnnounce(request);
     }
 
