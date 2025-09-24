@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.global.auth.member.entity.Member;
 
 import java.time.LocalDate;
@@ -40,4 +41,8 @@ public class Task {
 
     @Enumerated(EnumType.STRING)
     private TaskStatus taskStatus; // ASSIGNED / SUBMITTED / GRADED
+
+    @ManyToOne
+    @JoinColumn(name = "lesson_id") // FK 컬럼 지정
+    private Lesson lesson; // <-- 이 필드가 있어야 함
 }

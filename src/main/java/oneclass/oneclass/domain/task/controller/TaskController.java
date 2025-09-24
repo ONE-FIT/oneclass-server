@@ -18,7 +18,7 @@ public class TaskController {
     private final TaskService taskService;
 
     @PostMapping("/create/{lessonId}")
-    public TaskResponse createLessonTask(@RequestBody CreateTaskRequest request, Long lessonId) {
+    public TaskResponse createLessonTask(@RequestBody CreateTaskRequest request,@PathVariable Long lessonId) {
         return taskService.createLessonTask(request,lessonId);
     }
 

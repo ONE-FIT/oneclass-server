@@ -39,6 +39,7 @@ public class TaskService {
                 .title(request.title())
                 .description(request.description())
                 .dueDate(request.dueDate())
+                .teacher(lesson.getTeacher())
                 .build();
 
         Task savedTask = taskRepository.save(task);
@@ -61,6 +62,7 @@ public class TaskService {
                 .title(request.title())
                 .description(request.description())
                 .dueDate(request.dueDate())
+                .teacher(request.teacher())
                 .assignedBy(request.assignedBy())
                 .build();
         Task savedTask = taskRepository.save(task);
