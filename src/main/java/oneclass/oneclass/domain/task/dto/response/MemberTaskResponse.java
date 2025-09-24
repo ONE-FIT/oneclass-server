@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import oneclass.oneclass.global.auth.member.entity.Member;
 
-
 @Getter
 @AllArgsConstructor
 public class MemberTaskResponse {

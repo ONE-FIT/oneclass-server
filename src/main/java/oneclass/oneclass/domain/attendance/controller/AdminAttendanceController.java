@@ -1,7 +1,7 @@
 package oneclass.oneclass.domain.attendance.controller;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.attendance.dto.AttendanceResponse;
+import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 import oneclass.oneclass.domain.attendance.service.AdminAttendanceService;
 import org.springframework.web.bind.annotation.*;
@@ -32,9 +32,4 @@ public class AdminAttendanceController {
         LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ISO_DATE);
         return attendanceService.getAttendanceByDate(localDate);
     }
-
-//    @GetMapping("/all")
-//    public List<AttendanceResponse> getAllAttendanceRecords() {
-//        return attendanceService.getAllAttendanceRecords();
-//    }
 }

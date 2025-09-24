@@ -7,7 +7,7 @@ import oneclass.oneclass.domain.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.domain.announce.entity.Announce;
 import oneclass.oneclass.domain.announce.error.AnnounceError;
 import oneclass.oneclass.domain.announce.repository.AnnounceRepository;
-import oneclass.oneclass.domain.sendon.sms.event.AnnounceSavedEvent;
+import oneclass.oneclass.domain.sendon.event.AnnounceSavedEvent;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -36,6 +36,7 @@ public class AnnounceService {
         // 만약 메세지 발송 코드가 저장 코드 위에 있을 경우, 저장에 실패했지만 메세지는 전송되는 경우가 있을 수 있음
         Announce savedAnnounce = announceRepository.save(announce);
 
+        // Announce가 저장되면 이벤트 발생시킴
         eventPublisher.publishEvent(new AnnounceSavedEvent(request.content(), request.title()));
 
         return AnnounceResponse.of(savedAnnounce);

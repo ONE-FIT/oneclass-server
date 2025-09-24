@@ -28,9 +28,9 @@ public class LessonService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public void assignLessonTasks(Long lid) {
+    public void assignLessonTasks(Long lessonId) {
         // 1. lessonId로 Lesson 조회
-        Lesson lesson = lessonRepository.findById(lid)
+        Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
         // 2. 연관된 학생과 과제 가져오기
@@ -82,8 +82,8 @@ public class LessonService {
         return LessonResponse.of(lesson);
     }
 
-    public void deleteLesson(Long Lid) {
-        Lesson lesson = lessonRepository.findById(Lid)
+    public void deleteLesson(Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
         lessonRepository.delete(lesson);

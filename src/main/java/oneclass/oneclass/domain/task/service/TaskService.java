@@ -1,7 +1,6 @@
 package oneclass.oneclass.domain.task.service;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.sendon.sms.event.TaskSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
@@ -29,8 +28,6 @@ public class TaskService {
                 .build();
 
         Task savedTask = taskRepository.save(task);
-
-        eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
 
         return TaskResponse.of(savedTask);
     }
