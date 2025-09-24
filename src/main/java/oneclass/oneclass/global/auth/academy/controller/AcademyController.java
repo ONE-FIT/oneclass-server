@@ -39,7 +39,7 @@ public class AcademyController {
     // 비밀번호 초기화
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(@RequestBody ResetAcademyPasswordRequest request) {
-        academyService.resetPassword(request.getAcademyCode(), request.getAcademyName(), request.getVerificationCode());
+        academyService.resetPassword(request);
         return ResponseEntity.ok().build();
     }
 }
