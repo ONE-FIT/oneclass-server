@@ -46,14 +46,6 @@ public class LessonController {
         lessonService.deleteLesson(lessonId);
     }
 
-    /**
-     * 특정 수업의 모든 학생에게 과제 배정
-     */
-    @PostMapping("/assign-tasks/{lessonId}")
-    public ResponseEntity<String> assignTasks(@PathVariable Long lessonId) {
-        return ResponseEntity.ok("과제가 모든 학생에게 배정되었습니다.");
-    }
-
     @GetMapping("/all")
     public List<LessonResponse> findAllLessons() {return lessonService.findAll();}
 

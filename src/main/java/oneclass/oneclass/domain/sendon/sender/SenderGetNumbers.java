@@ -8,14 +8,14 @@ import oneclass.oneclass.domain.sendon.Executable;
 @Deprecated
 public class SenderGetNumbers extends BaseScenario implements Executable {
 
-  @Override
-  public void execute() throws InterruptedException {
-    GetUserNumbers getUserNumbers = sendon.sender.getUserNumbers(0, 10);
-    Log.d("GetUserNumbers: " + gson.toJson(getUserNumbers));
-  }
+    @Override
+    public void execute() throws InterruptedException {
+        GetUserNumbers getUserNumbers = sendon.sender.getUserNumbers(0, 10);
+        Log.d("GetUserNumbers: " + gson.toJson(getUserNumbers));
+    }
 
-  @Override
-  public String getDescription() {
-    return "[발신번호] 발신번호 목록조회";
-  }
+    @Override
+    public String getDescription() {
+        return "[발신번호] 발신번호 목록조회";
+    }
 }

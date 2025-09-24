@@ -13,12 +13,12 @@ public class KakaoSendAlimTalk extends BaseScenario implements Executable {
 
     @Override
     public void execute() throws InterruptedException {
-      SendAlimtalk sendAlimtalkResult = sendon.kakao.sendAlimtalk(new AlimtalkBuilder()
-          .setProfileId(KKO_SEND_PROFILE_ID)
-          .setTemplateId(KKO_TEMPLATE_ID)
-          .setTo(Arrays.asList(KKO_MOBILE_TO))
-      );
-      Log.d("SendAlimtalk: " + gson.toJson(sendAlimtalkResult));
+        SendAlimtalk sendAlimtalkResult = sendon.kakao.sendAlimtalk(new AlimtalkBuilder()
+                .setProfileId(KKO_SEND_PROFILE_ID)
+                .setTemplateId(KKO_TEMPLATE_ID)
+                .setTo(Arrays.asList(KKO_MOBILE_TO))
+        );
+        Log.d("SendAlimtalk: " + gson.toJson(sendAlimtalkResult));
     }
 
     @Override

@@ -16,28 +16,28 @@ import java.util.Arrays;
 @Deprecated
 public class SmsCancelShortMessageScenario extends BaseScenario implements ExecutableWithMessage {
 
-  private final MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
-  @Override
-  public void execute(String message) {
-    OffsetDateTime reservationTime = OffsetDateTime.now().plusMinutes(30);
-    Reservation reservation = new Reservation(reservationTime.toString());
-    SendSms sendSms = sendon.sms.sendSms(
-            SMS_MOBILE_FROM,
-            Arrays.asList(SMS_MOBILE_TO),
-            message,
-            true,
-            reservation);
-    Log.d("SendSms: " + gson.toJson(sendSms)); // sendon의 Log는 베포에 적합하지 않습니다.
+    @Override
+    public void execute(String message) {
+        OffsetDateTime reservationTime = OffsetDateTime.now().plusMinutes(30);
+        Reservation reservation = new Reservation(reservationTime.toString());
+        SendSms sendSms = sendon.sms.sendSms(
+                SMS_MOBILE_FROM,
+                Arrays.asList(SMS_MOBILE_TO),
+                message,
+                true,
+                reservation);
+        Log.d("SendSms: " + gson.toJson(sendSms)); // sendon의 Log는 베포에 적합하지 않습니다.
 
-    sleep(5000);
+        sleep(5000);
 
-    CancelGroup cancelGroup = sendon.sms.cancelGroup(sendSms.data.groupId);
-    Log.d("CancelGroup: " + gson.toJson(cancelGroup));
-  }
+        CancelGroup cancelGroup = sendon.sms.cancelGroup(sendSms.data.groupId);
+        Log.d("CancelGroup: " + gson.toJson(cancelGroup));
+    }
 
-  @Override
-  public String getDescription() {
-    return "[SMS] 예약문자 취소";
-  }
+    @Override
+    public String getDescription() {
+        return "[SMS] 예약문자 취소";
+    }
 }

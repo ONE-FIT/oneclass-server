@@ -8,8 +8,8 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import oneclass.oneclass.global.auth.member.error.TokenError;
+import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -21,8 +21,6 @@ import java.util.Date;
 @Component
 public class JwtProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtProvider.class);
-    private static final String AUTHORITIES_KEY = "auth";
 
     private final String secret;
     private final long tokenValidityInMilliseconds;
@@ -69,55 +67,13 @@ public class JwtProvider {
     }
 
 
-    // JWE 암호화
-    public String encyptToken(String plainJwt) throws Exception {
-        byte[] aesKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
-        JWEHeader header = new JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A128CBC_HS256);
-        Payload payload = new Payload(plainJwt);
-        JWEObject jweObject = new JWEObject(header, payload);
-        jweObject.encrypt(new DirectEncrypter(aesKey.getEncoded()));
-        return jweObject.serialize();
-    }
-
     // JWE 복호화
-    public String decyptToken(String jwtToken) throws Exception {
+    public String decryptToken(String jwtToken) throws Exception {
         byte[] aesKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
         SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
         JWEObject jweObject = JWEObject.parse(jwtToken);
         jweObject.decrypt(new DirectDecrypter(aesKey.getEncoded()));
         return jweObject.getPayload().toString();
-    }
-
-    // 토큰 생성(JWE 적용)
-    public ResponseToken generateTokenJwe(String username) {
-        Date now = new Date();
-        Date accessExpiry = new Date(now.getTime() + tokenValidityInMilliseconds);
-        String accessToken = Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(accessExpiry)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-
-        Date refreshExpiry = new Date(now.getTime() + tokenValidityInMilliseconds * 2);
-        String refreshToken = Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(refreshExpiry)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-
-        String encryptedAccessToken;
-        String encryptedRefreshToken;
-
-        try {
-            encryptedAccessToken = encyptToken(accessToken);
-            encryptedRefreshToken = encyptToken(refreshToken);
-        } catch (Exception e) {
-            throw new RuntimeException("토큰 암호화 실패", e);
-        }
-        return new ResponseToken(encryptedAccessToken, encryptedRefreshToken);
     }
 
     // 토큰 검증
@@ -126,11 +82,10 @@ public class JwtProvider {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
-            logger.info("만료된 JWT");
+            throw new CustomException(TokenError.TOKEN_EXPIRED);
         } catch (JwtException | IllegalArgumentException e) {
-            logger.error("잘못된 JWT: {}", e.getMessage());
+            throw new CustomException(TokenError.UNAUTHORIZED);
         }
-        return false;
     }
 
     // username 추출
@@ -143,15 +98,6 @@ public class JwtProvider {
                 .getSubject();
     }
 
-    // role 추출 (role claim이 들어간 경우만)
-    public String getRole(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .get("role", String.class);
-    }
     //로그아웃 로직
     public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");

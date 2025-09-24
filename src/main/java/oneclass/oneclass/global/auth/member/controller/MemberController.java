@@ -4,12 +4,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.global.auth.member.dto.*;
 import oneclass.oneclass.global.auth.member.dto.LoginRequest;
 import oneclass.oneclass.global.auth.member.dto.ResetPasswordRequest;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import oneclass.oneclass.global.auth.member.dto.SignupRequest;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.global.auth.member.service.MemberService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -22,6 +25,29 @@ public class MemberController {
 
     private final MemberService memberService;
     private final JwtProvider jwtProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
+
+
+    @DeleteMapping("/parent/{parentId}")
+    public ResponseEntity<Void> deleteParent(@PathVariable Long parentId) {
+        memberService.deleteParent(parentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/add-students")
+    public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
+        memberService.addStudentsToParent(
+                request.getUsername(),
+                request.getPassword(),
+                request.getStudentId()
+        );
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/signup-code")
+    public void sendSignupVerificationCode(@RequestParam String academyCode) {
+        memberService.sendSignupVerificationCode(academyCode);
+    }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
@@ -76,6 +102,10 @@ public class MemberController {
         // 4. 요청 username과 토큰 username 일치 확인
         if (!username.equals(tokenUsername)) {
             throw new IllegalArgumentException("토큰과 요청 username이 일치하지 않습니다.");
+        }
+        // refreshToken이 DB에 존재하는지 체크
+        if (!refreshTokenRepository.existsByUsername(username)) {
+            throw new IllegalArgumentException("이미 로그아웃된 사용자입니다.");
         }
 
         // 5. 로그아웃 처리
