@@ -15,9 +15,9 @@ public class KakaoUploadFriendWideImage extends BaseScenario implements Executab
 
     @Override
     public void execute() {
-      File file = new File("./img/aligo.png");
-      UploadFriendtalkWideImage uploadFriendtalkWideImage = sendon.kakao.uploadFriendtalkWideImage(file);
-      Log.d("UploadFriendtalkWideImage: " + gson.toJson(uploadFriendtalkWideImage));
+        File file = new File("./img/aligo.png");
+        UploadFriendtalkWideImage uploadFriendtalkWideImage = sendon.kakao.uploadFriendtalkWideImage(file);
+        Log.d("UploadFriendtalkWideImage: " + gson.toJson(uploadFriendtalkWideImage));
     }
 
     @Override

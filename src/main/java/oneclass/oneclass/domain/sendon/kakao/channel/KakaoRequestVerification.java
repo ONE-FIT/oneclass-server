@@ -10,8 +10,8 @@ public class KakaoRequestVerification extends BaseScenario implements Executable
 
     @Override
     public void execute() {
-      RequestAuthToken requestAuthToken = sendon.kakao.requestAuthToken(KKO_SEND_PROFILE_ID, KKO_CHANNEL_PHONE_NUMBER);
-      Log.d("RequestAuthToken: " + gson.toJson(requestAuthToken));
+        RequestAuthToken requestAuthToken = sendon.kakao.requestAuthToken(KKO_SEND_PROFILE_ID, KKO_CHANNEL_PHONE_NUMBER);
+        Log.d("RequestAuthToken: " + gson.toJson(requestAuthToken));
     }
 
 

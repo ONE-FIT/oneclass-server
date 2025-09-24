@@ -11,15 +11,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SmsSendLongMessageToAllNow extends AbstractLongMessage {
 
-  private final MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
-  @Override
-  protected Page<String> findTargets(Pageable pageable) {
-    return memberRepository.findAllPhones(pageable);
-  }
+    @Override
+    protected Page<String> findTargets(Pageable pageable) {
+        return memberRepository.findAllPhones(pageable);
+    }
 
-  @Override
-  public String getDescription() {
-    return "[LMS] 즉시문자 발송";
-  }
+    @Override
+    public String getDescription() {
+        return "[LMS] 즉시문자 발송";
+    }
 }

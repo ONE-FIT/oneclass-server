@@ -13,9 +13,9 @@ public class KakaoUploadFallbackImage extends BaseScenario implements Executable
 
     @Override
     public void execute() {
-      File file = new File("./img/aligo.png");
-      UploadFallbackImage uploadFallbackImage = sendon.kakao.uploadFallbackImage(Arrays.asList(file));
-      Log.d("UploadFallbackImage: " + gson.toJson(uploadFallbackImage));
+        File file = new File("./img/aligo.png");
+        UploadFallbackImage uploadFallbackImage = sendon.kakao.uploadFallbackImage(Arrays.asList(file));
+        Log.d("UploadFallbackImage: " + gson.toJson(uploadFallbackImage));
     }
 
     @Override
