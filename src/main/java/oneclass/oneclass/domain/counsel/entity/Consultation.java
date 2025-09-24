@@ -15,8 +15,11 @@ public class Consultation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-    private String phone;
+    private String name;//학생이름
+    private String phone;//학생전번
+    private String parentPhone;//학부모전번
+
+    private LocalDateTime date;//희망 날짜
 
     private String type;// 신규 or 재학생
     private String subject;//과목
