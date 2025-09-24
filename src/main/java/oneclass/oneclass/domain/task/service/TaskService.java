@@ -29,7 +29,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskAssignmentRepository taskAssignmentRepository;
     private final LessonRepository lessonRepository;
-    private final MemberRepository memberRepository;
 
     @Transactional
     public TaskResponse createLessonTask(CreateTaskRequest request, Long lessonId) {
