@@ -2,6 +2,7 @@ package oneclass.oneclass.global.auth.member.jwt;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.DirectDecrypter;
+import com.nimbusds.jose.crypto.DirectEncrypter;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -67,7 +68,7 @@ public class JwtProvider {
 
 
     // JWE 복호화
-    public String decryptToken(String jwtToken) throws Exception {
+    public String decyptToken(String jwtToken) throws Exception {
         byte[] aesKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
         SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
         JWEObject jweObject = JWEObject.parse(jwtToken);

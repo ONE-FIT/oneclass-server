@@ -5,14 +5,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.global.auth.member.dto.*;
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.global.auth.member.dto.LoginRequest;
+import oneclass.oneclass.global.auth.member.dto.ResetPasswordRequest;
+import oneclass.oneclass.global.auth.member.dto.ResponseToken;
+import oneclass.oneclass.global.auth.member.dto.SignupRequest;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.global.auth.member.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
@@ -66,7 +68,7 @@ public class MemberController {
     }
 
     @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
-    @PostMapping("/send-reset-password")
+    @PostMapping("/send-reset-password-email")
     public void sendResetPasswordEmail(@RequestBody Map<String, String> request) {
         String emailOrPhone = request.get("emailOrPhone");
         memberService.sendResetPasswordEmail(emailOrPhone);
@@ -88,10 +90,16 @@ public class MemberController {
         if (token == null) {
             throw new IllegalArgumentException("유효한 토큰이 필요합니다.");
         }
+
+        // 2. 토큰 검증
         if (!jwtProvider.validateToken(token)) {
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
+
+        // 3. 토큰에서 username 추출
         String tokenUsername = jwtProvider.getUsername(token);
+
+        // 4. 요청 username과 토큰 username 일치 확인
         if (!username.equals(tokenUsername)) {
             throw new IllegalArgumentException("토큰과 요청 username이 일치하지 않습니다.");
         }
@@ -100,6 +108,7 @@ public class MemberController {
             throw new IllegalArgumentException("이미 로그아웃된 사용자입니다.");
         }
 
+        // 5. 로그아웃 처리
         memberService.logout(username);
     }
 }

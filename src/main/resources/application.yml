@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/oneclass
     username: root
-    password: 
+    password:
 
   jpa:
     hibernate:
@@ -19,7 +19,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: abcb090125@gmail.com
-    password:   
+    password:
     properties:
       mail:
         smtp:
@@ -29,7 +29,7 @@ spring:
           ssl:
             trust: smtp.gmail.com
   mvc:
-    path match:
+    pathmatch:
        matching-strategy: ANT_PATH_MATCHER
 
   http:
@@ -51,3 +51,5 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
+toss:
+  secret-key: test_sk_xxxxxxxxxxxxxxxxx

@@ -21,7 +21,6 @@ public class ConsultationDetailResponse {
         res.setSubject(consultation.getSubject());
         res.setDescription(consultation.getDescription());
         res.setStatus(consultation.getStatus());
-        // 필요하다면 scheduleTime 등도 추가
         return res;
     }
 }

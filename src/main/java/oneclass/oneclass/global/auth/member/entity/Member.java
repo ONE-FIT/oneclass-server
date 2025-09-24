@@ -21,8 +21,8 @@ public class Member {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String username;//userId
-    private String password;//비번
+    private String username; // 이름
+    private String password; // 비번
 
     @Column(nullable = false)
     private String name;//이름
