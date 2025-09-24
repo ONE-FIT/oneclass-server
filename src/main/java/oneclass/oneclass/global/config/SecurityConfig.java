@@ -22,7 +22,7 @@ import org.springframework.web.filter.CorsFilter;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-
+    private final JwtProvider jwtProvider;
 
     // PasswordEncoder는 BCryptPasswordEncoder를 사용
     @Bean
@@ -38,18 +38,21 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/member/**",
-                                "/member/login",
-                                "/member/signup-code",
-                                "/consultations/request",
-                                "/consultations/detail",
-                                "/consultations/schedule",
-                                "/consultations/change-status", //원래 상태변경은 관리자용인데 일단 테스트로 permitAll
-                                "/academy/**").permitAll()//테스트용으로 관리자 권한없이 전체 스케쥴 확인
-//                        .requestMatchers("/api/consultations/schedule").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
+                        .requestMatchers("/member/signup",
+                                        "/member/login",
+                                        "/consultations/request",
+                                        "/consultations/detail",
+                                        "/lesson/**",
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**"
+                                ).permitAll()
+                        .requestMatchers("/api/consultations/schedule",
+                                "/attendance",
+                                "attendance/date/",
+                                "attendance/member/").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
-                .sessionManagement((session) -> session
+                        .addFilterBefore(new JwtFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
+                        .sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
 
