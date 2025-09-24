@@ -68,7 +68,7 @@ public class JwtProvider {
 
 
     // JWE 복호화
-    public String decyptToken(String jwtToken) throws Exception {
+    public String decryptToken(String jwtToken) throws Exception {
         byte[] aesKeyBytes = secret.getBytes(StandardCharsets.UTF_8);
         SecretKeySpec aesKey = new SecretKeySpec(aesKeyBytes, "AES");
         JWEObject jweObject = JWEObject.parse(jwtToken);
