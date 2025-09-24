@@ -1,7 +1,7 @@
 package oneclass.oneclass.domain.task.controller;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.lesson.entity.Lesson;
+import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
@@ -18,8 +18,14 @@ public class TaskController {
     private final TaskService taskService;
 
     @PostMapping("/create/{lessonId}")
-    public TaskResponse createTask(@RequestBody CreateTaskRequest request, Long lessonId) {
-        return taskService.createTask(request,lessonId);
+    public TaskResponse createLessonTask(@RequestBody CreateTaskRequest request, Long lessonId) {
+        return taskService.createLessonTask(request,lessonId);
+    }
+
+    @PostMapping("/createOne/{}")
+    public TaskResponse createEachTask(@RequestBody CreateEachTaskRequest request) {
+        return taskService.createEachTask(request);
+
     }
 
     @GetMapping("/id/{id}")
@@ -32,10 +38,13 @@ public class TaskController {
         return taskService.findTaskByTitle(title);
     }
 
+//    @GetMapping("/status/{status}")
+//    public TaskResponse findTaskByStatus(@PathVariable TaskStatus status) {
+//        return taskService.findTaskByStatus(status);
+//    }
+
     @PatchMapping()
-    public TaskResponse updateTask(@RequestBody UpdateTaskRequest request) {
-        return taskService.updateTask(request);
-    }
+    public TaskResponse updateTask(@RequestBody UpdateTaskRequest request) { return taskService.updateTask(request); }
 
     @DeleteMapping("/{id}")
     public void deleteTask(@PathVariable Long id) {

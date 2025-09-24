@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
-import oneclass.oneclass.domain.lesson.service.LessonService;
+import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
@@ -16,6 +16,7 @@ import oneclass.oneclass.domain.task.error.TaskError;
 import oneclass.oneclass.domain.task.repository.TaskAssignmentRepository;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
 import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 
@@ -27,11 +28,11 @@ import java.util.stream.Collectors;
 public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskAssignmentRepository taskAssignmentRepository;
-    private final LessonService lessonService;
     private final LessonRepository lessonRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional
-    public TaskResponse createTask(CreateTaskRequest request, Long lessonId) {
+    public TaskResponse createLessonTask(CreateTaskRequest request, Long lessonId) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
@@ -56,6 +57,17 @@ public class TaskService {
         return TaskResponse.of(savedTask);
     }
 
+    public TaskResponse createEachTask(CreateEachTaskRequest request) {
+        Task task = Task.builder()
+                .title(request.title())
+                .description(request.description())
+                .dueDate(request.dueDate())
+                .assignedBy(request.assignedBy())
+                .build();
+        Task savedTask = taskRepository.save(task);
+        return TaskResponse.of(savedTask);
+    }
+
     public TaskResponse findTaskById(Long id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
@@ -67,6 +79,12 @@ public class TaskService {
                 .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
         return TaskResponse.of(task);
     }
+
+//    public TaskResponse findTaskByStatus(TaskStatus status) {
+//        Task task = taskRepository.findByTaskStatus(status)
+//                .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
+//        return TaskResponse.of(task);
+//    }
 
 
     public TaskResponse updateTask(UpdateTaskRequest request) {
