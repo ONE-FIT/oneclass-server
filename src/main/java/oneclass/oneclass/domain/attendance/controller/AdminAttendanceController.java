@@ -2,24 +2,41 @@ package oneclass.oneclass.domain.attendance.controller;
 
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.dto.AttendanceResponse;
-import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 import oneclass.oneclass.domain.attendance.service.AdminAttendanceService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
-@RequestMapping("/attendance")
+@RequestMapping("/admin/attendance")
 @RequiredArgsConstructor
 public class AdminAttendanceController {
 
     private final AdminAttendanceService attendanceService;
 
-    @GetMapping
-    public List<AttendanceResponse> getAttendanceByStatus(@RequestParam AttendanceStatus status) {
-        return attendanceService.getTodayMembersByStatus(status);
+    @GetMapping("/present")
+    public List<AttendanceResponse> getTodayPresentMembers() {
+        return attendanceService.getTodayPresentMembers();
+    }
+
+    @GetMapping("/absent")
+    public List<AttendanceResponse> getTodayAbsentMembers() {
+        return attendanceService.getTodayAbsentMembers();
+    }
+
+    @GetMapping("/late")
+    public List<AttendanceResponse> getTodayLateMembers() {
+        return attendanceService.getTodayLateMembers();
+    }
+
+    @GetMapping("/excused")
+    public List<AttendanceResponse> getTodayExcusedMembers() {
+        return attendanceService.getTodayExcusedMembers();
     }
 
     @GetMapping("/member/{memberId}")
@@ -33,8 +50,8 @@ public class AdminAttendanceController {
         return attendanceService.getAttendanceByDate(localDate);
     }
 
-//    @GetMapping("/all")
-//    public List<AttendanceResponse> getAllAttendanceRecords() {
-//        return attendanceService.getAllAttendanceRecords();
-//    }
+    @GetMapping("/all")
+    public List<AttendanceResponse> getAllAttendanceRecords() {
+        return attendanceService.getAllAttendanceRecords();
+    }
 }

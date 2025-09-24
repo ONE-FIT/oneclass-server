@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,9 +42,13 @@ public class JwtFilter extends OncePerRequestFilter {
         return path.startsWith("/member/signup")
                 || path.startsWith("/member/login") // 로그인/회원가입
                 || path.startsWith("/consultations/")
-                || path.startsWith("/swagger-ui/**")    // 스웨거 UI
+                || path.startsWith("/swagger-ui/")    // 스웨거 UI
                 || path.startsWith("/v3/api-docs")    // 스웨거 문서
-                || path.startsWith("/error");         // 에러 엔드포인트
+                || path.startsWith("/error")         // 에러 엔드포인트
+                || path.startsWith("/academy/**")
+                || path.startsWith("/member/signup-code")
+                || path.startsWith("/member/change-status")
+                || path.startsWith("/member/send-reset-password");
     }
 
     // JWE compact serialization 은 점(.) 이 4개라 5개 조각
@@ -56,6 +61,7 @@ public class JwtFilter extends OncePerRequestFilter {
         return dots == 4;
     }
 
+    //사용안하지만 상속한거에서 override 한거기에 남겨둬야됨
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -79,7 +85,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             // JWE면 복호화, 아니면 평문 JWT 그대로 사용
-            String plainJwt = looksLikeJwe(token) ? jwtProvider.decyptToken(token) : token;
+            String plainJwt = looksLikeJwe(token) ? jwtProvider.decryptToken(token) : token;
 
             // 검증 실패 시 컨텍스트 설정하지 않고 통과
             if (!jwtProvider.validateToken(plainJwt)) {

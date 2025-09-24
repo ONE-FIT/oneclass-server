@@ -19,47 +19,47 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SmsSendLongMessageSchedule extends BaseScenario {
 
-  private final MemberRepository memberRepository;
+    private final MemberRepository memberRepository;
 
-  public void execute(String message, String title, String reservationTime) {
-    Reservation reservation = new Reservation(reservationTime); // 동적으로 받은 예약 시간
-    Pageable pageable = PageRequest.of(0, PHONE_PAGE_SIZE);
-    Page<String> phonePage;
+    public void execute(String message, String title, String reservationTime) {
+        Reservation reservation = new Reservation(reservationTime); // 동적으로 받은 예약 시간
+        Pageable pageable = PageRequest.of(0, PHONE_PAGE_SIZE);
+        Page<String> phonePage;
 
-    do {
-      phonePage = findTargets(pageable);
-      if (!phonePage.getContent().isEmpty()) {
-        try {
-          SendSms sendSms = sendon.sms.sendMms(new MmsBuilder()
-                  .setFrom(SMS_MOBILE_FROM)
-                  .setTo(phonePage.getContent())
-                  .setTitle(title)
-                  .setMessage(message)
-                  .setReservation(reservation)
-                  .setIsAd(false)
-          );
-          log.info("예약 LMS 발송 완료. Page: {}, Count: {}, Reservation: {}",
-                  phonePage.getNumber(), phonePage.getNumberOfElements(), reservationTime);
-          log.debug("응답: {}", gson.toJson(sendSms));
-        } catch (Exception e) {
-          log.error("예약 LMS 발송 중 오류 발생. Page: {}, Size: {}, Reservation: {}",
-                  phonePage.getNumber(), phonePage.getSize(), reservationTime, e);
-        }
-      }
-      pageable = phonePage.nextPageable();
-    } while (phonePage.hasNext());
-  }
+        do {
+            phonePage = findTargets(pageable);
+            if (!phonePage.getContent().isEmpty()) {
+                try {
+                    SendSms sendSms = sendon.sms.sendMms(new MmsBuilder()
+                            .setFrom(SMS_MOBILE_FROM)
+                            .setTo(phonePage.getContent())
+                            .setTitle(title)
+                            .setMessage(message)
+                            .setReservation(reservation)
+                            .setIsAd(false)
+                    );
+                    log.info("예약 LMS 발송 완료. Page: {}, Count: {}, Reservation: {}",
+                            phonePage.getNumber(), phonePage.getNumberOfElements(), reservationTime);
+                    log.debug("응답: {}", gson.toJson(sendSms));
+                } catch (Exception e) {
+                    log.error("예약 LMS 발송 중 오류 발생. Page: {}, Size: {}, Reservation: {}",
+                            phonePage.getNumber(), phonePage.getSize(), reservationTime, e);
+                }
+            }
+            pageable = phonePage.nextPageable();
+        } while (phonePage.hasNext());
+    }
 
-  protected Page<String> findTargets(Pageable pageable) {
-    return memberRepository.findAllPhones(pageable);
-  }
+    protected Page<String> findTargets(Pageable pageable) {
+        return memberRepository.findAllPhones(pageable);
+    }
 
-  @Async
-  public void send(String message, String title, String reservationTime) {
-    execute(message, title, reservationTime);
-  }
+    @Async
+    public void send(String message, String title, String reservationTime) {
+        execute(message, title, reservationTime);
+    }
 
-  public String getDescription() {
-    return "[LMS] 예약문자 발송";
-  }
+    public String getDescription() {
+        return "[LMS] 예약문자 발송";
+    }
 }

@@ -32,4 +32,3 @@ public class Attendance {
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
 }
-

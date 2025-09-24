@@ -9,15 +9,15 @@ import oneclass.oneclass.domain.sendon.Executable;
 @Deprecated
 public class KakaoGetTemplateList extends BaseScenario implements Executable {
 
-  @Override
-  public void execute() throws InterruptedException {
-    GetTemplates  getTemplates = sendon.kakao.getTemplates(KKO_SEND_PROFILE_ID, null, 1, null, TemplateStatus.APPROVED, null);
-    Log.d("GetTemplates: " + gson.toJson(getTemplates));
-  }
+    @Override
+    public void execute() throws InterruptedException {
+        GetTemplates  getTemplates = sendon.kakao.getTemplates(KKO_SEND_PROFILE_ID, null, 1, null, TemplateStatus.APPROVED, null);
+        Log.d("GetTemplates: " + gson.toJson(getTemplates));
+    }
 
-  @Override
-  public String getDescription() {
-    return "[카카오] 템플릿 목록 조회";
-  }
+    @Override
+    public String getDescription() {
+        return "[카카오] 템플릿 목록 조회";
+    }
 
 }
