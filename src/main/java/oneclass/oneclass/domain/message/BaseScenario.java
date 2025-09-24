@@ -10,16 +10,16 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class BaseScenario {
   private static final Dotenv dotenv = Dotenv.load();
 
-  protected String USER_ID;
-  protected String USER_APIKEY;
-  protected String SMS_MOBILE_TO;
-  protected String SMS_MOBILE_FROM;
-  protected String KKO_MOBILE_TO;
-  protected String KKO_TEMPLATE_ID;
-  protected String KKO_CHANNEL_ID;
-  protected String KKO_TOKEN_YOU_RECEIVED;
-  protected String KKO_SEND_PROFILE_ID;
-  protected String KKO_CHANNEL_PHONE_NUMBER;
+  protected final String USER_ID;
+  protected final String USER_APIKEY;
+  protected final String SMS_MOBILE_TO;
+  protected final String SMS_MOBILE_FROM;
+  protected final String KKO_MOBILE_TO;
+  protected final String KKO_TEMPLATE_ID;
+  protected final String KKO_CHANNEL_ID;
+  protected final String KKO_TOKEN_YOU_RECEIVED;
+  protected final String KKO_SEND_PROFILE_ID;
+  protected final String KKO_CHANNEL_PHONE_NUMBER;
 
   public abstract String getDescription();
 
@@ -47,7 +47,6 @@ public abstract class BaseScenario {
   }
 
   protected void handleException(Exception e) {
-    System.err.println("에러 응답:");
     log.error("에러 응답 발생", e);
   }
 
@@ -70,7 +69,7 @@ public abstract class BaseScenario {
           Thread.sleep(1000); // TODO: 다른 방법 사용하기
           seconds++;
           dots.append("😎");
-          System.out.print("\r[" + seconds + "]" + dots);
+          log.debug("[{}]{}", seconds, dots);
         }
       } catch (InterruptedException e) {
         // Thread interrupted, stop printing
