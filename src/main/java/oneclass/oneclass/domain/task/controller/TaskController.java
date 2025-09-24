@@ -1,6 +1,7 @@
 package oneclass.oneclass.domain.task.controller;
 
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
@@ -16,9 +17,9 @@ import java.util.List;
 public class TaskController {
     private final TaskService taskService;
 
-    @PostMapping("/create")
-    public TaskResponse createTask(@RequestBody CreateTaskRequest request) {
-        return taskService.createTask(request);
+    @PostMapping("/create/{lessonId}")
+    public TaskResponse createTask(@RequestBody CreateTaskRequest request, Long lessonId) {
+        return taskService.createTask(request,lessonId);
     }
 
     @GetMapping("/id/{id}")

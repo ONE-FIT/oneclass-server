@@ -1,12 +1,21 @@
 package oneclass.oneclass.domain.task.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.lesson.entity.Lesson;
+import oneclass.oneclass.domain.lesson.error.LessonError;
+import oneclass.oneclass.domain.lesson.repository.LessonRepository;
+import oneclass.oneclass.domain.lesson.service.LessonService;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
 import oneclass.oneclass.domain.task.entity.Task;
+import oneclass.oneclass.domain.task.entity.TaskAssignment;
+import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.error.TaskError;
+import oneclass.oneclass.domain.task.repository.TaskAssignmentRepository;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
+import oneclass.oneclass.global.auth.member.entity.Member;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 
@@ -17,15 +26,35 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskService {
     private final TaskRepository taskRepository;
+    private final TaskAssignmentRepository taskAssignmentRepository;
+    private final LessonService lessonService;
+    private final LessonRepository lessonRepository;
 
-    public TaskResponse createTask(CreateTaskRequest request) {
+    @Transactional
+    public TaskResponse createTask(CreateTaskRequest request, Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
+
         Task task = Task.builder()
                 .title(request.title())
                 .description(request.description())
                 .dueDate(request.dueDate())
                 .build();
-        return TaskResponse.of(taskRepository.save(task));
-        // 리턴시 assignedTo 에게 메세지 발송
+        lessonService.assignLessonTasks(task.getId());
+
+        Task savedTask = taskRepository.save(task);
+
+        // 학생들한테 바로 할당
+        for (Member student : lesson.getStudents()) {
+            TaskAssignment assignment = new TaskAssignment();
+            assignment.setTask(savedTask);
+            assignment.setStudent(student);
+            assignment.setTaskStatus(TaskStatus.ASSIGNED);
+
+            taskAssignmentRepository.save(assignment);
+        }
+
+        return TaskResponse.of(savedTask);
     }
 
     public TaskResponse findTaskById(Long id) {
