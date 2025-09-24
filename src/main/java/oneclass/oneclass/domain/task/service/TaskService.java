@@ -40,7 +40,6 @@ public class TaskService {
                 .description(request.description())
                 .dueDate(request.dueDate())
                 .build();
-        lessonService.assignLessonTasks(task.getId());
 
         Task savedTask = taskRepository.save(task);
 
