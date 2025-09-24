@@ -26,9 +26,9 @@ public class LessonController {
         return lessonService.createLesson(request);
     }
 
-    @GetMapping("/id/{lid}")
-    public LessonResponse findLessonById(@PathVariable Long lid) {
-        return lessonService.findLessonById(lid);
+    @GetMapping("/id/{lessonId}")
+    public LessonResponse findLessonById(@PathVariable Long lessonId) {
+        return lessonService.findLessonById(lessonId);
     }
 
     @GetMapping("/title/{title}")
@@ -41,28 +41,19 @@ public class LessonController {
         return lessonService.updateLesson(request);
     }
 
-    @DeleteMapping("/{lid}")
-    public void deleteLesson(@PathVariable Long lid) {
-        lessonService.deleteLesson(lid);
-    }
-
-    /**
-     * 특정 수업의 모든 학생에게 과제 배정
-     */
-    @PostMapping("/assign-tasks/{lid}")
-    public ResponseEntity<String> assignTasks(@PathVariable Long lid) {
-        lessonService.assignLessonTasks(lid);
-        return ResponseEntity.ok("과제가 모든 학생에게 배정되었습니다.");
+    @DeleteMapping("/{lessonId}")
+    public void deleteLesson(@PathVariable Long lessonId) {
+        lessonService.deleteLesson(lessonId);
     }
 
     @GetMapping("/all")
     public List<LessonResponse> findAllLessons() {return lessonService.findAll();}
 
-    @PostMapping("/{lid}/students/{id}")
+    @PostMapping("/{lessonId}/students/{id}")
     public ResponseEntity<String> addStudentToLesson(
-            @PathVariable Long lid,
+            @PathVariable Long lessonId,
             @PathVariable Long id) {
-        lessonService.addStudentToLesson(lid, id);
+        lessonService.addStudentToLesson(lessonId, id);
         return ResponseEntity.ok("학생이 수업에 등록되었습니다.");
     }
 }

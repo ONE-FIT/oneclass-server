@@ -31,6 +31,9 @@ public class Task {
     @JoinColumn(name = "assigned_by_id")
     private Member teacher; // 출제자
 
+    @Transient
+    private Member assignedBy;
+
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TaskAssignment> assignments;
 
