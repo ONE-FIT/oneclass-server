@@ -24,6 +24,7 @@ public class Task {
     private Long id;
 
     private String title;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -31,16 +32,10 @@ public class Task {
     @JoinColumn(name = "assigned_by_id")
     private Member teacher; // 출제자
 
-    @Transient
-    private Member assignedBy;
-
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TaskAssignment> assignments;
 
     private LocalDate dueDate; // 마감 기한
-
-    @Enumerated(EnumType.STRING)
-    private TaskStatus taskStatus; // ASSIGNED / SUBMITTED / GRADED
 
     @ManyToOne
     @JoinColumn(name = "lesson_id") // FK 컬럼 지정

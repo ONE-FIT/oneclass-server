@@ -1,11 +1,17 @@
 package oneclass.oneclass.domain.task.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import oneclass.oneclass.global.auth.member.entity.Member;
 
 @Entity
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 public class TaskAssignment {
 
     @Id

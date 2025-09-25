@@ -38,11 +38,6 @@ public class TaskController {
         return taskService.findTaskByTitle(title);
     }
 
-//    @GetMapping("/status/{status}")
-//    public TaskResponse findTaskByStatus(@PathVariable TaskStatus status) {
-//        return taskService.findTaskByStatus(status);
-//    }
-
     @PatchMapping()
     public TaskResponse updateTask(@RequestBody UpdateTaskRequest request) { return taskService.updateTask(request); }
 
