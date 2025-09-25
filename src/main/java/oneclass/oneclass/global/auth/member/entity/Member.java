@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import oneclass.oneclass.global.auth.academy.entity.Academy;
+
 import java.util.ArrayList;
 import java.util.List;
 

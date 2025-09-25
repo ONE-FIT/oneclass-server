@@ -17,5 +17,4 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("select m.phone from Member m")
     Page<String> findAllPhones(Pageable pageable);
 
-    Role role(Role role);
 }

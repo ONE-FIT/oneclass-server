@@ -9,10 +9,10 @@ import oneclass.oneclass.global.auth.academy.entity.Academy;
 import oneclass.oneclass.global.auth.academy.entity.AcademyRefreshToken;
 import oneclass.oneclass.global.auth.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.global.auth.academy.entity.Role;
-import oneclass.oneclass.global.auth.academy.repository.AcademyRepository;
-import oneclass.oneclass.global.auth.academy.repository.AcademyRefreshTokenRepository;
-import oneclass.oneclass.global.auth.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.global.auth.academy.error.AuthError;
+import oneclass.oneclass.global.auth.academy.repository.AcademyRefreshTokenRepository;
+import oneclass.oneclass.global.auth.academy.repository.AcademyRepository;
+import oneclass.oneclass.global.auth.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
@@ -147,13 +147,12 @@ public class AcademyServiceImpl implements AcademyService {
         if (!academy.getAcademyName().equals(request.getAcademyName())) {
             throw new CustomException(AuthError.NOT_FOUND);
         }
-        if (academy.getAcademyCode().equals(request.getAcademyCode())) {
             // 비밀번호 일치 확인
-            if (!request.getNewPassword().equals(request.getCheekPassword())) {
+            if (!request.getNewPassword().equals(request.getCheckPassword())) {
                 throw new CustomException(AuthError.PASSWORD_MISMATCH);
             }
             academy.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        }
+
 
         academyRepository.save(academy);
 
