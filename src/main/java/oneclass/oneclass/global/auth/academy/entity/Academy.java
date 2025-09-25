@@ -17,6 +17,7 @@ public class Academy {
 
     private String academyName;
     private String password;
+    private String checkPassword;
     private String email;
 
     @Enumerated(EnumType.STRING)
@@ -27,10 +28,11 @@ public class Academy {
     private List<Member> members = new ArrayList<>();
 
     @Builder
-    public Academy(String academyCode, String academyName, String password, String email, Role role, List<Member> members) {
+    public Academy(String academyCode, String academyName, String password, String email, Role role, List<Member> members, String checkPassword) {
         this.academyCode = academyCode;
         this.academyName = academyName;
         this.password = password;
+        this.checkPassword = checkPassword;
         this.email = email;
         this.role = role;
         this.members = (members == null) ? new ArrayList<>() : members;

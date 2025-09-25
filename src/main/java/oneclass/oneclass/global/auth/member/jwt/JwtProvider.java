@@ -66,6 +66,22 @@ public class JwtProvider {
         return new ResponseToken(accessToken, refreshToken);
     }
 
+    public String generateAccessToken(String username, String role) {
+        Date now = new Date();
+        Date accessExpiry = new Date(now.getTime() + tokenValidityInMilliseconds);
+
+        JwtBuilder builder = Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(accessExpiry);
+
+        if (role != null) {
+            builder.claim("role", role);
+        }
+
+        return builder.signWith(key, SignatureAlgorithm.HS256).compact();
+    }
+
 
     // JWE 복호화
     public String decryptToken(String jwtToken) throws Exception {

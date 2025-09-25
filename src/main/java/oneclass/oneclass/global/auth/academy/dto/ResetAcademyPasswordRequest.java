@@ -10,4 +10,5 @@ public class ResetAcademyPasswordRequest {
     private String academyName;
     private String verificationCode;
     private String newPassword;
+    private String cheekPassword;
 }

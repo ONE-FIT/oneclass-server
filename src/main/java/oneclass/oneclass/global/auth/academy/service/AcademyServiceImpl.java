@@ -57,6 +57,11 @@ public class AcademyServiceImpl implements AcademyService {
             randomAcademyCode = generateRandomCode(8);
         } while (academyRepository.findByAcademyCode(randomAcademyCode).isPresent());
 
+        // 비밀번호 일치 확인
+        if (!request.getPassword().equals(request.getCheckPassword())) {
+            throw new CustomException(AuthError.PASSWORD_MISMATCH);
+        }
+
         Academy academy = new Academy();
         academy.setRole(role);
         academy.setAcademyCode(randomAcademyCode);
@@ -142,8 +147,11 @@ public class AcademyServiceImpl implements AcademyService {
         if (!academy.getAcademyName().equals(request.getAcademyName())) {
             throw new CustomException(AuthError.NOT_FOUND);
         }
-        if (academy.getAcademyName().equals(request.getAcademyName()) && academy.getAcademyCode().equals(request.getAcademyCode())) {
-
+        if (academy.getAcademyCode().equals(request.getAcademyCode())) {
+            // 비밀번호 일치 확인
+            if (!request.getNewPassword().equals(request.getCheekPassword())) {
+                throw new CustomException(AuthError.PASSWORD_MISMATCH);
+            }
             academy.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
 
