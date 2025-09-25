@@ -1,7 +1,7 @@
 package oneclass.oneclass.domain.attendance.service;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.attendance.dto.AttendanceResponse;
+import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.Attendance;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 import oneclass.oneclass.domain.attendance.repository.AttendanceRepository;

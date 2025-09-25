@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.attendance.dto;
+package oneclass.oneclass.domain.attendance.dto.response;
 
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
