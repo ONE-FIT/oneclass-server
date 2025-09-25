@@ -7,7 +7,10 @@ import oneclass.oneclass.global.auth.academy.dto.ResetAcademyPasswordRequest;
 import oneclass.oneclass.global.auth.academy.service.AcademyService;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,7 +42,7 @@ public class AcademyController {
     // 비밀번호 초기화
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(@RequestBody ResetAcademyPasswordRequest request) {
-        academyService.resetPassword(request.getAcademyCode(), request.getAcademyName(), request.getVerificationCode());
+        academyService.resetPassword(request);
         return ResponseEntity.ok().build();
     }
 }

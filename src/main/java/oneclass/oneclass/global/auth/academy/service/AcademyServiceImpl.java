@@ -4,14 +4,15 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.global.auth.academy.dto.MadeRequest;
+import oneclass.oneclass.global.auth.academy.dto.ResetAcademyPasswordRequest;
 import oneclass.oneclass.global.auth.academy.entity.Academy;
 import oneclass.oneclass.global.auth.academy.entity.AcademyRefreshToken;
 import oneclass.oneclass.global.auth.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.global.auth.academy.entity.Role;
-import oneclass.oneclass.global.auth.academy.repository.AcademyRepository;
-import oneclass.oneclass.global.auth.academy.repository.AcademyRefreshTokenRepository;
-import oneclass.oneclass.global.auth.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.global.auth.academy.error.AuthError;
+import oneclass.oneclass.global.auth.academy.repository.AcademyRefreshTokenRepository;
+import oneclass.oneclass.global.auth.academy.repository.AcademyRepository;
+import oneclass.oneclass.global.auth.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.global.auth.member.dto.ResponseToken;
 import oneclass.oneclass.global.auth.member.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
@@ -46,16 +47,6 @@ public class AcademyServiceImpl implements AcademyService {
         }
         return sb.toString();
     }
-    //비번 랜덤생성
-    public String generateRandomPassword(int length) {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
-    }
 
     @Override
     public void madeAcademy(MadeRequest request) {
@@ -66,15 +57,19 @@ public class AcademyServiceImpl implements AcademyService {
             randomAcademyCode = generateRandomCode(8);
         } while (academyRepository.findByAcademyCode(randomAcademyCode).isPresent());
 
-        // 비밀번호 자동 생성
-        String randomPassword = generateRandomPassword(10); // 10자리 비밀번호
+        // 비밀번호 일치 확인
+        if (!request.getPassword().equals(request.getCheckPassword())) {
+            throw new CustomException(AuthError.PASSWORD_MISMATCH);
+        }
+
         Academy academy = new Academy();
         academy.setRole(role);
         academy.setAcademyCode(randomAcademyCode);
         academy.setAcademyName(request.getAcademyName());
-        academy.setPassword(passwordEncoder.encode(randomPassword));
+        academy.setEmail(request.getEmail());
+        academy.setPassword(passwordEncoder.encode(request.getPassword()));
         log.info("학원 코드: " + randomAcademyCode);
-        log.info("학원 평문 비밀번호: " + randomPassword); // 생성된 비밀번호 평문 로그
+
 
         academyRepository.save(academy);
 
@@ -133,12 +128,12 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
-    public void resetPassword(String academyCode, String academyName, String verificationCode){
+    public void resetPassword(ResetAcademyPasswordRequest request){
         // 인증코드 검증
-        AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(academyCode)
+        AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(request.getAcademyCode())
                 .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
 
-        if (!codeEntity.getCode().equals(verificationCode)) {
+        if (!codeEntity.getCode().equals(request.getVerificationCode())) {
             throw new CustomException(AuthError.UNAUTHORIZED);
         }
         // 인증코드 만료 검증
@@ -147,30 +142,20 @@ public class AcademyServiceImpl implements AcademyService {
         }
 
         // 학원 정보 조회 및 이름 확인
-        Academy academy = academyRepository.findByAcademyCode(academyCode)
+        Academy academy = academyRepository.findByAcademyCode(request.getAcademyCode())
                 .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
-        if (!academy.getAcademyName().equals(academyName)) {
+        if (!academy.getAcademyName().equals(request.getAcademyName())) {
             throw new CustomException(AuthError.NOT_FOUND);
         }
+            // 비밀번호 일치 확인
+            if (!request.getNewPassword().equals(request.getCheckPassword())) {
+                throw new CustomException(AuthError.PASSWORD_MISMATCH);
+            }
+            academy.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
-        // 임시 비밀번호 생성 및 변경
-        String tempPassword = UUID.randomUUID().toString().substring(0, 10);
-        academy.setPassword(passwordEncoder.encode(tempPassword));
+
         academyRepository.save(academy);
 
-        // 인증코드 사용 완료 시 삭제
-        academyVerificationCodeRepository.delete(codeEntity);
-
-        String to = academy.getEmail();
-        String subject = "임시 비밀번호 안내";
-        String text = "임시 비밀번호: " + tempPassword;
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
-
-        javaMailSender.send(message);
     }
 
 }

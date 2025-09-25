@@ -1,26 +1,39 @@
 package oneclass.oneclass.global.auth.member.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class RefreshToken {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(length = 100)
+    private String username;   // PK = username (유저당 1개)
 
-    private String username;//토큰 소유자
-    private String token;//refreshToken값
+    @Column(nullable = false, length = 300)
+    private String token;
 
-    private LocalDateTime expiryDate;//만료일
+    @Column(nullable = false)
+    private LocalDateTime expiryDate;
+
+    public boolean isExpired() {
+        return expiryDate.isBefore(LocalDateTime.now());
+    }
+
+    public void rotate(String newToken, LocalDateTime newExpiry) {
+        this.token = newToken;
+        this.expiryDate = newExpiry;
+    }
+
 }
