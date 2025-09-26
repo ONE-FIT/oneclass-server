@@ -1,7 +1,6 @@
 package oneclass.oneclass.global.auth.member.repository;
 
 import oneclass.oneclass.global.auth.member.entity.Member;
-import oneclass.oneclass.global.auth.member.entity.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

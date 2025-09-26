@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
+import oneclass.oneclass.domain.sendon.event.TaskAssignmentSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
-import oneclass.oneclass.domain.sendon.sms.event.TaskSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
@@ -17,7 +17,6 @@ import oneclass.oneclass.domain.task.error.TaskError;
 import oneclass.oneclass.domain.task.repository.TaskAssignmentRepository;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
 import oneclass.oneclass.global.auth.member.entity.Member;
-import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -31,12 +30,12 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskAssignmentRepository taskAssignmentRepository;
     private final LessonRepository lessonRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public TaskResponse createLessonTask(CreateTaskRequest request, Long lessonId) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
-//     private final ApplicationEventPublisher eventPublisher;
 
         Task task = Task.builder()
                 .title(request.title())
@@ -55,6 +54,8 @@ public class TaskService {
             assignment.setTaskStatus(TaskStatus.ASSIGNED);
 
             taskAssignmentRepository.save(assignment);
+
+            eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title()));
         }
 
         return TaskResponse.of(savedTask);
@@ -66,10 +67,8 @@ public class TaskService {
                 .description(request.description())
                 .dueDate(request.dueDate())
                 .teacher(request.teacher())
-                .assignedBy(request.assignedBy())
                 .build();
         Task savedTask = taskRepository.save(task);
-        //eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
 
         return TaskResponse.of(savedTask);
     }
