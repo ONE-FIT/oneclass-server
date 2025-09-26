@@ -68,7 +68,17 @@ public class TaskService {
                 .dueDate(request.dueDate())
                 .teacher(request.teacher())
                 .build();
+
         Task savedTask = taskRepository.save(task);
+
+        TaskAssignment assignment = new TaskAssignment();
+        assignment.setTask(savedTask);
+        assignment.setStudent(request.assignedBy());
+        assignment.setTaskStatus(TaskStatus.ASSIGNED);
+
+        taskAssignmentRepository.save(assignment);
+
+        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title()));
 
         return TaskResponse.of(savedTask);
     }
