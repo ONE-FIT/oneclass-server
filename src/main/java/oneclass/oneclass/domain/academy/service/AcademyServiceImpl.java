@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -78,11 +79,9 @@ public class AcademyServiceImpl implements AcademyService {
     @Override
     @Transactional
     public ResponseToken login(String academyCode, String academyName, String password) {
-
-        // 1. 학원 검증
+        // 1) 학원 검증 (기존 로직 그대로)
         Academy academy = academyRepository.findByAcademyCode(academyCode)
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-
         if (!academy.getAcademyName().equals(academyName)) {
             throw new CustomException(AcademyError.NOT_FOUND);
         }
@@ -90,41 +89,31 @@ public class AcademyServiceImpl implements AcademyService {
             throw new CustomException(AcademyError.UNAUTHORIZED);
         }
 
-        String roleClaim = "ROLE_" + academy.getRole().name(); // 권장 포맷
+        String roleClaim = "ROLE_" + academy.getRole().name();
 
-        // 2. RefreshToken 조회
-        AcademyRefreshToken refresh =
-                academyRefreshTokenRepository.findByAcademyCode(academyCode).orElse(null);
+        // 2) RefreshToken 조회
+        Optional<AcademyRefreshToken> refreshOpt =
+                academyRefreshTokenRepository.findByAcademyCode(academyCode);
 
-        String accessToken;
-        String refreshTokenValue;
-
-        if (refresh != null) {
-            if (!refresh.isExpired()) {
-                // a) 아직 유효: Refresh 재사용, Access 새 발급
-                accessToken = jwtProvider.generateAccessToken(academyCode, roleClaim);
-                refreshTokenValue = refresh.getToken();
-            } else {
-                // b) 만료: 새 pair 발급 후 rotate
-                ResponseToken rotated = jwtProvider.generateToken(academyCode, roleClaim);
-                refresh.rotate(rotated.getRefreshToken(), LocalDateTime.now().plusDays(28));
-                accessToken = rotated.getAccessToken();
-                refreshTokenValue = rotated.getRefreshToken();
-            }
-        } else {
-            // c) 최초 발급
-            ResponseToken first = jwtProvider.generateToken(academyCode, roleClaim);
-            AcademyRefreshToken newRt = AcademyRefreshToken.builder()
-                    .academyCode(academyCode)
-                    .token(first.getRefreshToken())
-                    .expiryDate(LocalDateTime.now().plusDays(28))
-                    .build();
-            academyRefreshTokenRepository.save(newRt);
-            accessToken = first.getAccessToken();
-            refreshTokenValue = first.getRefreshToken();
+        // Case a) 유효한 RefreshToken이 있는 경우: AccessToken만 재발급 후 즉시 반환
+        if (refreshOpt.isPresent() && !refreshOpt.get().isExpired()) {
+            String accessToken = jwtProvider.generateAccessToken(academyCode, roleClaim);
+            return new ResponseToken(accessToken, refreshOpt.get().getToken());
         }
 
-        return new ResponseToken(accessToken, refreshTokenValue);
+        // Case b/c) 만료되었거나 최초 발급: 새 pair 발급 + 저장 후 즉시 반환
+        ResponseToken newPair = jwtProvider.generateToken(academyCode, roleClaim);
+
+        AcademyRefreshToken tokenToSave = refreshOpt.orElseGet(() ->
+                AcademyRefreshToken.builder()
+                        .academyCode(academyCode)
+                        .build()
+        );
+
+        tokenToSave.rotate(newPair.getRefreshToken(), LocalDateTime.now().plusDays(28));
+        academyRefreshTokenRepository.save(tokenToSave);
+
+        return new ResponseToken(newPair.getAccessToken(), newPair.getRefreshToken());
     }
 
     @Override

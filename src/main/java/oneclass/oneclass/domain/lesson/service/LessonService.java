@@ -9,6 +9,7 @@ import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
 import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.task.entity.Task;
 import oneclass.oneclass.domain.task.entity.TaskAssignment;
@@ -95,7 +96,7 @@ public class LessonService {
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
         Member student = memberRepository.findById(studentId)
-                .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         lesson.getStudents().add(student);
         lessonRepository.save(lesson);
