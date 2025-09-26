@@ -5,8 +5,8 @@ import io.sendon.kakao.response.SendFriendtalk;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import oneclass.oneclass.global.auth.member.error.UserError;
-import oneclass.oneclass.global.auth.member.repository.MemberRepository;
+import oneclass.oneclass.domain.member.error.MemberError;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ public class KakaoSendFriendTalkToOne extends BaseScenario {
             SendFriendtalk friendTalk = sendon.kakao.sendFriendtalk(new FriendtalkBuilder()
                     .setProfileId(KKO_CHANNEL_ID) // TODO: 채널 등록하기
                     .setTo(Arrays.asList(memberRepository.findById(memberId).
-                            orElseThrow(() -> new CustomException(UserError.NOT_FOUND))
+                            orElseThrow(() -> new CustomException(MemberError.NOT_FOUND))
                             .getPhone()
                     ))
                     .setMessage(message)

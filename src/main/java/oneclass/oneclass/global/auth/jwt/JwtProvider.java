@@ -159,16 +159,7 @@ public class JwtProvider {
         return getAllClaims(token).getSubject();
     }
 
-    /**
-     * 만료여부 (Claims 이미 구했을 때)
-     */
-    public boolean isExpired(Claims claims) {
-        return claims.getExpiration() != null && claims.getExpiration().before(new Date());
-    }
 
-    public Date getExpiration(String token) {
-        return getAllClaims(token).getExpiration();
-    }
 
     private Jws<Claims> parseClaimsJws(String token) {
         return Jwts.parserBuilder()

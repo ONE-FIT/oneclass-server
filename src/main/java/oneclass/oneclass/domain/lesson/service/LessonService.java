@@ -73,7 +73,7 @@ public class LessonService {
     }
 
     public LessonResponse updateLesson(UpdateLessonRequest request) {
-        Lesson lesson = lessonRepository.findById(request.lid())
+        Lesson lesson = lessonRepository.findById(request.lessonId())
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
         lesson.setTitle(request.title());
         lesson.setTeacher(request.teacher());
