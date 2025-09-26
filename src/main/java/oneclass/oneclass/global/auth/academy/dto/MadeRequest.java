@@ -7,4 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MadeRequest {
     private String academyName;
+    private String email;
+    private String password;
+    private String checkPassword;
 }

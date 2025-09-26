@@ -44,9 +44,10 @@ public class SecurityConfig {
                                         "/consultations/detail",
                                         "/lesson/**",
                                         "/v3/api-docs/**",
-                                        "/swagger-ui/**"
+                                        "/swagger-ui/**",
+                                "/academy/**"
                                 ).permitAll()
-                        .requestMatchers("/api/consultations/schedule",
+                        .requestMatchers("/consultations/schedule",
                                 "/attendance",
                                 "attendance/date/",
                                 "attendance/member/").hasRole("ADMIN")//상담 전체 확인이라서 관리자용
