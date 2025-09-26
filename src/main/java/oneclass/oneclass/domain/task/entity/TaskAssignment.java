@@ -2,7 +2,7 @@ package oneclass.oneclass.domain.task.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.domain.member.entity.Member;
 
 @Entity
 @Data
