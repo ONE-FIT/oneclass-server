@@ -9,6 +9,6 @@ public record CreateEachTaskRequest(
         String description,
         LocalDate dueDate,
         Member teacher,
-        Member assignedBy
+        Member student
 ) {
 }

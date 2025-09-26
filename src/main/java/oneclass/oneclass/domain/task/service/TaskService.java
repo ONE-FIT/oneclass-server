@@ -21,6 +21,7 @@ import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,9 +55,11 @@ public class TaskService {
             assignment.setTaskStatus(TaskStatus.ASSIGNED);
 
             taskAssignmentRepository.save(assignment);
-
-            eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title()));
         }
+
+        List<Long> memberId = lesson.getStudents().stream().map(Member::getId).toList();
+
+        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), memberId));
 
         return TaskResponse.of(savedTask);
     }
@@ -73,12 +76,14 @@ public class TaskService {
 
         TaskAssignment assignment = new TaskAssignment();
         assignment.setTask(savedTask);
-        assignment.setStudent(request.assignedBy());
+        assignment.setStudent(request.student());
         assignment.setTaskStatus(TaskStatus.ASSIGNED);
 
         taskAssignmentRepository.save(assignment);
 
-        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title()));
+        Long memberId = request.student().getId();
+
+        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), Arrays.asList(memberId)));
 
         return TaskResponse.of(savedTask);
     }
