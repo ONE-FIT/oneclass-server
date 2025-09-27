@@ -166,7 +166,7 @@ public class MemberServiceImpl implements MemberService {
 
         String roleClaim = "ROLE_" + member.getRole().name();
 
-        // 1. RefreshToken 조회
+        //RefreshToken 조회
         RefreshToken refresh = refreshTokenRepository.findByUsername(username).orElse(null);
 
         String accessToken;
@@ -174,11 +174,11 @@ public class MemberServiceImpl implements MemberService {
 
         if (refresh != null) {
             if (!refresh.isExpired()) {
-                // a) 아직 유효 → refresh 그대로 재사용, access 새로
+                //아직 유효 → refresh 그대로 재사용, access 새로
                 accessToken = jwtProvider.generateAccessToken(username, roleClaim);
                 refreshTokenString = refresh.getToken();
             } else {
-                // b) 만료 → 새로 rotate
+                //만료 → 새로 rotate
                 ResponseToken newPair = jwtProvider.generateToken(username, roleClaim);
                 refresh.rotate(newPair.getRefreshToken(), LocalDateTime.now().plusDays(28));
                 // JPA dirty checking
@@ -186,7 +186,7 @@ public class MemberServiceImpl implements MemberService {
                 refreshTokenString = newPair.getRefreshToken();
             }
         } else {
-            // c) 처음 발급
+            //처음 발급
             ResponseToken newPair = jwtProvider.generateToken(username, roleClaim);
             RefreshToken newRt = RefreshToken.builder()
                     .username(username)
