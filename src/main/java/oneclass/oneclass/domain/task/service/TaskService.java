@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
+import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.sendon.event.TaskAssignmentSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
@@ -16,12 +17,10 @@ import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.error.TaskError;
 import oneclass.oneclass.domain.task.repository.TaskAssignmentRepository;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
-import oneclass.oneclass.global.auth.member.entity.Member;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
