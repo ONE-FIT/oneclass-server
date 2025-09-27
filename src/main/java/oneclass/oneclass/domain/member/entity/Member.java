@@ -115,8 +115,4 @@ public class Member {
             }
         }
     }
-
-    public void changePassword(String encodedPw) {
-        this.password = encodedPw;
-    }
 }
