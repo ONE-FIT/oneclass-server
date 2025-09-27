@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
+import oneclass.oneclass.domain.sendon.event.TaskAssignmentSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
-import oneclass.oneclass.domain.sendon.sms.event.TaskSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
@@ -16,12 +16,12 @@ import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.error.TaskError;
 import oneclass.oneclass.domain.task.repository.TaskAssignmentRepository;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
-import oneclass.oneclass.domain.member.entity.Member;
-import oneclass.oneclass.domain.member.repository.MemberRepository;
+import oneclass.oneclass.global.auth.member.entity.Member;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,12 +31,12 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskAssignmentRepository taskAssignmentRepository;
     private final LessonRepository lessonRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public TaskResponse createLessonTask(CreateTaskRequest request, Long lessonId) {
         Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
-//     private final ApplicationEventPublisher eventPublisher;
 
         Task task = Task.builder()
                 .title(request.title())
@@ -57,19 +57,34 @@ public class TaskService {
             taskAssignmentRepository.save(assignment);
         }
 
+        List<Long> memberId = lesson.getStudents().stream().map(Member::getId).toList();
+
+        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), memberId));
+
         return TaskResponse.of(savedTask);
     }
 
+    @Transactional
     public TaskResponse createEachTask(CreateEachTaskRequest request) {
         Task task = Task.builder()
                 .title(request.title())
                 .description(request.description())
                 .dueDate(request.dueDate())
                 .teacher(request.teacher())
-                .assignedBy(request.assignedBy())
                 .build();
+
         Task savedTask = taskRepository.save(task);
-        //eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
+
+        TaskAssignment assignment = new TaskAssignment();
+        assignment.setTask(savedTask);
+        assignment.setStudent(request.student());
+        assignment.setTaskStatus(TaskStatus.ASSIGNED);
+
+        taskAssignmentRepository.save(assignment);
+
+        Long memberId = request.student().getId();
+
+        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), List.of(memberId)));
 
         return TaskResponse.of(savedTask);
     }
