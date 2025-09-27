@@ -1,6 +1,6 @@
 package oneclass.oneclass.domain.task.dto.request;
 
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.domain.member.entity.Member;
 
 import java.time.LocalDate;
 

@@ -3,7 +3,7 @@ package oneclass.oneclass.domain.task.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.domain.member.entity.Member;
 
 @Getter
 @AllArgsConstructor

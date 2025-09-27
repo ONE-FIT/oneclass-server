@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.domain.member.entity.Member;
 
 import java.time.LocalDate;
 import java.util.List;

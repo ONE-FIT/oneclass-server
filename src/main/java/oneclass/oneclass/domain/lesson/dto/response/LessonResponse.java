@@ -3,7 +3,7 @@ package oneclass.oneclass.domain.lesson.dto.response;
 
 
 import oneclass.oneclass.domain.lesson.entity.Lesson;
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.domain.member.entity.Member;
 
 public record LessonResponse(
         Long lessonId,
