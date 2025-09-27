@@ -5,14 +5,11 @@ import io.sendon.kakao.response.SendFriendtalk;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import oneclass.oneclass.global.auth.member.error.MemberError;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
-import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
