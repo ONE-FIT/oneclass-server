@@ -84,7 +84,7 @@ public class TaskService {
 
         Long memberId = request.student().getId();
 
-        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), Arrays.asList(memberId)));
+        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), List.of(memberId)));
 
         return TaskResponse.of(savedTask);
     }

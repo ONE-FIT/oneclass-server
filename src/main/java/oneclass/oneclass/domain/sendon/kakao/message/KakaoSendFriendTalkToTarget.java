@@ -5,6 +5,7 @@ import io.sendon.kakao.response.SendFriendtalk;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.sendon.BaseScenario;
+import oneclass.oneclass.global.auth.member.entity.Member;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Async;
@@ -24,7 +25,7 @@ public class KakaoSendFriendTalkToTarget extends BaseScenario {
         try {
             // memberId 리스트로 phone 번호 추출
             List<String> phones = memberRepository.findAllById(memberIds).stream()
-                    .map(oneclass.oneclass.global.auth.member.entity.Member::getPhone)
+                    .map(Member::getPhone)
                     .filter(phone -> phone != null && !phone.isBlank())
                     .collect(Collectors.toList());
 
