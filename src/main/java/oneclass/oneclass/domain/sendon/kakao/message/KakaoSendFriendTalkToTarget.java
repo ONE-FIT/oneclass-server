@@ -8,9 +8,11 @@ import oneclass.oneclass.domain.sendon.BaseScenario;
 import oneclass.oneclass.global.auth.member.error.MemberError;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,11 +26,9 @@ public class KakaoSendFriendTalkToTarget extends BaseScenario {
     public void execute(String message, boolean isAd, List<Long> memberIds) {
         try {
             // memberId 리스트로 phone 번호 추출
-            List<String> phones = memberIds.stream()
-                    .map(id -> memberRepository.findById(id)
-                            .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND))
-                            .getPhone()
-                    )
+            List<String> phones = memberRepository.findAllById(memberIds).stream()
+                    .map(oneclass.oneclass.global.auth.member.entity.Member::getPhone)
+                    .filter(phone -> phone != null && !phone.isBlank())
                     .collect(Collectors.toList());
 
             SendFriendtalk friendTalk = sendon.kakao.sendFriendtalk(new FriendtalkBuilder()
@@ -38,10 +38,18 @@ public class KakaoSendFriendTalkToTarget extends BaseScenario {
                     .setIsAd(isAd)
             );
 
+            log.info("친구톡 발송 대상 {}명", phones.size());
             log.info("친구톡 발송 대상: {}", phones);
             log.info("응답: {}", gson.toJson(friendTalk));
+        } catch (DataAccessException dae) {
+            log.error("DB 조회 중 오류 발생", dae);
+            throw dae; // 보통 DB 예외는 다시 던지는 게 안전
+        } catch (RuntimeException re) {
+            log.error("예상치 못한 런타임 오류 발생", re);
+            throw re; // 숨기지 말고 다시 던지기
         } catch (Exception e) {
-            log.error("친구톡 발송 중 오류 발생", e);
+            log.error("친구톡 발송 중 알 수 없는 오류 발생 ({}: {})",
+                    e.getClass().getSimpleName(), e.getMessage(), e);
         }
     }
 

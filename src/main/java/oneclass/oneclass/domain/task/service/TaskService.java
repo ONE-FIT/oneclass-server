@@ -64,6 +64,7 @@ public class TaskService {
         return TaskResponse.of(savedTask);
     }
 
+    @Transactional
     public TaskResponse createEachTask(CreateEachTaskRequest request) {
         Task task = Task.builder()
                 .title(request.title())
