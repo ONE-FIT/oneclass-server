@@ -20,7 +20,6 @@ public class Academy {
 
     private String academyName;
     private String password;
-    private String checkPassword;
     private String email;
 
     @Enumerated(EnumType.STRING)
@@ -35,7 +34,6 @@ public class Academy {
         this.academyCode = academyCode;
         this.academyName = academyName;
         this.password = password;
-        this.checkPassword = checkPassword;
         this.email = email;
         this.role = role;
         this.members = (members == null) ? new ArrayList<>() : members;
