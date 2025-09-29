@@ -1,12 +1,14 @@
 package oneclass.oneclass.global.auth;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.member.entity.Member;
-import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
+import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
