@@ -2,11 +2,13 @@ package oneclass.oneclass.domain.attendance.dto.response;
 
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import lombok.Getter;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Getter
 public class AttendanceResponse {
     public String name;
 
