@@ -229,7 +229,7 @@ public class MemberServiceImpl implements MemberService {
                 VerificationCode.builder()
                         .usernameOrEmail(username)
                         .code(tempCode)
-                        .expiry(System.currentTimeMillis() + 5 * 60 * 1000)
+                        .expiry(LocalDateTime.now().plusMinutes(5))
                         .build()
         );
 
@@ -244,11 +244,11 @@ public class MemberServiceImpl implements MemberService {
 
         // 인증코드 확인
         if (!codeEntry.getCode().equals(verificationCode)) {
-            throw new CustomException(MemberError.INVALID_PASSWORD);//토큰이 일치하지 않아서 바꿔야됨
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
 
         // 인증코드 만료 확인
-        if (codeEntry.getExpiry() < System.currentTimeMillis()) {
+        if (codeEntry.getExpiry().isBefore(LocalDateTime.now())) {
             throw new CustomException(MemberError.TOKEN_EXPIRED);
         }
 
