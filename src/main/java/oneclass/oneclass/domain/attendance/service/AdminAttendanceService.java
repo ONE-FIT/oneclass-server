@@ -21,16 +21,11 @@ public class AdminAttendanceService {
 
     // 오늘 특정 상태의 출석 정보 조회 (AttendanceResponse 반환)
     public List<AttendanceResponse> getTodayMembersByStatus(AttendanceStatus status) {
-        final LocalDate today = LocalDate.now();
-        if (status == AttendanceStatus.ABSENT) {
-            return getTodayAbsentMembers(today); // 결석은 별도 로직
-        }
-        return attendanceRepository.findByDateAndAttendanceStatus(today, status)
+        return attendanceRepository.findByDateAndAttendanceStatus(LocalDate.now(), status)
                 .stream()
                 .map(this::attendanceToResponse)
                 .toList();
     }
-
 
     // 오늘 출석한 사람들 (AttendanceResponse 반환)
     public List<AttendanceResponse> getTodayPresentMembers() {
@@ -38,11 +33,15 @@ public class AdminAttendanceService {
     }
 
     // 오늘 결석한 사람들 (AttendanceResponse 반환)
-    public List<AttendanceResponse> getTodayAbsentMembers(LocalDate date) {
-        List<Member> absentMembers = memberRepository.findAbsentMembers(date);
-
-        return absentMembers.stream()
-                .map(m -> new AttendanceResponse(m.getUsername(), AttendanceStatus.ABSENT, date))
+    public List<AttendanceResponse> getTodayAbsentMembers() {
+        List<Member> allMembers = memberRepository.findAll();
+        List<Long> presentMemberIds = attendanceRepository.findByDateAndAttendanceStatus(LocalDate.now(), AttendanceStatus.PRESENT)
+                .stream()
+                .map(a -> a.getMember().getId())
+                .toList();
+        return allMembers.stream()
+                .filter(m -> !presentMemberIds.contains(m.getId()))
+                .map(m -> new AttendanceResponse(m.getUsername(), AttendanceStatus.ABSENT, LocalDate.now()))
                 .toList();
     }
 
@@ -54,6 +53,14 @@ public class AdminAttendanceService {
     // 오늘 공결 처리된 사람들 (AttendanceResponse 반환)
     public List<AttendanceResponse> getTodayExcusedMembers() {
         return getTodayMembersByStatus(AttendanceStatus.EXCUSED);
+    }
+
+    // 전체 출석 정보 (AttendanceResponse 반환)
+    public List<AttendanceResponse> getAllAttendanceRecords() {
+        return attendanceRepository.findAll()
+                .stream()
+                .map(this::attendanceToResponse)
+                .toList();
     }
 
     // 특정 학생 출석 기록 (AttendanceResponse 반환)

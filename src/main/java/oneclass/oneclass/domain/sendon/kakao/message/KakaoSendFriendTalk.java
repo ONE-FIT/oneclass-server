@@ -4,7 +4,6 @@ import io.sendon.kakao.request.FriendtalkBuilder;
 import io.sendon.kakao.response.SendFriendtalk;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,15 +27,8 @@ public abstract class KakaoSendFriendTalk extends BaseScenario {
                             .setIsAd(isAd)
                     );
                     log.info("응답: {}", gson.toJson(friendTalk));
-                } catch (DataAccessException dae) {
-                    log.error("DB 조회 중 오류 발생", dae);
-                    throw dae; // 보통 DB 예외는 다시 던지는 게 안전
-                } catch (RuntimeException re) {
-                    log.error("예상치 못한 런타임 오류 발생", re);
-                    throw re; // 숨기지 말고 다시 던지기
                 } catch (Exception e) {
-                    log.error("친구톡 발송 중 알 수 없는 오류 발생 ({}: {})",
-                            e.getClass().getSimpleName(), e.getMessage(), e);
+                    log.error("친구톡 발송 중 오류 발생. Page: {}, Size: {}", phonePage.getNumber(), phonePage.getSize(), e);
                 }
             }
             pageable = phonePage.nextPageable();

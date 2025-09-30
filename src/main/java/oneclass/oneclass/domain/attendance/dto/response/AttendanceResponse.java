@@ -19,8 +19,6 @@ public class AttendanceResponse {
     private LocalDateTime checkOutTime;
 
     public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate now) {
-        this.name = username;
-        this.attendanceStatus = attendanceStatus;
-        this.date = now;
+
     }
 }
