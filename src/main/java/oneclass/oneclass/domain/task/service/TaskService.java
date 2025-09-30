@@ -71,6 +71,7 @@ public class TaskService {
         TaskAssignment assignment = TaskAssignment.builder()
                 .task(savedTask)
                 .student(request.student())
+                .taskStatus(TaskStatus.SUBMITTED)
                 .build();
         taskAssignmentRepository.save(assignment);
 

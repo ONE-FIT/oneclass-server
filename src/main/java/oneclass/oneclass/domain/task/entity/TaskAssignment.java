@@ -30,5 +30,5 @@ public class TaskAssignment {
 
     // 학생별 과제 상태
     @Enumerated(EnumType.STRING)
-    private TaskStatus taskStatus; // ASSIGNED / SUBMITTED / GRADED
+    private TaskStatus taskStatus; // ASSIGNED / SUBMITTED 
 }
