@@ -107,13 +107,6 @@ public class GetTodayAbsentMembersTest {
                 .role(Role.STUDENT)
                 .build();
 
-        Attendance attendance1 = Attendance.builder()
-                .attendanceStatus(AttendanceStatus.PRESENT)
-                .checkInTime(LocalDateTime.now())
-                .checkOutTime(LocalDateTime.now().plusMinutes(60))
-                .date(LocalDate.now())
-                .member(member1).build();
-
         // memberRepository.findAbsentMembers(today) 호출 시 반환
         Mockito.when(memberRepository.findAbsentMembers(today))
                 .thenReturn(List.of(member2, member3));

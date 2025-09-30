@@ -51,15 +51,15 @@ public class MemberRepositoryTest {
         attendanceRepository.save(Attendance.builder()
                 .member(member1)
                 .attendanceStatus(AttendanceStatus.PRESENT)
-                .checkInTime(LocalDateTime.now())
-                .checkOutTime(LocalDateTime.now().plusHours(1))
-                .date(LocalDate.now())
+                .checkInTime(LocalDateTime.of(2023, 10, 27, 9, 0))
+                .checkOutTime(LocalDateTime.of(2023, 10, 27, 10, 0))
+                .date(LocalDate.of(2023, 10, 27))
                 .build());
     }
 
     @Test
     void findAbsentMembers() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.of(2023, 10, 27);
 
         List<Member> absentMembers = memberRepository.findAbsentMembers(today);
 
