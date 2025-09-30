@@ -5,10 +5,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.*;
+import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
+import oneclass.oneclass.global.auth.CustomUserDetails;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
+import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -81,30 +85,11 @@ public class MemberController {
 
     @Operation(summary = "로그아웃", description = "Refresh Token을 폐기하여 로그아웃 처리합니다.")
     @PostMapping("/logout")
-    public void logout(HttpServletRequest request, @RequestParam String username) {
-        String token = jwtProvider.resolveToken(request);
-        if (token == null) {
-            throw new IllegalArgumentException("유효한 토큰이 필요합니다.");
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new CustomException(TokenError.UNAUTHORIZED);
         }
-
-        // 2. 토큰 검증
-        if (!jwtProvider.validateToken(token)) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
-        }
-
-        // 3. 토큰에서 username 추출
-        String tokenUsername = jwtProvider.getUsername(token);
-
-        // 4. 요청 username과 토큰 username 일치 확인
-        if (!username.equals(tokenUsername)) {
-            throw new IllegalArgumentException("토큰과 요청 username이 일치하지 않습니다.");
-        }
-        // refreshToken이 DB에 존재하는지 체크
-        if (!refreshTokenRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("이미 로그아웃된 사용자입니다.");
-        }
-
-        // 5. 로그아웃 처리
-        memberService.logout(username);
+        memberService.logout(userDetails.getUsername());
+        return ResponseEntity.noContent().build();
     }
 }

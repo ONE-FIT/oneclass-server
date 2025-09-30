@@ -61,98 +61,102 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.CONFLICT);
         }
 
-        // 3. 이메일/전화번호 중복 검사(공통, switch문 밖에서 한 번만)
+        // 3. 이메일/전화번호 중복 검사(공통)
         validateEmailOrPhoneDuplication(request.getEmail(), request.getPhone());
 
+        // 4. 역할별 회원가입 처리 분리
         switch (selectRole) {
-            case TEACHER: {
-                String academyCode = request.getAcademyCode();
-                String userInputCode = request.getVerificationCode();
-
-                if (academyCode == null || academyCode.trim().isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-                Academy academy = academyRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-                if (userInputCode == null || userInputCode.trim().isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-                AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-                if (!savedCode.getCode().equals(userInputCode)) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-                if (savedCode.getExpiry().isBefore(LocalDateTime.now())) {
-                    throw new CustomException(MemberError.TOKEN_EXPIRED);
-                }
-                academyVerificationCodeRepository.delete(savedCode);
-
-                Member member = Member.builder()
-                        .username(request.getUsername())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .role(selectRole)
-                        .academy(academy)
-                        .name(request.getName())
-                        .phone(request.getPhone())
-                        .email(request.getEmail())
-                        .build();
-
-                memberRepository.save(member);
-                break;
-            }
-            case STUDENT: {
-                String academyCode = request.getAcademyCode();
-                if (academyCode == null || academyCode.trim().isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-                Academy academy = academyRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-
-                Member member = Member.builder()
-                        .username(request.getUsername())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .role(selectRole)
-                        .academy(academy)
-                        .name(request.getName())
-                        .phone(request.getPhone())
-                        .email(request.getEmail())
-                        .build();
-
-                memberRepository.save(member);
-                break;
-            }
-            case PARENT: {
-                List<String> studentUsernames = request.getStudentId();
-                if (studentUsernames == null || studentUsernames.isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-
-                List<Member> children = new ArrayList<>();
-                for (String s : studentUsernames) {
-                    Member child = memberRepository.findByUsername(s)
-                            .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-                    children.add(child);
-                }
-
-                Member parent = Member.builder()
-                        .username(request.getUsername())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .role(selectRole)
-                        .name(request.getName())
-                        .phone(request.getPhone())
-                        .email(request.getEmail())
-                        .parentStudents(children)
-                        .build();
-
-                memberRepository.save(parent);
-                break;
-            }
-            default:
-                throw new CustomException(MemberError.BAD_REQUEST);
+            case TEACHER -> signupTeacher(request);
+            case STUDENT -> signupStudent(request);
+            case PARENT  -> signupParent(request);
+            default      -> throw new CustomException(MemberError.BAD_REQUEST);
         }
     }
 
-    // 중복체크를 위한 private 메서드
+// ===== 역할별 세부 로직 분리 =====
+
+    private void signupTeacher(SignupRequest request) {
+        String academyCode = request.getAcademyCode();
+        String userInputCode = request.getVerificationCode();
+
+        if (academyCode == null || academyCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+        if (userInputCode == null || userInputCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+        if (!savedCode.getCode().equals(userInputCode)) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        if (savedCode.getExpiry().isBefore(LocalDateTime.now())) {
+            throw new CustomException(MemberError.TOKEN_EXPIRED);
+        }
+        academyVerificationCodeRepository.delete(savedCode);
+
+        Member member = Member.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .academy(academy)
+                .name(request.getName())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .build();
+
+        memberRepository.save(member);
+    }
+
+    private void signupStudent(SignupRequest request) {
+        String academyCode = request.getAcademyCode();
+        if (academyCode == null || academyCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+
+        Member member = Member.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .academy(academy)
+                .name(request.getName())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .build();
+
+        memberRepository.save(member);
+    }
+
+    private void signupParent(SignupRequest request) {
+        List<String> studentUsernames = request.getStudentId();
+        if (studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+
+        List<Member> children = new ArrayList<>();
+        for (String s : studentUsernames) {
+            Member child = memberRepository.findByUsername(s)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+            children.add(child);
+        }
+
+        Member parent = Member.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .name(request.getName())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .parentStudents(children)
+                .build();
+
+        memberRepository.save(parent);
+    }
+    //이메일 전번 중복 걸러내는 메서드
     private void validateEmailOrPhoneDuplication(String email, String phone) {
         if (memberRepository.findByEmailOrPhone(email, phone).isPresent()) {
             throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");

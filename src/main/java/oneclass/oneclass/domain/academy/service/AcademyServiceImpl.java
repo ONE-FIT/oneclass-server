@@ -42,7 +42,7 @@ public class AcademyServiceImpl implements AcademyService {
     public String generateRandomCode(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 사용할 문자 집합
         StringBuilder sb = new StringBuilder();
-        Random random = new Random();
+        java.security.SecureRandom random = new java.security.SecureRandom();
         for (int i = 0; i < length; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
@@ -177,8 +177,7 @@ public class AcademyServiceImpl implements AcademyService {
     @Override
     @Transactional
     public void logout(String academyCode) {
-        academyRefreshTokenRepository.findByAcademyCode(academyCode)
-                .ifPresent(academyRefreshTokenRepository::delete);
+        academyRefreshTokenRepository.deleteByAcademyCode(academyCode);
     }
 
 }
