@@ -78,7 +78,7 @@ public class MemberServiceImpl implements MemberService {
                 }
                 academyVerificationCodeRepository.delete(savedCode);
 
-                         Member member = Member.builder()
+                Member member = Member.builder()
                         .username(request.getUsername())
                         .password(passwordEncoder.encode(request.getPassword()))
                         .role(selectRole)

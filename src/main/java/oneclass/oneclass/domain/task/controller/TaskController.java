@@ -25,7 +25,6 @@ public class TaskController {
     @PostMapping("/createOne")
     public TaskResponse createEachTask(@RequestBody CreateEachTaskRequest request) {
         return taskService.createEachTask(request);
-
     }
 
     @GetMapping("/id/{id}")
@@ -37,11 +36,6 @@ public class TaskController {
     public TaskResponse findTaskByTitle(@PathVariable String title) { //유저가 사용할 기능
         return taskService.findTaskByTitle(title);
     }
-
-//    @GetMapping("/status/{status}")
-//    public TaskResponse findTaskByStatus(@PathVariable TaskStatus status) {
-//        return taskService.findTaskByStatus(status);
-//    }
 
     @PatchMapping()
     public TaskResponse updateTask(@RequestBody UpdateTaskRequest request) { return taskService.updateTask(request); }

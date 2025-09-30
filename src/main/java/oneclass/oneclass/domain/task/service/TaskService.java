@@ -31,6 +31,7 @@ public class TaskService {
     private final TaskAssignmentRepository taskAssignmentRepository;
     private final LessonRepository lessonRepository;
     private final ApplicationEventPublisher eventPublisher;
+    //eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
 
     @Transactional
     public TaskResponse createLessonTask(CreateTaskRequest request, Long lessonId) {
@@ -74,16 +75,16 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
 
-        TaskAssignment assignment = new TaskAssignment();
-        assignment.setTask(savedTask);
-        assignment.setStudent(request.student());
-        assignment.setTaskStatus(TaskStatus.ASSIGNED);
-
-        taskAssignmentRepository.save(assignment);
-
         Long memberId = request.student().getId();
 
         eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), List.of(memberId)));
+
+        TaskAssignment assignment = TaskAssignment.builder()
+                .task(savedTask)
+                .student(request.student())
+                .taskStatus(TaskStatus.ASSIGNED)
+                .build();
+        taskAssignmentRepository.save(assignment);
 
         return TaskResponse.of(savedTask);
     }
@@ -100,16 +101,10 @@ public class TaskService {
         return TaskResponse.of(task);
     }
 
-//    public TaskResponse findTaskByStatus(TaskStatus status) {
-//        Task task = taskRepository.findByTaskStatus(status)
-//                .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
-//        return TaskResponse.of(task);
-//    }
-
-
     public TaskResponse updateTask(UpdateTaskRequest request) {
         Task task = taskRepository.findById(request.id())
                 .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
+        task.setTitle(request.title());
         task.setDescription(request.description());
         task.setDueDate(request.dueDate());
         taskRepository.save(task);

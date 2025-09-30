@@ -25,31 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LessonService {
     private final LessonRepository lessonRepository;
-    private final TaskAssignmentRepository taskAssignmentRepository;
     private final MemberRepository memberRepository;
-
-    @Transactional
-    public void assignLessonTasks(Long lid) {
-        // 1. lessonId로 Lesson 조회
-        Lesson lesson = lessonRepository.findById(lid)
-                .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
-
-        // 2. 연관된 학생과 과제 가져오기
-        List<Member> students = lesson.getStudents();  // Lesson 엔티티에 @OneToMany(or @ManyToMany) 매핑 필요
-        List<Task> tasks = lesson.getTasks();          // Lesson 엔티티에 @OneToMany 매핑 필요
-
-        // 3. 모든 (학생 × Task) 조합으로 TaskAssignment 생성
-        for (Task task : tasks) {
-            for (Member student : students) {
-                TaskAssignment assignment = new TaskAssignment();
-                assignment.setTask(task);
-                assignment.setStudent(student);
-                assignment.setTaskStatus(TaskStatus.ASSIGNED);
-
-                taskAssignmentRepository.save(assignment);
-            }
-        }
-    }
 
     public LessonResponse createLesson(CreateLessonRequest request) {
         Lesson lesson  = Lesson.builder()
@@ -59,8 +35,8 @@ public class LessonService {
         return LessonResponse.of(lessonRepository.save(lesson));
     }
 
-    public LessonResponse findLessonById(Long Lid) {
-        Lesson lesson = lessonRepository.findById(Lid)
+    public LessonResponse findLessonById(Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
         return LessonResponse.of(lesson);
@@ -83,8 +59,8 @@ public class LessonService {
         return LessonResponse.of(lesson);
     }
 
-    public void deleteLesson(Long Lid) {
-        Lesson lesson = lessonRepository.findById(Lid)
+    public void deleteLesson(Long lessonId) {
+        Lesson lesson = lessonRepository.findById(lessonId)
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
         lessonRepository.delete(lesson);

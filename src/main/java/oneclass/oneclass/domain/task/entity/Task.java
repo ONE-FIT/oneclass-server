@@ -12,11 +12,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@SuperBuilder
-@NoArgsConstructor
-@Getter
 @Setter
+@Getter
+@NoArgsConstructor
+@SuperBuilder
 @Table(name = "Task")
+
 public class Task {
 
     @Id
@@ -24,6 +25,7 @@ public class Task {
     private Long id;
 
     private String title;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
