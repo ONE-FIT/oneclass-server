@@ -15,7 +15,7 @@ public interface MemberService {
     void sendResetPasswordEmail(String usernameOrEmail); // 비번 재설정 메일 발송
     void resetPassword(String username, String newPassword, String verificationCode); // 비번 변경
     void logout(String username);
-    void sendSignupVerificationCode(String academyCode);
+    void sendSignupVerificationCode(String academyCode , String username);
     void addStudentsToParent(String username, String password, List<Long> studentIds);
 
 
