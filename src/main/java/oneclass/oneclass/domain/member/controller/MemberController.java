@@ -23,13 +23,13 @@ public class MemberController {
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
 
-
+    @Operation(summary = "부모님 삭제", description = "학생계정에 등록된 부모님을 삭제합니다.")
     @DeleteMapping("/parent/{parentId}")
     public ResponseEntity<Void> deleteParent(@PathVariable Long parentId) {
         memberService.deleteParent(parentId);
         return ResponseEntity.noContent().build();
     }
-
+    @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
     @PostMapping("/add-students")
     public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
         memberService.addStudentsToParent(
@@ -39,7 +39,7 @@ public class MemberController {
         );
         return ResponseEntity.noContent().build();
     }
-
+    @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
     @PostMapping("/signup-code")
     public void sendSignupVerificationCode(@RequestParam String academyCode) {
         memberService.sendSignupVerificationCode(academyCode);
