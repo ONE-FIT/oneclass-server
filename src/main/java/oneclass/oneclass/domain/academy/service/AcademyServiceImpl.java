@@ -42,7 +42,7 @@ public class AcademyServiceImpl implements AcademyService {
     public String generateRandomCode(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; // 사용할 문자 집합
         StringBuilder sb = new StringBuilder();
-        Random random = new Random();
+        java.security.SecureRandom random = new java.security.SecureRandom();
         for (int i = 0; i < length; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
@@ -69,7 +69,7 @@ public class AcademyServiceImpl implements AcademyService {
         academy.setAcademyName(request.getAcademyName());
         academy.setEmail(request.getEmail());
         academy.setPassword(passwordEncoder.encode(request.getPassword()));
-        log.info("학원 코드: " + randomAcademyCode);
+        log.info("학원 코드: {}", randomAcademyCode);
 
 
         academyRepository.save(academy);
@@ -79,7 +79,7 @@ public class AcademyServiceImpl implements AcademyService {
     @Override
     @Transactional
     public ResponseToken login(String academyCode, String academyName, String password) {
-        // 1) 학원 검증 (기존 로직 그대로)
+        //학원 검증
         Academy academy = academyRepository.findByAcademyCode(academyCode)
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
         if (!academy.getAcademyName().equals(academyName)) {
@@ -91,17 +91,17 @@ public class AcademyServiceImpl implements AcademyService {
 
         String roleClaim = "ROLE_" + academy.getRole().name();
 
-        // 2) RefreshToken 조회
+        //RefreshToken 조회
         Optional<AcademyRefreshToken> refreshOpt =
                 academyRefreshTokenRepository.findByAcademyCode(academyCode);
 
-        // Case a) 유효한 RefreshToken이 있는 경우: AccessToken만 재발급 후 즉시 반환
+        //유효한 RefreshToken이 있는 경우: AccessToken만 재발급 후 즉시 반환
         if (refreshOpt.isPresent() && !refreshOpt.get().isExpired()) {
             String accessToken = jwtProvider.generateAccessToken(academyCode, roleClaim);
             return new ResponseToken(accessToken, refreshOpt.get().getToken());
         }
 
-        // Case b/c) 만료되었거나 최초 발급: 새 pair 발급 + 저장 후 즉시 반환
+        //만료되었거나 최초 발급: 새 pair 발급 + 저장 후 즉시 반환
         ResponseToken newPair = jwtProvider.generateToken(academyCode, roleClaim);
 
         AcademyRefreshToken tokenToSave = refreshOpt.orElseGet(() ->
@@ -177,8 +177,7 @@ public class AcademyServiceImpl implements AcademyService {
     @Override
     @Transactional
     public void logout(String academyCode) {
-        academyRefreshTokenRepository.findByAcademyCode(academyCode)
-                .ifPresent(rt -> academyRefreshTokenRepository.delete(rt));
+        academyRefreshTokenRepository.deleteByAcademyCode(academyCode);
     }
 
 }

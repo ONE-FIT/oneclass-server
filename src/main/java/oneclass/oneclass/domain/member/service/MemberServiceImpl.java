@@ -50,108 +50,116 @@ public class MemberServiceImpl implements MemberService {
         Role selectRole = request.getRole();
         if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
-        // username+role 중복 검사
+        // 1. password, checkPassword 일치 확인
+        if (request.getPassword() == null || request.getCheckPassword() == null
+                || !request.getPassword().equals(request.getCheckPassword())) {
+            throw new CustomException(MemberError.BAD_REQUEST, "비밀번호 확인이 일치하지 않습니다.");
+        }
+
+        // 2. username+role 중복 검사
         if (memberRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new CustomException(MemberError.CONFLICT);
         }
 
+        // 3. 이메일/전화번호 중복 검사(공통)
+        validateEmailOrPhoneDuplication(request.getEmail(), request.getPhone());
+
+        // 4. 역할별 회원가입 처리 분리
         switch (selectRole) {
-            case TEACHER: {
-                String academyCode = request.getAcademyCode();
-                String userInputCode = request.getVerificationCode();
+            case TEACHER -> signupTeacher(request);
+            case STUDENT -> signupStudent(request);
+            case PARENT  -> signupParent(request);
+            default      -> throw new CustomException(MemberError.BAD_REQUEST);
+        }
+    }
 
-                if (academyCode == null || academyCode.trim().isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-                Academy academy = academyRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-                if (userInputCode == null || userInputCode.trim().isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-                AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-                if (!savedCode.getCode().equals(userInputCode)) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-                if (savedCode.getExpiry().isBefore(LocalDateTime.now())) {
-                    throw new CustomException(MemberError.TOKEN_EXPIRED);
-                }
-                academyVerificationCodeRepository.delete(savedCode);
+// ===== 역할별 세부 로직 분리 =====
 
-                Member member = Member.builder()
-                        .username(request.getUsername())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .role(selectRole)
-                        .academy(academy)
-                        .name(request.getName())
-                        .phone(request.getPhone())
-                        .email(request.getEmail())
-                        .build();
+    private void signupTeacher(SignupRequest request) {
+        String academyCode = request.getAcademyCode();
+        String userInputCode = request.getVerificationCode();
 
-                if (memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()) {
-                    throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");
-                }
+        if (academyCode == null || academyCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+        if (userInputCode == null || userInputCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+        if (!savedCode.getCode().equals(userInputCode)) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        if (savedCode.getExpiry().isBefore(LocalDateTime.now())) {
+            throw new CustomException(MemberError.TOKEN_EXPIRED);
+        }
+        academyVerificationCodeRepository.delete(savedCode);
 
-                memberRepository.save(member);
-                break;
-            }
-            case STUDENT: {
-                String academyCode = request.getAcademyCode();
-                if (academyCode == null || academyCode.trim().isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
-                Academy academy = academyRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+        Member member = Member.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .academy(academy)
+                .name(request.getName())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .build();
 
-                Member member = Member.builder()
-                        .username(request.getUsername())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .role(selectRole)
-                        .academy(academy)
-                        .name(request.getName())
-                        .phone(request.getPhone())
-                        .email(request.getEmail())
-                        .build();
+        memberRepository.save(member);
+    }
 
-                if (memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()) {
-                    throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");
-                }
+    private void signupStudent(SignupRequest request) {
+        String academyCode = request.getAcademyCode();
+        if (academyCode == null || academyCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
-                memberRepository.save(member);
-                break;
-            }
-            case PARENT: {
-                List<String> studentUsernames = request.getStudentId();
-                if (studentUsernames == null || studentUsernames.isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST);
-                }
+        Member member = Member.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .academy(academy)
+                .name(request.getName())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .build();
 
-                List<Member> children = new ArrayList<>();
-                for (String s : studentUsernames) {
-                    Member child = memberRepository.findByUsername(s)
-                            .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-                    children.add(child);
-                }
+        memberRepository.save(member);
+    }
 
-                Member parent = Member.builder()
-                        .username(request.getUsername())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .role(selectRole)
-                        .name(request.getName())
-                        .phone(request.getPhone())
-                        .email(request.getEmail())
-                        .parentStudents(children) // builder가 편의 메서드 통해 양방향 묶음
-                        .build();
+    private void signupParent(SignupRequest request) {
+        List<String> studentUsernames = request.getStudentId();
+        if (studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
 
-                if (memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()) {
-                    throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");
-                }
+        List<Member> children = new ArrayList<>();
+        for (String s : studentUsernames) {
+            Member child = memberRepository.findByUsername(s)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+            children.add(child);
+        }
 
-                memberRepository.save(parent);
-                break;
-            }
-            default:
-                throw new CustomException(MemberError.BAD_REQUEST);
+        Member parent = Member.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .name(request.getName())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .parentStudents(children)
+                .build();
+
+        memberRepository.save(parent);
+    }
+    //이메일 전번 중복 걸러내는 메서드
+    private void validateEmailOrPhoneDuplication(String email, String phone) {
+        if (memberRepository.findByEmailOrPhone(email, phone).isPresent()) {
+            throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");
         }
     }
 
@@ -166,7 +174,7 @@ public class MemberServiceImpl implements MemberService {
 
         String roleClaim = "ROLE_" + member.getRole().name();
 
-        // 1. RefreshToken 조회
+        //RefreshToken 조회
         RefreshToken refresh = refreshTokenRepository.findByUsername(username).orElse(null);
 
         String accessToken;
@@ -174,11 +182,11 @@ public class MemberServiceImpl implements MemberService {
 
         if (refresh != null) {
             if (!refresh.isExpired()) {
-                // a) 아직 유효 → refresh 그대로 재사용, access 새로
+                //아직 유효 → refresh 그대로 재사용, access 새로
                 accessToken = jwtProvider.generateAccessToken(username, roleClaim);
                 refreshTokenString = refresh.getToken();
             } else {
-                // b) 만료 → 새로 rotate
+                //만료 → 새로 rotate
                 ResponseToken newPair = jwtProvider.generateToken(username, roleClaim);
                 refresh.rotate(newPair.getRefreshToken(), LocalDateTime.now().plusDays(28));
                 // JPA dirty checking
@@ -186,7 +194,7 @@ public class MemberServiceImpl implements MemberService {
                 refreshTokenString = newPair.getRefreshToken();
             }
         } else {
-            // c) 처음 발급
+            //처음 발급
             ResponseToken newPair = jwtProvider.generateToken(username, roleClaim);
             RefreshToken newRt = RefreshToken.builder()
                     .username(username)
@@ -266,13 +274,14 @@ public class MemberServiceImpl implements MemberService {
         refreshTokenRepository.deleteById(username);
     }
     @Override
-    public void sendSignupVerificationCode(String academyCode) {
+    public void sendSignupVerificationCode(String academyCode , String username) {
         if (academyCode == null) {
             throw new CustomException(MemberError.BAD_REQUEST);
         }
         Academy academy = academyRepository.findByAcademyCode(academyCode)
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
         String email = academy.getEmail();
+        String academyName = academy.getAcademyName();
 
         // 인증코드 생성 및 저장
         String tempCode = UUID.randomUUID().toString().substring(0, 13);
@@ -285,7 +294,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 메일 발송
         String subject = "회원가입 인증코드 안내";
-        String text = "인증코드: " + tempCode + "\n10분 내에 입력해주세요.";
+        String text = String.format("%s님이 %s 학원으로 가입하려고 합니다.%n아래 인증코드를 10분 내에 입력해주세요.%n%n인증코드: %s", username, academyName, tempCode);
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);

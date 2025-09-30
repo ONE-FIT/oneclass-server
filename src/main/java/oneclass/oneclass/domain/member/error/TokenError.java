@@ -8,8 +8,7 @@ public enum TokenError implements CustomError {
     TOKEN_EXPIRED(401, "만료된 토큰입니다."),
     UNAUTHORIZED(401,"잘못된 토큰입니다."),
     INTERNAL_SERVER_ERROR(500,"암호화에 실패하였습니다."),
-    BAD_REQUEST(400,"요청형식에 맞게 써주세요."),
-    NO_CONTENT(204,"존재하지 않는 토큰입니다.");
+    BAD_REQUEST(400,"요청형식에 맞게 써주세요.");
 
     private final int status;
     private final String message;
