@@ -21,13 +21,13 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Page<String> findAllPhones(Pageable pageable);
 
     @Query("""
-        SELECT m FROM Member m
-        WHERE m.id NOT IN (
-            SELECT a.member.id FROM Attendance a
-            WHERE a.date = :date
-              AND a.attendanceStatus = :status
-        )
-        """)
-    List<Member> findAbsentMembers(@Param("date") LocalDate date,
-                                   @Param("status") AttendanceStatus status);
+    SELECT m FROM Member m
+    WHERE NOT EXISTS (
+        SELECT 1 FROM Attendance a
+        WHERE a.member.id = m.id
+          AND a.date = :date
+          AND a.attendanceStatus IN ('PRESENT', 'LATE', 'EXCUSED')
+    )
+    """)
+    List<Member> findAbsentMembers(@Param("date") LocalDate date);
 }

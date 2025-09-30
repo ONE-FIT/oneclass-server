@@ -39,7 +39,7 @@ public class AdminAttendanceService {
 
     // 오늘 결석한 사람들 (AttendanceResponse 반환)
     public List<AttendanceResponse> getTodayAbsentMembers() {
-        List<Member> absentMembers = memberRepository.findAbsentMembers(LocalDate.now(), AttendanceStatus.PRESENT);
+        List<Member> absentMembers = memberRepository.findAbsentMembers(LocalDate.now());
 
         return absentMembers.stream()
                 .map(m -> new AttendanceResponse(m.getUsername(), AttendanceStatus.ABSENT, LocalDate.now()))
