@@ -21,11 +21,16 @@ public class AdminAttendanceService {
 
     // 오늘 특정 상태의 출석 정보 조회 (AttendanceResponse 반환)
     public List<AttendanceResponse> getTodayMembersByStatus(AttendanceStatus status) {
+        if (status == AttendanceStatus.ABSENT) {
+            return getTodayAbsentMembers(); // 결석은 별도 로직
+        }
+
         return attendanceRepository.findByDateAndAttendanceStatus(LocalDate.now(), status)
                 .stream()
                 .map(this::attendanceToResponse)
                 .toList();
     }
+
 
     // 오늘 출석한 사람들 (AttendanceResponse 반환)
     public List<AttendanceResponse> getTodayPresentMembers() {
