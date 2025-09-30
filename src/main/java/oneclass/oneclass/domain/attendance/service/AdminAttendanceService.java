@@ -5,8 +5,8 @@ import oneclass.oneclass.domain.attendance.dto.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.Attendance;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 import oneclass.oneclass.domain.attendance.repository.AttendanceRepository;
-import oneclass.oneclass.global.auth.member.entity.Member;
-import oneclass.oneclass.global.auth.member.repository.MemberRepository;
+import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;

@@ -8,9 +8,9 @@ import oneclass.oneclass.domain.lesson.dto.response.LessonResponse;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
-import oneclass.oneclass.global.auth.member.entity.Member;
-import oneclass.oneclass.global.auth.member.error.MemberError;
-import oneclass.oneclass.global.auth.member.repository.MemberRepository;
+import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.error.MemberError;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 

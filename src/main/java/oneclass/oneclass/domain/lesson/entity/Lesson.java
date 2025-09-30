@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import oneclass.oneclass.domain.task.entity.Task;
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.domain.member.entity.Member;
 
 import java.util.ArrayList;
 import java.util.List;

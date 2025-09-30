@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.sendon.BaseScenario;
 import oneclass.oneclass.domain.sendon.ExecutableWithMessage;
-import oneclass.oneclass.global.auth.member.repository.MemberRepository;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

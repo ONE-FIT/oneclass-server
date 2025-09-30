@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import oneclass.oneclass.global.auth.member.entity.Member;
+import oneclass.oneclass.domain.member.entity.Member;
 
 @Entity
 @Data
@@ -30,5 +30,5 @@ public class TaskAssignment {
 
     // 학생별 과제 상태
     @Enumerated(EnumType.STRING)
-    private TaskStatus taskStatus; // ASSIGNED / SUBMITTED 
+    private TaskStatus taskStatus; // ASSIGNED / SUBMITTED
 }
