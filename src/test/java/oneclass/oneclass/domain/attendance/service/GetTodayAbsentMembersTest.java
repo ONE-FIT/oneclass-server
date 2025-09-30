@@ -1,7 +1,6 @@
 package oneclass.oneclass.domain.attendance.service;
 
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
-import oneclass.oneclass.domain.attendance.entity.Attendance;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 import oneclass.oneclass.domain.attendance.repository.AttendanceRepository;
 import oneclass.oneclass.domain.member.entity.Member;
@@ -15,7 +14,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
