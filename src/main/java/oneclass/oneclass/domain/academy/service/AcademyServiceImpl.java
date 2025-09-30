@@ -4,16 +4,17 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.academy.dto.MadeRequest;
+import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyRefreshToken;
 import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.entity.Role;
-import oneclass.oneclass.domain.academy.error.AuthError;
+import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRefreshTokenRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.domain.member.dto.ResponseToken;
-import oneclass.oneclass.domain.member.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -21,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -46,16 +48,6 @@ public class AcademyServiceImpl implements AcademyService {
         }
         return sb.toString();
     }
-    //비번 랜덤생성
-    public String generateRandomPassword(int length) {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
-    }
 
     @Override
     public void madeAcademy(MadeRequest request) {
@@ -66,48 +58,68 @@ public class AcademyServiceImpl implements AcademyService {
             randomAcademyCode = generateRandomCode(8);
         } while (academyRepository.findByAcademyCode(randomAcademyCode).isPresent());
 
-        // 비밀번호 자동 생성
-        String randomPassword = generateRandomPassword(10); // 10자리 비밀번호
+        // 비밀번호 일치 확인
+        if (!request.getPassword().equals(request.getCheckPassword())) {
+            throw new CustomException(AcademyError.PASSWORD_MISMATCH);
+        }
+
         Academy academy = new Academy();
         academy.setRole(role);
         academy.setAcademyCode(randomAcademyCode);
         academy.setAcademyName(request.getAcademyName());
-        academy.setPassword(passwordEncoder.encode(randomPassword));
+        academy.setEmail(request.getEmail());
+        academy.setPassword(passwordEncoder.encode(request.getPassword()));
         log.info("학원 코드: " + randomAcademyCode);
-        log.info("학원 평문 비밀번호: " + randomPassword); // 생성된 비밀번호 평문 로그
+
 
         academyRepository.save(academy);
 
     }
 
     @Override
-    public ResponseToken login(String academyCode, String academyName , String password){
+    @Transactional
+    public ResponseToken login(String academyCode, String academyName, String password) {
+        // 1) 학원 검증 (기존 로직 그대로)
         Academy academy = academyRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
         if (!academy.getAcademyName().equals(academyName)) {
-            throw new CustomException(AuthError.NOT_FOUND);
+            throw new CustomException(AcademyError.NOT_FOUND);
         }
         if (!passwordEncoder.matches(password, academy.getPassword())) {
-            throw new CustomException(AuthError.UNAUTHORIZED);
+            throw new CustomException(AcademyError.UNAUTHORIZED);
         }
-        String roleClaim = "role" +academy.getRole();
-        ResponseToken token = jwtProvider.generateToken(academy.getAcademyCode(), roleClaim);
-        AcademyRefreshToken refreshToken = AcademyRefreshToken.builder()
-                .academyCode(academyCode)
-                .token(token.getRefreshToken())
-                .expiryDate(LocalDateTime.now().plusDays(28))
-                .build();
 
-        academyRefreshTokenRepository.save(refreshToken);
+        String roleClaim = "ROLE_" + academy.getRole().name();
 
-        return token;
+        // 2) RefreshToken 조회
+        Optional<AcademyRefreshToken> refreshOpt =
+                academyRefreshTokenRepository.findByAcademyCode(academyCode);
 
+        // Case a) 유효한 RefreshToken이 있는 경우: AccessToken만 재발급 후 즉시 반환
+        if (refreshOpt.isPresent() && !refreshOpt.get().isExpired()) {
+            String accessToken = jwtProvider.generateAccessToken(academyCode, roleClaim);
+            return new ResponseToken(accessToken, refreshOpt.get().getToken());
+        }
+
+        // Case b/c) 만료되었거나 최초 발급: 새 pair 발급 + 저장 후 즉시 반환
+        ResponseToken newPair = jwtProvider.generateToken(academyCode, roleClaim);
+
+        AcademyRefreshToken tokenToSave = refreshOpt.orElseGet(() ->
+                AcademyRefreshToken.builder()
+                        .academyCode(academyCode)
+                        .build()
+        );
+
+        tokenToSave.rotate(newPair.getRefreshToken(), LocalDateTime.now().plusDays(28));
+        academyRefreshTokenRepository.save(tokenToSave);
+
+        return new ResponseToken(newPair.getAccessToken(), newPair.getRefreshToken());
     }
 
     @Override
     public void sendResetPasswordEmail(String code, String name){
         Academy academy = academyRepository.findByAcademyCodeAndAcademyName(code , name)
-                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
         String academyCode = academy.getAcademyCode();
         String tempCode = UUID.randomUUID().toString().substring(0, 13);
 
@@ -133,44 +145,40 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
-    public void resetPassword(String academyCode, String academyName, String verificationCode){
+    public void resetPassword(ResetAcademyPasswordRequest request){
         // 인증코드 검증
-        AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
+        AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(request.getAcademyCode())
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
-        if (!codeEntity.getCode().equals(verificationCode)) {
-            throw new CustomException(AuthError.UNAUTHORIZED);
+        if (!codeEntity.getCode().equals(request.getVerificationCode())) {
+            throw new CustomException(AcademyError.UNAUTHORIZED);
         }
         // 인증코드 만료 검증
         if (codeEntity.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new CustomException(AuthError.UNAUTHORIZED);
+            throw new CustomException(AcademyError.UNAUTHORIZED);
         }
 
         // 학원 정보 조회 및 이름 확인
-        Academy academy = academyRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
-        if (!academy.getAcademyName().equals(academyName)) {
-            throw new CustomException(AuthError.NOT_FOUND);
+        Academy academy = academyRepository.findByAcademyCode(request.getAcademyCode())
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+        if (!academy.getAcademyName().equals(request.getAcademyName())) {
+            throw new CustomException(AcademyError.NOT_FOUND);
         }
+        // 비밀번호 일치 확인
+        if (!request.getNewPassword().equals(request.getCheckPassword())) {
+            throw new CustomException(AcademyError.PASSWORD_MISMATCH);
+        }
+        academy.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
-        // 임시 비밀번호 생성 및 변경
-        String tempPassword = UUID.randomUUID().toString().substring(0, 10);
-        academy.setPassword(passwordEncoder.encode(tempPassword));
+
         academyRepository.save(academy);
 
-        // 인증코드 사용 완료 시 삭제
-        academyVerificationCodeRepository.delete(codeEntity);
-
-        String to = academy.getEmail();
-        String subject = "임시 비밀번호 안내";
-        String text = "임시 비밀번호: " + tempPassword;
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
-
-        javaMailSender.send(message);
+    }
+    @Override
+    @Transactional
+    public void logout(String academyCode) {
+        academyRefreshTokenRepository.findByAcademyCode(academyCode)
+                .ifPresent(rt -> academyRefreshTokenRepository.delete(rt));
     }
 
 }

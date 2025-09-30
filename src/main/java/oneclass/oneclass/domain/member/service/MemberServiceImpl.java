@@ -4,7 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
-import oneclass.oneclass.domain.academy.error.AuthError;
+import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.domain.member.dto.ResponseToken;
@@ -14,10 +14,10 @@ import oneclass.oneclass.domain.member.entity.RefreshToken;
 import oneclass.oneclass.domain.member.entity.Role;
 import oneclass.oneclass.domain.member.entity.VerificationCode;
 import oneclass.oneclass.domain.member.error.MemberError;
-import oneclass.oneclass.domain.member.jwt.JwtProvider;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
+import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -49,12 +48,9 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void signup(SignupRequest request) {
         Role selectRole = request.getRole();
+        if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
-        if (selectRole == null) {
-            throw new CustomException(MemberError.BAD_REQUEST);
-        }
-
-        // 아이디 중복 검사 (공통)
+        // username+role 중복 검사
         if (memberRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new CustomException(MemberError.CONFLICT);
         }
@@ -68,12 +64,12 @@ public class MemberServiceImpl implements MemberService {
                     throw new CustomException(MemberError.BAD_REQUEST);
                 }
                 Academy academy = academyRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
+                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
                 if (userInputCode == null || userInputCode.trim().isEmpty()) {
                     throw new CustomException(MemberError.BAD_REQUEST);
                 }
                 AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
+                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
                 if (!savedCode.getCode().equals(userInputCode)) {
                     throw new CustomException(MemberError.BAD_REQUEST);
                 }
@@ -82,7 +78,7 @@ public class MemberServiceImpl implements MemberService {
                 }
                 academyVerificationCodeRepository.delete(savedCode);
 
-                         Member member = Member.builder()
+                Member member = Member.builder()
                         .username(request.getUsername())
                         .password(passwordEncoder.encode(request.getPassword()))
                         .role(selectRole)
@@ -105,7 +101,7 @@ public class MemberServiceImpl implements MemberService {
                     throw new CustomException(MemberError.BAD_REQUEST);
                 }
                 Academy academy = academyRepository.findByAcademyCode(academyCode)
-                        .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
+                        .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
                 Member member = Member.builder()
                         .username(request.getUsername())
@@ -125,20 +121,16 @@ public class MemberServiceImpl implements MemberService {
                 break;
             }
             case PARENT: {
-                // 여러 자녀를 받을 수 있도록 수정 (List<String> studentId)
                 List<String> studentUsernames = request.getStudentId();
                 if (studentUsernames == null || studentUsernames.isEmpty()) {
-                    throw new CustomException(MemberError.BAD_REQUEST); // 자녀 정보 필수
+                    throw new CustomException(MemberError.BAD_REQUEST);
                 }
 
-                List<Member> students = new ArrayList<>();
-                for (String username : studentUsernames) {
-                    if (username == null || username.trim().isEmpty()) {
-                        throw new CustomException(MemberError.BAD_REQUEST); // 빈 값 체크
-                    }
-                    Member student = memberRepository.findByUsername(username)
-                            .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND)); // 자녀 존재 확인
-                    students.add(student);
+                List<Member> children = new ArrayList<>();
+                for (String s : studentUsernames) {
+                    Member child = memberRepository.findByUsername(s)
+                            .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+                    children.add(child);
                 }
 
                 Member parent = Member.builder()
@@ -148,7 +140,7 @@ public class MemberServiceImpl implements MemberService {
                         .name(request.getName())
                         .phone(request.getPhone())
                         .email(request.getEmail())
-                        .students(students) // 여러 자녀 연결 (Member 엔티티에 List<Member> students 필드 필요)
+                        .parentStudents(children) // builder가 편의 메서드 통해 양방향 묶음
                         .build();
 
                 if (memberRepository.findByEmailOrPhone(request.getEmail(), request.getPhone()).isPresent()) {
@@ -164,29 +156,50 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public ResponseToken login(String username, String password){
-        //회원정보 조회 with ID
+    public ResponseToken login(String username, String password) {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        //비번 체크
-        if (!passwordEncoder.matches(password, member.getPassword())){
+
+        if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new CustomException(MemberError.INVALID_PASSWORD);
         }
-        // 토큰 생성 시
+
         String roleClaim = "ROLE_" + member.getRole().name();
-        ResponseToken tokens = jwtProvider.generateToken(member.getUsername(), roleClaim);
 
-        refreshTokenRepository.findByUsername(username);
-        RefreshToken refreshToken = RefreshToken.builder()
-                .username(username)
-                .token(tokens.getRefreshToken())
-                .expiryDate(LocalDateTime.now().plusDays(28))
-                .build();
-        refreshTokenRepository.save(refreshToken);
+        // 1. RefreshToken 조회
+        RefreshToken refresh = refreshTokenRepository.findByUsername(username).orElse(null);
 
+        String accessToken;
+        String refreshTokenString;
 
-        return tokens;
+        if (refresh != null) {
+            if (!refresh.isExpired()) {
+                // a) 아직 유효 → refresh 그대로 재사용, access 새로
+                accessToken = jwtProvider.generateAccessToken(username, roleClaim);
+                refreshTokenString = refresh.getToken();
+            } else {
+                // b) 만료 → 새로 rotate
+                ResponseToken newPair = jwtProvider.generateToken(username, roleClaim);
+                refresh.rotate(newPair.getRefreshToken(), LocalDateTime.now().plusDays(28));
+                // JPA dirty checking
+                accessToken = newPair.getAccessToken();
+                refreshTokenString = newPair.getRefreshToken();
+            }
+        } else {
+            // c) 처음 발급
+            ResponseToken newPair = jwtProvider.generateToken(username, roleClaim);
+            RefreshToken newRt = RefreshToken.builder()
+                    .username(username)
+                    .token(newPair.getRefreshToken())
+                    .expiryDate(LocalDateTime.now().plusDays(28))
+                    .build();
+            refreshTokenRepository.save(newRt);
 
+            accessToken = newPair.getAccessToken();
+            refreshTokenString = newPair.getRefreshToken();
+        }
+
+        return new ResponseToken(accessToken, refreshTokenString);
     }
 
     @Override
@@ -246,12 +259,11 @@ public class MemberServiceImpl implements MemberService {
 
     //로그아웃시 토큰 폐기
     @Override
-    public void logout(String username){
-        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByUsername(username);
-        if (tokenOpt.isEmpty()) {
-            throw new CustomException(MemberError.CONFLICT);
+    public void logout(String username) {
+        if (!refreshTokenRepository.existsByUsername(username)) {
+            throw new CustomException(MemberError.CONFLICT); // 혹은 그냥 silent 처리
         }
-        refreshTokenRepository.deleteByUsername(username);
+        refreshTokenRepository.deleteById(username);
     }
     @Override
     public void sendSignupVerificationCode(String academyCode) {
@@ -259,7 +271,7 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.BAD_REQUEST);
         }
         Academy academy = academyRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new CustomException(AuthError.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
         String email = academy.getEmail();
 
         // 인증코드 생성 및 저장
@@ -285,20 +297,16 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void addStudentsToParent(String username, String password, List<Long> studentIds) {
-        // 부모 인증: username, password로 부모 조회
         Member parent = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         if (!passwordEncoder.matches(password, parent.getPassword())) {
             throw new CustomException(MemberError.INVALID_PASSWORD);
         }
 
-        // 학생 목록 추가
-        for (Long studentId : studentIds) {
-            Member student = memberRepository.findById(studentId)
+        for (Long sid : studentIds) {
+            Member child = memberRepository.findById(sid)
                     .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-            if (!parent.getStudents().contains(student)) { // 중복 방지
-                parent.getStudents().add(student);
-            }
+            parent.addParentStudent(child); // 편의 메서드 사용
         }
         memberRepository.save(parent);
     }
@@ -310,7 +318,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         // 1. 부모와 자녀 연결 해제
-        parent.getStudents().clear();
+        parent.getParentStudents().clear();
         memberRepository.save(parent); // 변경 사항 반영
 
         // 2. 부모 삭제

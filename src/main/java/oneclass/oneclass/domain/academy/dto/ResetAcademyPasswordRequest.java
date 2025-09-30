@@ -9,4 +9,6 @@ public class ResetAcademyPasswordRequest {
     private String academyCode;
     private String academyName;
     private String verificationCode;
+    private String newPassword;
+    private String checkPassword;
 }
