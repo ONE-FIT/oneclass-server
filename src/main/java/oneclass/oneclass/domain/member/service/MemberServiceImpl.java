@@ -294,9 +294,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 메일 발송
         String subject = "회원가입 인증코드 안내";
-        String text = username + "님이 " + academyName + " 학원으로 가입하려고 합니다.\n"
-                + "아래 인증코드를 10분 내에 입력해주세요.\n\n"
-                + "인증코드: " + tempCode;
+        String text = String.format("%s님이 %s 학원으로 가입하려고 합니다.%n아래 인증코드를 10분 내에 입력해주세요.%n%n인증코드: %s", username, academyName, tempCode);
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
