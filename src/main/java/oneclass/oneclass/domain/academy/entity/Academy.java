@@ -21,6 +21,7 @@ public class Academy {
     private String academyName;
     private String password;
     private String email;
+    private String phone;
 
     @Enumerated(EnumType.STRING)
     private Role role;

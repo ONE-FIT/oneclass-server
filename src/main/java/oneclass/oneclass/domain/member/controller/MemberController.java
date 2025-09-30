@@ -2,7 +2,6 @@ package oneclass.oneclass.domain.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.*;
 import oneclass.oneclass.domain.member.error.TokenError;

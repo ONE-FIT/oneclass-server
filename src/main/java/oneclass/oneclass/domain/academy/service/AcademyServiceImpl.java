@@ -3,6 +3,7 @@ package oneclass.oneclass.domain.academy.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import oneclass.oneclass.domain.academy.dto.MadeAcademyResponse;
 import oneclass.oneclass.domain.academy.dto.MadeRequest;
 import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.entity.Academy;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
 
 @Slf4j
@@ -50,30 +50,46 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
-    public void madeAcademy(MadeRequest request) {
+    public MadeAcademyResponse madeAcademy(MadeRequest request) {
         Role role = Role.ACADEMY;
         String randomAcademyCode;
-        // 학원코드 중복 체크
+
+        // 1. 이메일/폰번호 중복 체크 (이름은 중복 허용)
+        if (academyRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new CustomException(AcademyError.DUPLICATE_EMAIL, "이미 사용중인 이메일입니다.");
+        }
+        if (academyRepository.findByPhone(request.getPhone()).isPresent()) {
+            throw new CustomException(AcademyError.DUPLICATE_PHONE, "이미 사용중인 전화번호입니다.");
+        }
+
+        // 2. 학원코드 중복 체크해서 랜덤 발급
         do {
             randomAcademyCode = generateRandomCode(8);
         } while (academyRepository.findByAcademyCode(randomAcademyCode).isPresent());
 
-        // 비밀번호 일치 확인
+        // 3. 비밀번호 일치 확인
         if (!request.getPassword().equals(request.getCheckPassword())) {
             throw new CustomException(AcademyError.PASSWORD_MISMATCH);
         }
 
+        // 4. 엔티티 생성 및 저장
         Academy academy = new Academy();
         academy.setRole(role);
         academy.setAcademyCode(randomAcademyCode);
         academy.setAcademyName(request.getAcademyName());
         academy.setEmail(request.getEmail());
+        academy.setPhone(request.getPhone());
         academy.setPassword(passwordEncoder.encode(request.getPassword()));
-        log.info("학원 코드: {}", randomAcademyCode);
-
 
         academyRepository.save(academy);
 
+        // 5. 결과 반환 (학원코드는 무조건 별도로 발급)
+        return new MadeAcademyResponse(
+                randomAcademyCode,
+                request.getAcademyName(),
+                request.getEmail(),
+                request.getPhone()
+        );
     }
 
     @Override
@@ -82,9 +98,6 @@ public class AcademyServiceImpl implements AcademyService {
         //학원 검증
         Academy academy = academyRepository.findByAcademyCode(academyCode)
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-        if (!academy.getAcademyName().equals(academyName)) {
-            throw new CustomException(AcademyError.NOT_FOUND);
-        }
         if (!passwordEncoder.matches(password, academy.getPassword())) {
             throw new CustomException(AcademyError.UNAUTHORIZED);
         }

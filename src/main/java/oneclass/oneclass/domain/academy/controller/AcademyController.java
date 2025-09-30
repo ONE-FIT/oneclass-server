@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.dto.AcademyLoginRequest;
+import oneclass.oneclass.domain.academy.dto.MadeAcademyResponse;
 import oneclass.oneclass.domain.academy.dto.MadeRequest;
 import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.service.AcademyService;
@@ -26,9 +27,9 @@ public class AcademyController {
     //학원 계정 만들기
     @Operation(summary = "회원가입(학원)", description = "새로운 학원을 등록합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<Void> made(@RequestBody MadeRequest request) {
-        academyService.madeAcademy(request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<MadeAcademyResponse> made(@RequestBody MadeRequest request) {
+        MadeAcademyResponse response = academyService.madeAcademy(request);
+        return ResponseEntity.ok(response);
     }
 
     // 로그인
