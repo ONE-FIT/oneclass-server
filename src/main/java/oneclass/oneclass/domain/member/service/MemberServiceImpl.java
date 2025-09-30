@@ -244,7 +244,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 인증코드 확인
         if (!codeEntry.getCode().equals(verificationCode)) {
-            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE, "인증코드가 일치하지 않습니다.");
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
 
         // 인증코드 만료 확인

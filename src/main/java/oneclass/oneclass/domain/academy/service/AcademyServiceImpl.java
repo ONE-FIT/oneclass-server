@@ -56,10 +56,10 @@ public class AcademyServiceImpl implements AcademyService {
 
         // 1. 이메일/폰번호 중복 체크 (이름은 중복 허용)
         if (academyRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new CustomException(AcademyError.DUPLICATE_EMAIL, "이미 사용중인 이메일입니다.");
+            throw new CustomException(AcademyError.DUPLICATE_EMAIL);
         }
         if (academyRepository.findByPhone(request.getPhone()).isPresent()) {
-            throw new CustomException(AcademyError.DUPLICATE_PHONE, "이미 사용중인 전화번호입니다.");
+            throw new CustomException(AcademyError.DUPLICATE_PHONE);
         }
 
         // 2. 학원코드 중복 체크해서 랜덤 발급
@@ -73,13 +73,14 @@ public class AcademyServiceImpl implements AcademyService {
         }
 
         // 4. 엔티티 생성 및 저장
-        Academy academy = new Academy();
-        academy.setRole(role);
-        academy.setAcademyCode(randomAcademyCode);
-        academy.setAcademyName(request.getAcademyName());
-        academy.setEmail(request.getEmail());
-        academy.setPhone(request.getPhone());
-        academy.setPassword(passwordEncoder.encode(request.getPassword()));
+        Academy academy = Academy.builder()
+                .role(role)
+                .academyCode(randomAcademyCode)
+                .academyName(request.getAcademyName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .build();
 
         academyRepository.save(academy);
 
@@ -164,12 +165,12 @@ public class AcademyServiceImpl implements AcademyService {
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
         if (!codeEntity.getCode().equals(request.getVerificationCode())) {
-            throw new CustomException(AcademyError.INVALID_VERIFICATION_CODE, "인증코드가 일치하지 않습니다.");
+            throw new CustomException(AcademyError.INVALID_VERIFICATION_CODE);
         }
 
 // 인증코드 만료 검증
         if (codeEntity.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new CustomException(AcademyError.EXPIRED_VERIFICATION_CODE, "인증코드가 만료되었습니다.");
+            throw new CustomException(AcademyError.EXPIRED_VERIFICATION_CODE);
         }
 
         // 학원 정보 조회 및 이름 확인
