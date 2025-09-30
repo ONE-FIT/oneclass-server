@@ -12,10 +12,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@NoArgsConstructor
-@Getter
 @Setter
+@Getter
+@NoArgsConstructor
+@SuperBuilder
 @Table(name = "Task")
+
 public class Task {
 
     @Id
