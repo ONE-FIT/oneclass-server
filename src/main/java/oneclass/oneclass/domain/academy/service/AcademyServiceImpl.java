@@ -164,11 +164,12 @@ public class AcademyServiceImpl implements AcademyService {
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
         if (!codeEntity.getCode().equals(request.getVerificationCode())) {
-            throw new CustomException(AcademyError.UNAUTHORIZED);
+            throw new CustomException(AcademyError.INVALID_VERIFICATION_CODE, "인증코드가 일치하지 않습니다.");
         }
-        // 인증코드 만료 검증
+
+// 인증코드 만료 검증
         if (codeEntity.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new CustomException(AcademyError.UNAUTHORIZED);
+            throw new CustomException(AcademyError.EXPIRED_VERIFICATION_CODE, "인증코드가 만료되었습니다.");
         }
 
         // 학원 정보 조회 및 이름 확인
