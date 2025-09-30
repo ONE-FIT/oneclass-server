@@ -1,7 +1,8 @@
-package oneclass.oneclass.domain.sendon.sms.event;
+package oneclass.oneclass.domain.sendon.event;
 
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.sendon.kakao.message.KakaoSendFriendTalkToAll;
+import oneclass.oneclass.domain.sendon.kakao.message.KakaoSendFriendTalkToTarget;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -10,17 +11,18 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class EntitySavedEventListener {
     private final KakaoSendFriendTalkToAll kakaoSendFriendTalkToAll;
+    private final KakaoSendFriendTalkToTarget kakaoSendFriendTalkToTarget;
 
+    // 공지가 생성되면 메세지 발송
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAnnounceSavedEvent(AnnounceSavedEvent event) {
-        kakaoSendFriendTalkToAll.sendInfo(event.getContent());
+        kakaoSendFriendTalkToAll.sendInfo(event.content());
     }
 
+    // 과제가 저장되면 메세지 발송
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleTaskSavedEvent(TaskSavedEvent event) {
+    public void handleTaskAssignmentSavedEvent(TaskAssignmentSavedEvent event) {
 
-        // TODO: 과제 대상에게만 메세지를 보내세요.
-        // 현재 모든 사용자에게 메세지를 보냅니다.
-        kakaoSendFriendTalkToAll.sendInfo(event.getDescription());
+        kakaoSendFriendTalkToTarget.sendInfo(event.description(), event.memberId());
     }
 }

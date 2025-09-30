@@ -5,15 +5,14 @@ import io.sendon.sms.request.Reservation;
 import io.sendon.sms.response.CancelGroup;
 import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
 import oneclass.oneclass.domain.sendon.ExecutableWithMessage;
-import oneclass.oneclass.domain.member.repository.MemberRepository;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 
-
-
+@Deprecated
 @RequiredArgsConstructor
 public class SmsCancelLongMessageScenario extends BaseScenario implements ExecutableWithMessage {
 

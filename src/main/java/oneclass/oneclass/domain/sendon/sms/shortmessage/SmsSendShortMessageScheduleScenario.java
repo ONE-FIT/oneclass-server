@@ -5,9 +5,9 @@ import io.sendon.sms.request.Reservation;
 import io.sendon.sms.request.SmsBuilder;
 import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
 import oneclass.oneclass.domain.sendon.ExecutableWithMessage;
-import oneclass.oneclass.domain.member.repository.MemberRepository;
 
 import java.util.Arrays;
 

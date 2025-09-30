@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.attendance.dto;
+package oneclass.oneclass.domain.attendance.dto.response;
 
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -19,6 +19,8 @@ public class AttendanceResponse {
     private LocalDateTime checkOutTime;
 
     public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate now) {
-
+        this.name = username;
+        this.attendanceStatus = attendanceStatus;
+        this.date = now;
     }
 }

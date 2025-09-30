@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
+import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.sendon.event.TaskAssignmentSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
@@ -15,7 +17,6 @@ import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.error.TaskError;
 import oneclass.oneclass.domain.task.repository.TaskAssignmentRepository;
 import oneclass.oneclass.domain.task.repository.TaskRepository;
-import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -56,9 +57,14 @@ public class TaskService {
             taskAssignmentRepository.save(assignment);
         }
 
+        List<Long> memberId = lesson.getStudents().stream().map(Member::getId).toList();
+
+        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), memberId));
+
         return TaskResponse.of(savedTask);
     }
 
+    @Transactional
     public TaskResponse createEachTask(CreateEachTaskRequest request) {
         Task task = Task.builder()
                 .title(request.title())
@@ -66,7 +72,12 @@ public class TaskService {
                 .dueDate(request.dueDate())
                 .teacher(request.teacher())
                 .build();
+
         Task savedTask = taskRepository.save(task);
+
+        Long memberId = request.student().getId();
+
+        eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), List.of(memberId)));
 
         TaskAssignment assignment = TaskAssignment.builder()
                 .task(savedTask)
@@ -102,6 +113,7 @@ public class TaskService {
     }
 
     public void deleteTask(Long id) {
+
         Task task = taskRepository.findById(id)
                 .orElseThrow(() ->new CustomException(TaskError.NOT_FOUND));
         taskRepository.delete(task);

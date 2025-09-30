@@ -164,11 +164,11 @@ public class AcademyServiceImpl implements AcademyService {
         if (!academy.getAcademyName().equals(request.getAcademyName())) {
             throw new CustomException(AcademyError.NOT_FOUND);
         }
-        // 비밀번호 일치 확인
-        if (!request.getNewPassword().equals(request.getCheckPassword())) {
-            throw new CustomException(AcademyError.PASSWORD_MISMATCH);
-        }
-        academy.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            // 비밀번호 일치 확인
+            if (!request.getNewPassword().equals(request.getCheckPassword())) {
+                throw new CustomException(AcademyError.PASSWORD_MISMATCH);
+            }
+            academy.setPassword(passwordEncoder.encode(request.getNewPassword()));
 
 
         academyRepository.save(academy);

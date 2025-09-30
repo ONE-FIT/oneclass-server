@@ -5,9 +5,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.*;
-import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
+import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
