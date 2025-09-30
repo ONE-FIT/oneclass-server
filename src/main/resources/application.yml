@@ -36,7 +36,7 @@ server:
     context-path: /
 
 jwt:
-  secret: "0123456789ABCDEF0123456789ABCDEF"
+  secret: "${JWT_SECRET}"  
   token-validity-in-seconds: 3600
   refresh-validity-in-seconds: 1209600   # 14일
 
