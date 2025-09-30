@@ -30,6 +30,7 @@ public class TaskService {
     private final TaskAssignmentRepository taskAssignmentRepository;
     private final LessonRepository lessonRepository;
     private final ApplicationEventPublisher eventPublisher;
+    //eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
 
     @Transactional
     public TaskResponse createLessonTask(CreateTaskRequest request, Long lessonId) {
@@ -72,7 +73,6 @@ public class TaskService {
                 .student(request.student())
                 .build();
         taskAssignmentRepository.save(assignment);
-        //eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
 
         return TaskResponse.of(savedTask);
     }
@@ -92,6 +92,7 @@ public class TaskService {
     public TaskResponse updateTask(UpdateTaskRequest request) {
         Task task = taskRepository.findById(request.id())
                 .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
+        task.setTitle(request.title());
         task.setDescription(request.description());
         task.setDueDate(request.dueDate());
         taskRepository.save(task);
@@ -100,7 +101,6 @@ public class TaskService {
     }
 
     public void deleteTask(Long id) {
-
         Task task = taskRepository.findById(id)
                 .orElseThrow(() ->new CustomException(TaskError.NOT_FOUND));
         taskRepository.delete(task);

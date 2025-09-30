@@ -9,7 +9,7 @@ import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
 import oneclass.oneclass.global.auth.member.entity.Member;
-import oneclass.oneclass.global.auth.member.error.UserError;
+import oneclass.oneclass.global.auth.member.error.MemberError;
 import oneclass.oneclass.global.auth.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
@@ -68,7 +68,7 @@ public class LessonService {
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
         Member student = memberRepository.findById(studentId)
-                .orElseThrow(() -> new CustomException(UserError.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         lesson.getStudents().add(student);
         lessonRepository.save(lesson);

@@ -1,11 +1,14 @@
 package oneclass.oneclass.global.auth.academy.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import oneclass.oneclass.global.auth.member.entity.Member;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 @NoArgsConstructor
 @Getter

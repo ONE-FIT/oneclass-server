@@ -2,11 +2,12 @@ package oneclass.oneclass.global.auth.member.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import oneclass.oneclass.global.auth.academy.entity.Academy;
+
 import java.util.ArrayList;
 import java.util.List;
 

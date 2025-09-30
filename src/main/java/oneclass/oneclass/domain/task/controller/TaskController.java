@@ -25,7 +25,6 @@ public class TaskController {
     @PostMapping("/createOne")
     public TaskResponse createEachTask(@RequestBody CreateEachTaskRequest request) {
         return taskService.createEachTask(request);
-
     }
 
     @GetMapping("/id/{id}")
