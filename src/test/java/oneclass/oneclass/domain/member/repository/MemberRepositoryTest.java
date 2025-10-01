@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 public class MemberRepositoryTest {
 
+
     @Autowired
     private MemberRepository memberRepository;
 
