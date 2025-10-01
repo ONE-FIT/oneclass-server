@@ -31,12 +31,13 @@ public class SecurityConfig {
             "/member/login",
             "/academy/login",
             "/academy/signup",
+            "/academy/send-reset-password",
             "/consultations/request",
             "/consultations/detail",
             "/lesson/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui/index.html"
     };
 
     @Bean
@@ -60,7 +61,7 @@ public class SecurityConfig {
                                 "/attendance",
                                 "/attendance/date/**",
                                 "/attendance/member/**"
-                        ).hasRole("ADMIN")
+                        ).hasRole("TEACHER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
