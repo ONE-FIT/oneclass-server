@@ -10,9 +10,11 @@ import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.service.AcademyService;
 import oneclass.oneclass.domain.member.dto.ResponseToken;
 import oneclass.oneclass.domain.member.error.TokenError;
+import oneclass.oneclass.global.auth.CustomUserDetails;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -57,22 +59,11 @@ public class AcademyController {
     }
     @Operation(summary = "로그아웃", description = "학원계정을 로그아웃합니다.")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletRequest request) {
-
-        String token = jwtProvider.resolveToken(request);
-        if (token == null) {
-            throw new CustomException(TokenError.UNAUTHORIZED); // 혹은 TokenError.UNAUTHORIZED 로 교체
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new CustomException(TokenError.UNAUTHORIZED);
         }
-
-        // 토큰 유효성 검증
-        jwtProvider.validateToken(token);
-
-        // username 추출
-        String academyCode = jwtProvider.getUsername(token);
-
-        // 서비스 호출 (RefreshToken 삭제 / 예외 처리 내장)
-        academyService.logout(academyCode);
-
+        academyService.logout(userDetails.getUsername());
         return ResponseEntity.noContent().build(); // 204
     }
 }
