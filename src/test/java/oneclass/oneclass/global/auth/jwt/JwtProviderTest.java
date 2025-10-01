@@ -26,7 +26,7 @@ public class JwtProviderTest {
     }
 
     @Test
-    public void ProvideTest() {
+    public void ResponseToken_ProvideTest() {
 
         ResponseToken responseToken = jwtProvider.generateToken("FineFinee", "USER");
         System.out.println(responseToken.toString());
@@ -34,6 +34,22 @@ public class JwtProviderTest {
         assertThat(responseToken).isNotNull();
         assertThat(responseToken.getAccessToken()).isNotNull();
         assertThat(responseToken.getRefreshToken()).isNotNull();
+    }
+
+    @Test
+    public void AccessToken_ProvideTest() {
+
+        String accessToken = jwtProvider.generateAccessToken("FineFinee", "USER");
+        System.out.println(accessToken);
+
+        assertThat(accessToken).isNotNull();
+    }
+
+    @Test
+    public void ValidateToken_Test() {
+        String accessToken = jwtProvider.generateAccessToken("FineFinee", "USER");
+
+        assertThat(jwtProvider.validateToken(accessToken)).isTrue();
     }
 
 }
