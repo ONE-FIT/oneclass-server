@@ -1,25 +1,22 @@
 package oneclass.oneclass.domain.member.service;
 
-import jakarta.transaction.Transactional;
-import oneclass.oneclass.domain.member.dto.ResponseToken;
-import oneclass.oneclass.domain.member.dto.SignupRequest;
-import org.springframework.stereotype.Service;
-
+import oneclass.oneclass.domain.member.dto.*;
 import java.util.List;
 
-@Service
 public interface MemberService {
-    void signup(SignupRequest request); // 회원가입
-    ResponseToken login(String username, String password); // 로그인
-    String findUsername(String emailOrPhone); // 아이디 찾기
-    void sendResetPasswordEmail(String usernameOrEmail); // 비번 재설정 메일 발송
-    void resetPassword(String username, String newPassword, String verificationCode); // 비번 변경
-    void logout(String username);
-    void sendSignupVerificationCode(String academyCode , String username);
+    void signup(SignupRequest request);
+    ResponseToken login(String username, String password);
+    String findUsername(String emailOrPhone);
+    void sendResetPasswordEmail(String emailOrPhone);
+    void resetPassword(String username, String newPassword, String verificationCode);
+
+    // 로그아웃
+    void logout(String username, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
+
+    void sendSignupVerificationCode(String academyCode, String username);
     void addStudentsToParent(String username, String password, List<Long> studentIds);
-
-
-    @Transactional
     void deleteParent(Long parentId);
 
+    //refreshToken 검증
+    ResponseToken reissue(String refreshToken);
 }
