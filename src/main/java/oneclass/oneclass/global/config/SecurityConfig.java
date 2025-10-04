@@ -23,15 +23,20 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
-    private final JwtFilter jwtFilter; // JwtFilter 를 @Component 로 등록하거나 @Bean으로 만들고 주입
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/member/signup",
             "/member/signup-code",
             "/member/login",
+            "/member/find-username",
+            "/member/send-reset-password-email",
+            "/member/reset-password",
+
             "/academy/login",
             "/academy/signup",
             "/academy/send-reset-password",
+            "/academy/reset-password",
+
             "/consultations/request",
             "/consultations/detail",
             "/lesson/**",
@@ -46,16 +51,25 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public JwtFilter jwtFilter() {
+        return new JwtFilter(jwtProvider);
+    }
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> {})               // 별도 CorsFilter bean 사용
+                .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+
+                        // 역할별 접근 제어
+                        .requestMatchers("/academy/logout").hasRole("ACADEMY")
+                        .requestMatchers("/member/logout").hasAnyRole("STUDENT", "PARENT", "TEACHER")
+
                         .requestMatchers(
                                 "/consultations/schedule",
                                 "/attendance",
@@ -64,18 +78,14 @@ public class SecurityConfig {
                         ).hasRole("TEACHER")
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    /**
-     * CORS 전역 설정
-     */
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        // 실제 서비스 시 특정 도메인 명시 예: https://app.example.com
         config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

@@ -60,7 +60,7 @@ public class AcademyController {
     @Operation(summary = "로그아웃", description = "학원계정을 로그아웃합니다.")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
+        if (userDetails == null || !userDetails.isAcademy()) {
             throw new CustomException(TokenError.UNAUTHORIZED);
         }
         academyService.logout(userDetails.getUsername());
