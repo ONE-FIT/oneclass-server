@@ -129,42 +129,63 @@ public class MemberServiceImpl implements MemberService {
     // 비번 재설정 이메일 발송
     @Override
     public void sendResetPasswordEmail(String emailOrPhone) {
-        Member member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
+        var member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         String username = member.getUsername();
-        String tempCode = UUID.randomUUID().toString().substring(0, 6);
+
+        String tempCode = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
 
         verificationCodeRepository.save(
                 VerificationCode.builder()
                         .usernameOrEmail(username)
-                        .code(tempCode)
+                        .code(tempCode) // 대문자로 저장
                         .expiry(LocalDateTime.now().plusMinutes(5))
                         .build()
         );
 
-        emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode);
+        emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode + " (대문자 구분 없음)");
     }
 
     // 비번 재설정
     @Override
-    public void resetPassword(String username, String newPassword, String verificationCode) {
-        VerificationCode codeEntry = verificationCodeRepository.findById(username)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+    public void resetPassword(String username, String newPassword, String checkPassword, String verificationCode) {
+        if (newPassword == null || checkPassword == null || !newPassword.equals(checkPassword)) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+        }
+        if (username == null || username.isBlank()) {
+            throw new CustomException(MemberError.USERNAME_REQUIRED);
+        }
+        if (verificationCode == null || verificationCode.isBlank()) {
+            throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
+        }
 
-        if (!codeEntry.getCode().equals(verificationCode)) {
-            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
+        String provided = normalizeCode(verificationCode);
+
+        var codeEntry = verificationCodeRepository.findById(username)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
+
+        String saved = normalizeCode(codeEntry.getCode());
+
+        if (!saved.equals(provided)) {
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE, "인증코드가 일치하지 않습니다.");
         }
         if (codeEntry.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new CustomException(MemberError.TOKEN_EXPIRED);
+            throw new CustomException(MemberError.TOKEN_EXPIRED, "인증코드가 만료되었습니다.");
         }
 
+        // 1회용 코드 삭제
         verificationCodeRepository.deleteById(username);
 
-        Member member = memberRepository.findByUsername(username)
+        var member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         member.setPassword(passwordEncoder.encode(newPassword));
         memberRepository.save(member);
+    }
+
+    private String normalizeCode(String code) {
+        if (code == null) return "";
+        return code.trim().replaceAll("\\s+", "").toUpperCase();
     }
 
     // 로그아웃: 특정 refresh 토큰만 폐기
@@ -173,7 +194,7 @@ public class MemberServiceImpl implements MemberService {
         // 호출 전 컨트롤러에서 유효성/주체 일치 검증을 수행
         boolean exists = refreshTokenRepository.existsByUsernameAndToken(username, refreshToken);
         if (!exists) {
-            throw new CustomException(MemberError.CONFLICT); // 이미 폐기되었거나 불일치
+            throw new CustomException(TokenError.UNAUTHORIZED); // 이미 폐기되었거나 불일치
         }
         refreshTokenRepository.deleteByUsernameAndToken(username, refreshToken);
     }

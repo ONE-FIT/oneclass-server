@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.*;
+import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.service.MemberService;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
@@ -109,9 +110,17 @@ public class MemberController {
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
     public void resetPassword(@RequestBody ResetPasswordRequest request) {
+
+        if (request.getNewPassword() == null || request.getCheckPassword() == null
+                || !request.getNewPassword().equals(request.getCheckPassword())) {
+            throw new CustomException(MemberError.BAD_REQUEST, "비밀번호 확인이 일치하지 않습니다.");
+        }
+
+
         memberService.resetPassword(
                 request.getUsername(),
                 request.getNewPassword(),
+                request.getCheckPassword(),
                 request.getVerificationCode()
         );
     }

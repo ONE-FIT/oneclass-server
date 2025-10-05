@@ -8,7 +8,7 @@ public interface MemberService {
     ResponseToken login(String username, String password);
     String findUsername(String emailOrPhone);
     void sendResetPasswordEmail(String emailOrPhone);
-    void resetPassword(String username, String newPassword, String verificationCode);
+    void resetPassword(String username, String newPassword, String verificationCode,  String checkPassword);
 
     // 로그아웃
     void logout(String username, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
