@@ -69,9 +69,10 @@ public class SecurityConfig {
                         // 역할별 접근 제어
                         .requestMatchers("/academy/logout").hasRole("ACADEMY")
                         .requestMatchers("/member/logout").hasAnyRole("STUDENT", "PARENT", "TEACHER")
+                        .requestMatchers("/consultations/change-status").hasRole("ACADEMY")
+                        .requestMatchers("/consultations/schedule").hasAnyRole("TEACHER","ACADEMY")
 
                         .requestMatchers(
-                                "/consultations/schedule",
                                 "/attendance",
                                 "/attendance/date/**",
                                 "/attendance/member/**"

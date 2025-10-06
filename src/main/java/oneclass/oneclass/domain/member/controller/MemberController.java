@@ -120,8 +120,8 @@ public class MemberController {
         memberService.resetPassword(
                 request.getUsername(),
                 request.getNewPassword(),
-                request.getCheckPassword(),
-                request.getVerificationCode()
+                request.getVerificationCode(),
+                request.getCheckPassword()
         );
     }
 

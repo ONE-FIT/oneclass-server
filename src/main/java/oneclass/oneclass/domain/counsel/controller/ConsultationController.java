@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.counsel.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.counsel.dto.ChangeConsultationStatusRequest;
 import oneclass.oneclass.domain.counsel.dto.ConsultationDetailResponse;
 import oneclass.oneclass.domain.counsel.dto.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
@@ -19,12 +20,13 @@ public class ConsultationController {
 
     //상담신청(학생)
     @PostMapping("/request")
-    public ResponseEntity<Consultation> create(@RequestBody @Valid ConsultationRequest request){
+    public ResponseEntity<Consultation> create(@RequestBody @Valid ConsultationRequest request) {
         return ResponseEntity.ok(consultationService.createConsultation(request));
     }
+
     //상담 상태 변경 ex) 상담신청이 됨 -> 상담신청 날짜 확정
     @PostMapping("/change-status")
-    public ResponseEntity<Consultation> changeStatus(@RequestBody @Valid ConsultationRequest request){
+    public ResponseEntity<Consultation> changeStatus(@RequestBody @Valid ChangeConsultationStatusRequest request) {
         return ResponseEntity.ok(consultationService.changeStatus(request));
     }
 
@@ -39,7 +41,7 @@ public class ConsultationController {
 
     //전체상담조회
     @GetMapping("/schedule")
-    public ResponseEntity<List<Consultation>> getAllSchedule(){
+    public ResponseEntity<List<Consultation>> getAllSchedule() {
         return ResponseEntity.ok(consultationService.getAllSchedule());
     }
 }

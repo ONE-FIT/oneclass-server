@@ -26,7 +26,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -352,7 +354,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     private void signupParent(SignupRequest request) {
-        List<String> studentUsernames = request.getStudentId();
+        List<String> studentUsernames = request.getStudentUsername(); // studentId → studentUsername
         if (studentUsernames == null || studentUsernames.isEmpty()) {
             throw new CustomException(MemberError.BAD_REQUEST);
         }
