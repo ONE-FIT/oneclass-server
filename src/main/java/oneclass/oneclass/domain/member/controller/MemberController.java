@@ -45,8 +45,8 @@ public class MemberController {
 
     @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
     @PostMapping("/signup-code")
-    public void sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String username) {
-        memberService.sendSignupVerificationCode(academyCode, username);
+    public void sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
+        memberService.sendSignupVerificationCode(academyCode, name);
     }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")

@@ -203,7 +203,7 @@ public class MemberServiceImpl implements MemberService {
 
     // 회원가입 코드(선생님)
     @Override
-    public void sendSignupVerificationCode(String academyCode, String username) {
+    public void sendSignupVerificationCode(String academyCode, String name) {
         if (academyCode == null) {
             throw new CustomException(MemberError.BAD_REQUEST);
         }
@@ -223,7 +223,7 @@ public class MemberServiceImpl implements MemberService {
         String subject = "회원가입 인증코드 안내";
         String text = String.format(
                 "%s님이 %s 학원으로 가입하려고 합니다.%n아래 인증코드를 10분 내에 입력해주세요.%n%n인증코드: %s",
-                username, academyName, tempCode
+                name, academyName, tempCode
         );
 
         SimpleMailMessage message = new SimpleMailMessage();
