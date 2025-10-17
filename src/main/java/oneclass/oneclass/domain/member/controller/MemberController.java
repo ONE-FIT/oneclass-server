@@ -8,6 +8,7 @@ import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.service.MemberService;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.jwt.TokenUtils;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -133,9 +134,6 @@ public class MemberController {
     }
 
     private boolean isLikelyJwe(String t) {
-        if (t == null) return false;
-        int dots = 0;
-        for (int i = 0; i < t.length(); i++) if (t.charAt(i) == '.') dots++;
-        return dots == 4; // 5 segments
+        return TokenUtils.isLikelyJwe(t); // 5 segments
     }
 }

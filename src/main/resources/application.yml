@@ -22,7 +22,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: abcb090125@gmail.com
-    password: xvgv hswn zong baiw
+    password: ${SPRING_MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -36,7 +36,7 @@ server:
     context-path: /
 
 jwt:
-  secret: "dev-very-long-secret-6YtQ3pV9mN2aR7sK4xH8cL1jW5zE0uD3bF6gIqT9yX4v"
+  secret: ${JWT_SECRET}
   token-validity-in-seconds: 3600
   refresh-validity-in-seconds: 1209600   # 14일
 

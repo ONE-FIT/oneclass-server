@@ -145,7 +145,7 @@ public class MemberServiceImpl implements MemberService {
                         .build()
         );
 
-        emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode + " (대문자 구분 없음)");
+        emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode);
     }
 
     // 비번 재설정
