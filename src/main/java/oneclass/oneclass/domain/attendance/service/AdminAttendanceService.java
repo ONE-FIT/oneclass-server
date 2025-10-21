@@ -1,5 +1,9 @@
 package oneclass.oneclass.domain.attendance.service;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.MultiFormatWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.Attendance;
@@ -9,8 +13,11 @@ import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
+import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -80,4 +87,45 @@ public class AdminAttendanceService {
                 attendance.getDate()
         );
     }
+
+
+    // --- QR 코드 생성 관련 메서드 추가 ---
+
+    /**
+     * 수업용 출석 QR 페이로드를 생성하고 PNG 바이트 배열을 반환합니다.
+     * 페이로드 예시: {"type":"attendance","lessonId":123,"date":"2025-10-20","nonce":"uuid"}
+     */
+    public byte[] generateAttendanceQrPng(Long lessonId, LocalDate date) {
+        String payload = buildAttendancePayload(lessonId, date);
+        return createQrImage(payload, 350, 350);
+    }
+
+    /**
+     * Base64 인코딩된 PNG 문자열 반환 (웹에서 <img src="data:image/png;base64,...">로 바로 사용 가능)
+     */
+    public String generateAttendanceQrBase64(Long lessonId, LocalDate date) {
+        byte[] png = generateAttendanceQrPng(lessonId, date);
+        return Base64.getEncoder().encodeToString(png);
+    }
+
+    private String buildAttendancePayload(Long lessonId, LocalDate date) {
+        String nonce = UUID.randomUUID().toString();
+        // TODO: nonce를 DB에 저장해서 재사용/재발급 방지, 만료 시간 체크 로직 추가 권장
+        return String.format("{\"type\":\"attendance\",\"lessonId\":%d,\"date\":\"%s\",\"nonce\":\"%s\"}",
+                lessonId,
+                date.toString(),
+                nonce
+        );
+    }
+
+    private byte[] createQrImage(String text, int width, int height) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            BitMatrix matrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, width, height);
+            MatrixToImageWriter.writeToStream(matrix, "PNG", baos);
+            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("QR 코드 생성 실패", e);
+        }
+    }
+
 }

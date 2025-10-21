@@ -11,10 +11,6 @@ import oneclass.oneclass.domain.lesson.repository.LessonRepository;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
-import oneclass.oneclass.domain.task.entity.Task;
-import oneclass.oneclass.domain.task.entity.TaskAssignment;
-import oneclass.oneclass.domain.task.entity.TaskStatus;
-import oneclass.oneclass.domain.task.repository.TaskAssignmentRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 
@@ -28,9 +24,12 @@ public class LessonService {
     private final MemberRepository memberRepository;
 
     public LessonResponse createLesson(CreateLessonRequest request) {
+        Member teacher = memberRepository.findById(request.teacherId())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+
         Lesson lesson  = Lesson.builder()
                 .title(request.title())
-                .teacher(request.teacher())
+                .teacher(teacher)
                 .build();
         return LessonResponse.of(lessonRepository.save(lesson));
     }
@@ -53,7 +52,11 @@ public class LessonService {
         Lesson lesson = lessonRepository.findById(request.lessonId())
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
         lesson.setTitle(request.title());
-        lesson.setTeacher(request.teacher());
+
+        Member teacher = memberRepository.findById(request.teacherId())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        lesson.setTeacher(teacher);
+
         lessonRepository.save(lesson);
 
         return LessonResponse.of(lesson);

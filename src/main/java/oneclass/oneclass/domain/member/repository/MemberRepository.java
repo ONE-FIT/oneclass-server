@@ -1,6 +1,5 @@
 package oneclass.oneclass.domain.member.repository;
 
-import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 import oneclass.oneclass.domain.member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

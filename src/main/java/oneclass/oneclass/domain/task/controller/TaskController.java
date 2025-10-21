@@ -22,7 +22,7 @@ public class TaskController {
         return taskService.createLessonTask(request,lessonId);
     }
 
-    @PostMapping("/createOne")
+    @PostMapping("/create-one")
     public TaskResponse createEachTask(@RequestBody CreateEachTaskRequest request) {
         return taskService.createEachTask(request);
     }

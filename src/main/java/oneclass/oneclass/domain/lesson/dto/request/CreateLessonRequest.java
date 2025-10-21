@@ -4,6 +4,6 @@ import oneclass.oneclass.domain.member.entity.Member;
 
 public record CreateLessonRequest(
         String title,
-        Member teacher
+        Long teacherId
 ) {
 }

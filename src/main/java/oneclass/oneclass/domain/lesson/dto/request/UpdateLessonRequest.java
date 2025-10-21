@@ -5,7 +5,7 @@ import oneclass.oneclass.domain.member.entity.Member;
 public record UpdateLessonRequest(
         Long lessonId,
         String title,
-        Member teacher,
+        Long teacherId,
         Member student
 ) {
 }

@@ -35,7 +35,8 @@ public class SecurityConfig {
             "/lesson/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+            "/attendance/**",
     };
 
     @Bean
@@ -54,11 +55,9 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers("/api/attendance/qr/**").permitAll()
                         .requestMatchers(
-                                "/consultations/schedule",
-                                "/attendance",
-                                "/attendance/date/**",
-                                "/attendance/member/**"
+                                "/consultations/schedule"
                         ).hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
