@@ -1,52 +1,18 @@
 spring:
+  profiles:
+    default: dev
   application:
     name: oneclass
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/oneclass
-    username: root
-    password:               # 실제 운영: 환경 변수로
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update       # 운영: validate / none + Flyway
-    open-in-view: false
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        # dialect 명시 제거 (Hibernate 6 자동 선택)
-
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: abcb090125@gmail.com
-    password: ${SPRING_MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls.enable: true
-          ssl.trust: smtp.gmail.com
 
 server:
   port: 8080
   servlet:
     context-path: /
 
-jwt:
-  secret: "dev-very-long-secret-6YtQ3pV9mN2aR7sK4xH8cL1jW5zE0uD3bF6gIqT9yX4v"
-  token-validity-in-seconds: 3600
-  refresh-validity-in-seconds: 1209600   # 14일
-
 logging:
   level:
     org.springframework: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE    # (Hibernate 6 binding 로깅)
-    org.hibernate.type.descriptor.sql.BasicBinder: OFF   # 민감 정보 노출시키지 않으려면 OFF
-    org.springframework.security.config.annotation.authentication.configuration.UserDetailsServiceAutoConfiguration: ERROR
 
-toss:
-  secret-key: test_sk_xxxxxxxxxxxxxxxxx
+jwt:
+  token-validity-in-seconds: 3600
+  refresh-validity-in-seconds: 1209600   # 14일
