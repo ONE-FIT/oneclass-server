@@ -39,4 +39,6 @@ out/
 ### macOS system files ###
 .DS_Store
 
+### Environment files ###
 .env
+src/main/resources/application-dev.yml
