@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 
 @Slf4j
+@Deprecated
 public abstract class AbstractLongMessage extends BaseScenario implements ExecutableWithMessageAndTitle {
 
     @Override

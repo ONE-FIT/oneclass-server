@@ -40,5 +40,8 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: OFF
     org.springframework.security.config.annotation.authentication.configuration.UserDetailsServiceAutoConfiguration: ERROR
 
+cors:
+  allowed-origins: "*"
+
 #toss:
 #  secret-key: test_sk_xxxxxxxxxxxxxxxxx

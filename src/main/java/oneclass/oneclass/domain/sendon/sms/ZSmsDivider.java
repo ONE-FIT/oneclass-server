@@ -3,6 +3,7 @@ package oneclass.oneclass.domain.sendon.sms;
 import oneclass.oneclass.domain.sendon.BaseScenario;
 import oneclass.oneclass.domain.sendon.Executable;
 
+@Deprecated
 public class ZSmsDivider extends BaseScenario implements Executable {
 
     @Override

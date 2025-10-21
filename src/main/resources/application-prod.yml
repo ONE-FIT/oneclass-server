@@ -38,5 +38,8 @@ logging:
     org.hibernate.SQL: WARN
     org.springframework.security: WARN
 
+cors:
+  allowed-origins: ${PROD_CORS_ORIGIN}
+
 #toss:
 #  secret-key: ${TOSS_SECRET_KEY}

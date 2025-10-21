@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 // DTO 정의
 @Setter
 @Getter
+@Deprecated
 public class LongMessageScheduleRequestDto {
     // getter/setter
     @NotBlank

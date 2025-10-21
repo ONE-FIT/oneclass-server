@@ -3,6 +3,7 @@ package oneclass.oneclass.global.config;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.global.auth.jwt.JwtFilter;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -39,7 +41,6 @@ public class SecurityConfig {
 
             "/consultations/request",
             "/consultations/detail",
-            "/lesson/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui/index.html"
@@ -67,6 +68,7 @@ public class SecurityConfig {
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
 
                         // 역할별 접근 제어
+                        .requestMatchers("/lesson/**").hasAnyRole("ACADEMY", "TEACHER")
                         .requestMatchers("/academy/logout").hasRole("ACADEMY")
                         .requestMatchers("/member/logout").hasAnyRole("STUDENT", "PARENT", "TEACHER")
 
@@ -83,10 +85,14 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
+
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
