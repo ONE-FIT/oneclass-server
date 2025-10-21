@@ -139,6 +139,7 @@ public class MemberController {
     }
 
     //선생님한테 배우는 학생 추가
+    @Operation(summary = "선생님 계정에 학생 추가", description = "학생을 추가합니다.")
     @PostMapping("/teachers/{teacherUsername}/students")
     public ResponseEntity<Void> addStudentsToTeacher(
             @PathVariable String teacherUsername,
@@ -149,6 +150,7 @@ public class MemberController {
     }
 
     // 선생님에게서 여러 학생 제거
+    @Operation(summary = "선생님 계정에서 학생 제거", description = "학생을 제거합니다.")
     @DeleteMapping("/teachers/{teacherUsername}/students")
     public ResponseEntity<Void> removeStudentsFromTeacher(
             @PathVariable String teacherUsername,
@@ -159,6 +161,7 @@ public class MemberController {
     }
 
     // 선생님이 맡고 있는 학생 username 리스트 조회
+    @Operation(summary = "선생님이 맡고 있는 학생을 조회합니다", description = "선생님이 맡고있는 학생을 조회합니다.")
     @GetMapping("/teachers/{teacherUsername}/students")
     public ResponseEntity<List<String>> listStudentsOfTeacher(@PathVariable String teacherUsername) {
         Member teacher = memberRepository.findByUsername(teacherUsername)
@@ -174,6 +177,7 @@ public class MemberController {
     }
 
     // 특정 학생의 담당 선생님 username 리스트 조회
+    @Operation(summary = "특정학생의 선생 조회", description = "특정학생의 선생님을 조회합니다.")
     @GetMapping("/students/{studentUsername}/teachers")
     public ResponseEntity<List<String>> listTeachersOfStudent(@PathVariable String studentUsername) {
         Member student = memberRepository.findByUsername(studentUsername)
