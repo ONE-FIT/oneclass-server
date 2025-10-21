@@ -11,7 +11,8 @@ public enum MemberError implements CustomError {
     BAD_REQUEST(400,"요청형식에 맞게 써주세요."),
     CONFLICT(409, "이미 사용중입니다."),
     NO_CONTENT(204,"존재하지 않는 코드입니다."),
-    FORBIDDEN(403, "접근 권한이 없습니다.") ;
+    FORBIDDEN(403, "접근 권한이 없습니다.") ,
+    INVALID_VERIFICATION_CODE(409,"인증코드가 유효하지 않습니다.");
 
     private final int status;
     private final String message;

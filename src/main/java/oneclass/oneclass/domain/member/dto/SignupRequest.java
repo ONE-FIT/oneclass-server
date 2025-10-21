@@ -14,6 +14,7 @@ import java.util.List;
 public class SignupRequest {
     private String username;
     private String password;
+    private String checkPassword;
     private String name;
     private String email;
     private String phone;
@@ -27,6 +28,7 @@ public class SignupRequest {
                          Role role, String verificationCode, String academyCode, List<String> studentId) {
         this.username = username;
         this.password = password;
+        this.checkPassword = password;
         this.name = name;
         this.email = email;
         this.phone = phone;

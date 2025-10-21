@@ -8,12 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Optional;
 
 public interface AcademyRefreshTokenRepository extends JpaRepository<AcademyRefreshToken, Long> {
-
     Optional<AcademyRefreshToken> findByAcademyCode(String academyCode);
 
-    boolean existsByAcademyCode(String academyCode);
+
+    boolean existsByAcademyCodeAndToken(String academyCode, String token);
+    void deleteByAcademyCodeAndToken(String academyCode, String token);
+
 
     @Modifying
     @Query("DELETE FROM AcademyRefreshToken art WHERE art.academyCode = :academyCode")
-    void deleteByAcademyCode(String academyCode);
+    void deleteByAcademyCode(String academyCode); //이거 지우면 에러뜸
+
 }
