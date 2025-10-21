@@ -10,4 +10,5 @@ public class MadeRequest {
     private String email;
     private String password;
     private String checkPassword;
+    private String phone;
 }

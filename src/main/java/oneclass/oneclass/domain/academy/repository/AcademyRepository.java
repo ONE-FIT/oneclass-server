@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface AcademyRepository extends JpaRepository<Academy, String> {
     Optional<Academy> findByAcademyCode(String academyCode);
     Optional<Academy> findByAcademyCodeAndAcademyName(String academyCode, String academyName);
+    Optional<Academy> findByEmail(String email);
+    Optional<Academy> findByPhone(String phone);
 }
