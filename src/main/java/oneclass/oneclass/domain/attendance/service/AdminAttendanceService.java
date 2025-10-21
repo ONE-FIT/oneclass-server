@@ -111,11 +111,12 @@ public class AdminAttendanceService {
     private String buildAttendancePayload(Long lessonId, LocalDate date) {
         String nonce = UUID.randomUUID().toString();
         // TODO: nonce를 DB에 저장해서 재사용/재발급 방지, 만료 시간 체크 로직 추가 권장
-        return String.format("{\"type\":\"attendance\",\"lessonId\":%d,\"date\":\"%s\",\"nonce\":\"%s\"}",
-                lessonId,
-                date.toString(),
-                nonce
-        );
+        org.json.simple.JSONObject payload = new org.json.simple.JSONObject();
+        payload.put("type", "attendance");
+        payload.put("lessonId", lessonId);
+        payload.put("date", date.toString());
+        payload.put("nonce", nonce);
+        return payload.toJSONString();
     }
 
     private byte[] createQrImage(String text, int width, int height) {
@@ -123,7 +124,7 @@ public class AdminAttendanceService {
             BitMatrix matrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, width, height);
             MatrixToImageWriter.writeToStream(matrix, "PNG", baos);
             return baos.toByteArray();
-        } catch (Exception e) {
+        } catch (com.google.zxing.WriterException | java.io.IOException e) {
             throw new RuntimeException("QR 코드 생성 실패", e);
         }
     }
