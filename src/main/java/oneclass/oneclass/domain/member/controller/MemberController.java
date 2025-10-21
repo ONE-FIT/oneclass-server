@@ -2,10 +2,13 @@ package oneclass.oneclass.domain.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.*;
+import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
@@ -15,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
@@ -25,6 +29,7 @@ public class MemberController {
 
     private final MemberService memberService;
     private final JwtProvider jwtProvider;
+    private final MemberRepository memberRepository;
 
     @Operation(summary = "부모님 삭제", description = "학생계정에 등록된 부모님을 삭제합니다.")
     @DeleteMapping("/parent/{parentId}")
@@ -36,11 +41,7 @@ public class MemberController {
     @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
     @PostMapping("/add-students")
     public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
-        memberService.addStudentsToParent(
-                request.getUsername(),
-                request.getPassword(),
-                request.getStudentId()
-        );
+        memberService.addStudentsToParent(request.getUsername(), request.getPassword(), request.getStudentUsernames());
         return ResponseEntity.noContent().build();
     }
 
@@ -135,5 +136,54 @@ public class MemberController {
 
     private boolean isLikelyJwe(String t) {
         return TokenUtils.isLikelyJwe(t); // 5 segments
+    }
+
+    //선생님한테 배우는 학생 추가
+    @PostMapping("/teachers/{teacherUsername}/students")
+    public ResponseEntity<Void> addStudentsToTeacher(
+            @PathVariable String teacherUsername,
+            @RequestBody @Valid TeacherStudentsRequest request
+    ) {
+        memberService.addStudentsToTeacher(teacherUsername, request.getStudentUsernames(), request.getPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    // 선생님에게서 여러 학생 제거
+    @DeleteMapping("/teachers/{teacherUsername}/students")
+    public ResponseEntity<Void> removeStudentsFromTeacher(
+            @PathVariable String teacherUsername,
+            @RequestBody @Valid TeacherStudentsRequest request
+    ) {
+        memberService.removeStudentsFromTeacher(teacherUsername, request.getStudentUsernames());
+        return ResponseEntity.noContent().build();
+    }
+
+    // 선생님이 맡고 있는 학생 username 리스트 조회
+    @GetMapping("/teachers/{teacherUsername}/students")
+    public ResponseEntity<List<String>> listStudentsOfTeacher(@PathVariable String teacherUsername) {
+        Member teacher = memberRepository.findByUsername(teacherUsername)
+                .orElse(null);
+        if (teacher == null) return ResponseEntity.notFound().build();
+
+        // 지연로딩인 경우 트랜잭션 경계 안에서 사용하거나 DTO로 변환하세요.
+        List<String> students = teacher.getTeachingStudents().stream()
+                .map(Member::getUsername)
+                .toList();
+
+        return ResponseEntity.ok(students);
+    }
+
+    // 특정 학생의 담당 선생님 username 리스트 조회
+    @GetMapping("/students/{studentUsername}/teachers")
+    public ResponseEntity<List<String>> listTeachersOfStudent(@PathVariable String studentUsername) {
+        Member student = memberRepository.findByUsername(studentUsername)
+                .orElse(null);
+        if (student == null) return ResponseEntity.notFound().build();
+
+        List<String> teachers = student.getTeachers().stream()
+                .map(Member::getUsername)
+                .toList();
+
+        return ResponseEntity.ok(teachers);
     }
 }

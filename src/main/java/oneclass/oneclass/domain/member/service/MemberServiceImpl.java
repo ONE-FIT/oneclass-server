@@ -235,17 +235,20 @@ public class MemberServiceImpl implements MemberService {
 
     // 부모-자식: 자녀 추가(부모님)
     @Override
-    public void addStudentsToParent(String username, String password, List<Long> studentIds) {
+    public void addStudentsToParent(String username, String password, List<String> studentUsernames) {
         Member parent = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         if (!passwordEncoder.matches(password, parent.getPassword())) {
             throw new CustomException(MemberError.INVALID_PASSWORD);
         }
+        if (studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "자녀 username 목록이 필요합니다.");
+        }
 
-        for (Long sid : studentIds) {
-            Member child = memberRepository.findById(sid)
-                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-            parent.addParentStudent(child);
+        for (String su : studentUsernames) {
+            Member child = memberRepository.findByUsername(su)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + su));
+            parent.addParentStudent(child); // ManyToMany(username FK) 양방향 연결
         }
         memberRepository.save(parent);
     }
@@ -400,5 +403,52 @@ public class MemberServiceImpl implements MemberService {
             v = v.substring(1, v.length() - 1);
         }
         return v;
+    }
+    @Override
+    public void addStudentsToTeacher(String teacherUsername, List<String> studentUsernames, String password) {
+        Member teacher = memberRepository.findByUsername(teacherUsername).orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
+        if (teacherUsername == null || teacherUsername.isBlank() || studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
+        }
+        if (password == null || password.isBlank()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "비밀번호가 필요합니다.");
+        }
+        if (!passwordEncoder.matches(password, teacher.getPassword())) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH, "비밀번호가 올바르지 않습니다.");
+        }
+
+        if (teacher.getRole() != Role.TEACHER) {
+            throw new CustomException(MemberError.BAD_REQUEST, "해당 사용자는 선생님이 아닙니다.");
+        }
+
+        for (String s : studentUsernames) {
+            Member student = memberRepository.findByUsername(s)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + s));
+            if (student.getRole() != Role.STUDENT) {
+                throw new CustomException(MemberError.BAD_REQUEST, "학생이 아닌 계정입니다: " + s);
+            }
+            teacher.addStudent(student); // 양방향 연결
+        }
+        memberRepository.save(teacher); // owning side(teacher) 저장 → join table 반영
+    }
+
+    @Override
+    public void removeStudentsFromTeacher(String teacherUsername, List<String> studentUsernames) {
+        if (teacherUsername == null || teacherUsername.isBlank() || studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
+        }
+
+        Member teacher = memberRepository.findByUsername(teacherUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
+        if (teacher.getRole() != Role.TEACHER) {
+            throw new CustomException(MemberError.BAD_REQUEST, "해당 사용자는 선생님이 아닙니다.");
+        }
+
+        for (String s : studentUsernames) {
+            Member student = memberRepository.findByUsername(s)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + s));
+            teacher.removeStudent(student); // 양방향 해제
+        }
+        memberRepository.save(teacher);
     }
 }

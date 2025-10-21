@@ -74,8 +74,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/attendance",
                                 "/attendance/date/**",
-                                "/attendance/member/**"
+                                "/attendance/member/**",
+                                "/member/teachers/{teacherUsername}/students"
                         ).hasRole("TEACHER")
+                        .requestMatchers("/member/add-students").hasRole("PARENT")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);

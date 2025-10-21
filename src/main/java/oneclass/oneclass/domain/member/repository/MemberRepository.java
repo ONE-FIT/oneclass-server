@@ -29,4 +29,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     )
     """)
     List<Member> findAbsentMembers(@Param("date") LocalDate date);
+
+    String username(String username);
 }
