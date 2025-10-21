@@ -41,5 +41,3 @@ out/
 
 ### Environment files ###
 .env
-src/main/resources/application-dev.yml
-src/main/resources/application.yml

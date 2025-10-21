@@ -1,0 +1,18 @@
+spring:
+  profiles:
+    default: dev
+  application:
+    name: oneclass
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    org.springframework: INFO
+
+jwt:
+  token-validity-in-seconds: 3600
+  refresh-validity-in-seconds: 1209600   # 14일
