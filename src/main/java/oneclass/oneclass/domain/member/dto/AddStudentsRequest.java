@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@NoArgsConstructor
 public class AddStudentsRequest {
     @NotBlank
     private String username; // 부모 username
