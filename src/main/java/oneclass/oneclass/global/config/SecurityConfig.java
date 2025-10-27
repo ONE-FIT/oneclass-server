@@ -69,13 +69,15 @@ public class SecurityConfig {
                         // 역할별 접근 제어
                         .requestMatchers("/academy/logout").hasRole("ACADEMY")
                         .requestMatchers("/member/logout").hasAnyRole("STUDENT", "PARENT", "TEACHER")
-
+                        .requestMatchers("/consultations/change-status",
+                                        "/consultations/schedule").hasAnyRole("ACADEMY","TEACHER")
                         .requestMatchers(
-                                "/consultations/schedule",
                                 "/attendance",
                                 "/attendance/date/**",
-                                "/attendance/member/**"
+                                "/attendance/member/**",
+                                "/member/teachers/{teacherUsername}/students"
                         ).hasRole("TEACHER")
+                        .requestMatchers("/member/add-students").hasRole("PARENT")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -87,7 +89,7 @@ public class SecurityConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of("*"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);

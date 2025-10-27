@@ -41,4 +41,7 @@ logging:
     org.springframework.security.config.annotation.authentication.configuration.UserDetailsServiceAutoConfiguration: ERROR
 
 #toss:
+ret-key: test_sk_xxxxxxxxxxxxxxxxx
+
 #  secret-key: test_sk_xxxxxxxxxxxxxxxxx
+
