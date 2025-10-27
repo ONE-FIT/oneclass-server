@@ -23,4 +23,17 @@ public interface MemberService {
 
     //refreshToken 검증
     ResponseToken reissue(String refreshToken);
+
+    // ---------- 조회 관련 서비스 메서드 추가 ----------
+    /**
+     * 요청자(requesterUsername)의 권한을 검사한 뒤,
+     * teacherUsername이 맡고 있는 학생(username 리스트)를 반환한다.
+     */
+    java.util.List<String> listStudentsOfTeacher(String requesterUsername, String teacherUsername);
+
+    /**
+     * 요청자(requesterUsername)의 권한을 검사한 뒤,
+     * studentUsername의 담당 교사(username 리스트)를 반환한다.
+     */
+    java.util.List<String> listTeachersOfStudent(String requesterUsername, String studentUsername);
 }

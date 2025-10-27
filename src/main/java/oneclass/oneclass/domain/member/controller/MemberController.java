@@ -112,13 +112,6 @@ public class MemberController {
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
     public void resetPassword(@RequestBody ResetPasswordRequest request) {
-
-        if (request.getNewPassword() == null || request.getCheckPassword() == null
-                || !request.getNewPassword().equals(request.getCheckPassword())) {
-            throw new CustomException(MemberError.BAD_REQUEST, "비밀번호 확인이 일치하지 않습니다.");
-        }
-
-
         memberService.resetPassword(
                 request.getUsername(),
                 request.getNewPassword(),
@@ -143,51 +136,46 @@ public class MemberController {
     @PostMapping("/teachers/{teacherUsername}/students")
     public ResponseEntity<Void> addStudentsToTeacher(
             @PathVariable String teacherUsername,
-            @RequestBody @Valid TeacherStudentsRequest request
+            @RequestBody @Valid TeacherStudentsRequest request,
+            Authentication authentication // 인증 정보(필요 시 요청자 확인)
     ) {
+        // 현재 서비스 시그니처는 teacherUsername, studentUsernames, password 를 받음.
+        // 요청자가 본인(teacher)인지 검증하려면 authentication을 사용해 토큰 기반 확인을 추가 구현 가능.
         memberService.addStudentsToTeacher(teacherUsername, request.getStudentUsernames(), request.getPassword());
         return ResponseEntity.noContent().build();
     }
 
     // 선생님에게서 여러 학생 제거
-    @Operation(summary = "선생님 계정에서 학생 제거", description = "학생을 제거합니다.")
     @DeleteMapping("/teachers/{teacherUsername}/students")
     public ResponseEntity<Void> removeStudentsFromTeacher(
             @PathVariable String teacherUsername,
-            @RequestBody @Valid TeacherStudentsRequest request
+            @RequestBody @Valid TeacherStudentsRequest request,
+            Authentication authentication
     ) {
+        // remove에서는 password가 현재 필요없음(서비스 레벨에서 role 체크)
         memberService.removeStudentsFromTeacher(teacherUsername, request.getStudentUsernames());
         return ResponseEntity.noContent().build();
     }
 
     // 선생님이 맡고 있는 학생 username 리스트 조회
-    @Operation(summary = "선생님이 맡고 있는 학생을 조회합니다", description = "선생님이 맡고있는 학생을 조회합니다.")
     @GetMapping("/teachers/{teacherUsername}/students")
-    public ResponseEntity<List<String>> listStudentsOfTeacher(@PathVariable String teacherUsername) {
-        Member teacher = memberRepository.findByUsername(teacherUsername)
-                .orElse(null);
-        if (teacher == null) return ResponseEntity.notFound().build();
-
-        // 지연로딩인 경우 트랜잭션 경계 안에서 사용하거나 DTO로 변환하세요.
-        List<String> students = teacher.getTeachingStudents().stream()
-                .map(Member::getUsername)
-                .toList();
-
+    public ResponseEntity<List<String>> listStudentsOfTeacher(
+            @PathVariable String teacherUsername,
+            Authentication authentication
+    ) {
+        String requester = (authentication != null) ? authentication.getName() : null;
+        List<String> students = memberService.listStudentsOfTeacher(requester, teacherUsername);
         return ResponseEntity.ok(students);
     }
 
     // 특정 학생의 담당 선생님 username 리스트 조회
-    @Operation(summary = "특정학생의 선생 조회", description = "특정학생의 선생님을 조회합니다.")
     @GetMapping("/students/{studentUsername}/teachers")
-    public ResponseEntity<List<String>> listTeachersOfStudent(@PathVariable String studentUsername) {
-        Member student = memberRepository.findByUsername(studentUsername)
-                .orElse(null);
-        if (student == null) return ResponseEntity.notFound().build();
-
-        List<String> teachers = student.getTeachers().stream()
-                .map(Member::getUsername)
-                .toList();
-
+    public ResponseEntity<List<String>> listTeachersOfStudent(
+            @PathVariable String studentUsername,
+            Authentication authentication
+    ) {
+        String requester = (authentication != null) ? authentication.getName() : null;
+        List<String> teachers = memberService.listTeachersOfStudent(requester, studentUsername);
         return ResponseEntity.ok(teachers);
     }
 }
