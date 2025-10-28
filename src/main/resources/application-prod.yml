@@ -39,4 +39,6 @@ logging:
     org.springframework.security: WARN
 
 #toss:
+
 #  secret-key: ${TOSS_SECRET_KEY}
+

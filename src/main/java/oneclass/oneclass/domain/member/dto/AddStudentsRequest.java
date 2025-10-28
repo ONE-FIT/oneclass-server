@@ -1,5 +1,7 @@
 package oneclass.oneclass.domain.member.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,9 +11,10 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class AddStudentsRequest {
-    private String username;
-    private String password;
-    private List<Long> studentId = new ArrayList<>(); // 혹은 Long 타입
-
-    // 필요하면 @Builder 생성자 추가
+    @NotBlank
+    private String username; // 부모 username
+    @NotBlank
+    private String password; // 부모 비밀번호 확인
+    @NotEmpty
+    private List<String> studentUsernames; // 자녀 usernames
 }
