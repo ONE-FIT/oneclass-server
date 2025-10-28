@@ -17,4 +17,6 @@ logging:
 
 jwt:
   token-validity-in-seconds: 3600
+
   refresh-validity-in-seconds: 1209600   # 14일
+

@@ -26,7 +26,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -129,15 +133,16 @@ public class MemberServiceImpl implements MemberService {
     // 비번 재설정 이메일 발송
     @Override
     public void sendResetPasswordEmail(String emailOrPhone) {
-        Member member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
+        var member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         String username = member.getUsername();
-        String tempCode = UUID.randomUUID().toString().substring(0, 6);
+
+        String tempCode = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
 
         verificationCodeRepository.save(
                 VerificationCode.builder()
                         .usernameOrEmail(username)
-                        .code(tempCode)
+                        .code(tempCode) // 대문자로 저장
                         .expiry(LocalDateTime.now().plusMinutes(5))
                         .build()
         );
@@ -147,24 +152,44 @@ public class MemberServiceImpl implements MemberService {
 
     // 비번 재설정
     @Override
-    public void resetPassword(String username, String newPassword, String verificationCode) {
-        VerificationCode codeEntry = verificationCodeRepository.findById(username)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+    public void resetPassword(String username, String newPassword, String checkPassword, String verificationCode) {
+        if (newPassword == null || !newPassword.equals(checkPassword)) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+        }
+        if (username == null || username.isBlank()) {
+            throw new CustomException(MemberError.USERNAME_REQUIRED);
+        }
+        if (verificationCode == null || verificationCode.isBlank()) {
+            throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
+        }
 
-        if (!codeEntry.getCode().equals(verificationCode)) {
-            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
+        String provided = normalizeCode(verificationCode);
+
+        var codeEntry = verificationCodeRepository.findById(username)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
+
+        String saved = normalizeCode(codeEntry.getCode());
+
+        if (!saved.equals(provided)) {
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE, "인증코드가 일치하지 않습니다.");
         }
         if (codeEntry.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new CustomException(MemberError.TOKEN_EXPIRED);
+            throw new CustomException(MemberError.TOKEN_EXPIRED, "인증코드가 만료되었습니다.");
         }
 
+        // 1회용 코드 삭제
         verificationCodeRepository.deleteById(username);
 
-        Member member = memberRepository.findByUsername(username)
+        var member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         member.setPassword(passwordEncoder.encode(newPassword));
         memberRepository.save(member);
+    }
+
+    private String normalizeCode(String code) {
+        if (code == null) return "";
+        return code.trim().replaceAll("\\s+", "").toUpperCase();
     }
 
     // 로그아웃: 특정 refresh 토큰만 폐기
@@ -173,14 +198,14 @@ public class MemberServiceImpl implements MemberService {
         // 호출 전 컨트롤러에서 유효성/주체 일치 검증을 수행
         boolean exists = refreshTokenRepository.existsByUsernameAndToken(username, refreshToken);
         if (!exists) {
-            throw new CustomException(MemberError.CONFLICT); // 이미 폐기되었거나 불일치
+            throw new CustomException(TokenError.UNAUTHORIZED); // 이미 폐기되었거나 불일치
         }
         refreshTokenRepository.deleteByUsernameAndToken(username, refreshToken);
     }
 
     // 회원가입 코드(선생님)
     @Override
-    public void sendSignupVerificationCode(String academyCode, String username) {
+    public void sendSignupVerificationCode(String academyCode, String name) {
         if (academyCode == null) {
             throw new CustomException(MemberError.BAD_REQUEST);
         }
@@ -200,7 +225,7 @@ public class MemberServiceImpl implements MemberService {
         String subject = "회원가입 인증코드 안내";
         String text = String.format(
                 "%s님이 %s 학원으로 가입하려고 합니다.%n아래 인증코드를 10분 내에 입력해주세요.%n%n인증코드: %s",
-                username, academyName, tempCode
+                name, academyName, tempCode
         );
 
         SimpleMailMessage message = new SimpleMailMessage();
@@ -212,17 +237,20 @@ public class MemberServiceImpl implements MemberService {
 
     // 부모-자식: 자녀 추가(부모님)
     @Override
-    public void addStudentsToParent(String username, String password, List<Long> studentIds) {
+    public void addStudentsToParent(String username, String password, List<String> studentUsernames) {
         Member parent = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         if (!passwordEncoder.matches(password, parent.getPassword())) {
             throw new CustomException(MemberError.INVALID_PASSWORD);
         }
+        if (studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "자녀 username 목록이 필요합니다.");
+        }
 
-        for (Long sid : studentIds) {
-            Member child = memberRepository.findById(sid)
-                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-            parent.addParentStudent(child);
+        for (String su : studentUsernames) {
+            Member child = memberRepository.findByUsername(su)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + su));
+            parent.addParentStudent(child); // ManyToMany(username FK) 양방향 연결
         }
         memberRepository.save(parent);
     }
@@ -331,7 +359,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     private void signupParent(SignupRequest request) {
-        List<String> studentUsernames = request.getStudentId();
+        List<String> studentUsernames = request.getStudentUsername(); // studentId → studentUsername
         if (studentUsernames == null || studentUsernames.isEmpty()) {
             throw new CustomException(MemberError.BAD_REQUEST);
         }
@@ -377,5 +405,174 @@ public class MemberServiceImpl implements MemberService {
             v = v.substring(1, v.length() - 1);
         }
         return v;
+    }
+    @Override
+    public void addStudentsToTeacher(String teacherUsername, List<String> studentUsernames, String password) {
+        // 인증된 사용자 확인
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            throw new org.springframework.security.access.AccessDeniedException("인증이 필요합니다.");
+        }
+        String requester = auth.getName();
+
+        // 요청자가 해당 교사 본인이거나 ADMIN 권한을 가지고 있어야 함
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!requester.equals(teacherUsername) && !isAdmin) {
+            throw new org.springframework.security.access.AccessDeniedException("해당 교사의 학생을 수정할 권한이 없습니다.");
+        }
+
+        // 기존 유효성 검사
+        if (teacherUsername == null || teacherUsername.isBlank() || studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
+        }
+        if (password == null || password.isBlank()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "비밀번호가 필요합니다.");
+        }
+
+        Member teacher = memberRepository.findByUsername(teacherUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
+
+        if (!passwordEncoder.matches(password, teacher.getPassword()) && !isAdmin) {
+            // 관리자면 비밀번호 체크를 건너뛸 수 있게 했음(선택적)
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH, "비밀번호가 올바르지 않습니다.");
+        }
+
+        if (teacher.getRole() != Role.TEACHER) {
+            throw new CustomException(MemberError.BAD_REQUEST, "해당 사용자는 선생님이 아닙니다.");
+        }
+
+        for (String s : studentUsernames) {
+            Member student = memberRepository.findByUsername(s)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + s));
+            if (student.getRole() != Role.STUDENT) {
+                throw new CustomException(MemberError.BAD_REQUEST, "학생이 아닌 계정입니다: " + s);
+            }
+            teacher.addStudent(student); // 양방향 연결
+        }
+        memberRepository.save(teacher); // owning side(teacher) 저장 → join table 반영
+    }
+
+    @Override
+    public void removeStudentsFromTeacher(String teacherUsername, List<String> studentUsernames) {
+        // 인증된 사용자 확인
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            throw new org.springframework.security.access.AccessDeniedException("인증이 필요합니다.");
+        }
+        String requester = auth.getName();
+
+        // 요청자가 해당 교사 본인이거나 ADMIN 권한을 가지고 있어야 함
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!requester.equals(teacherUsername) && !isAdmin) {
+            throw new org.springframework.security.access.AccessDeniedException("해당 교사의 학생을 수정할 권한이 없습니다.");
+        }
+
+        if (teacherUsername == null || teacherUsername.isBlank() || studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
+        }
+
+        Member teacher = memberRepository.findByUsername(teacherUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
+        if (teacher.getRole() != Role.TEACHER) {
+            throw new CustomException(MemberError.BAD_REQUEST, "해당 사용자는 선생님이 아닙니다.");
+        }
+
+        for (String s : studentUsernames) {
+            Member student = memberRepository.findByUsername(s)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + s));
+            teacher.removeStudent(student); // 양방향 해제
+        }
+        memberRepository.save(teacher);
+    }
+
+    @Override
+    public List<String> listStudentsOfTeacher(String requesterUsername, String teacherUsername) {
+        // teacher 조회(연관관계 포함)
+        Member teacher = memberRepository.findWithRelationsByUsername(teacherUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
+
+        Member requester = null;
+        if (requesterUsername != null) {
+            requester = memberRepository.findWithRelationsByUsername(requesterUsername)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
+        }
+
+        Set<String> teacherStudents = teacher.getTeachingStudents().stream()
+                .map(Member::getUsername).collect(Collectors.toSet());
+
+        // 인증 없이 요청한 경우(anonymous) : 허용하지 않음
+        if (requester == null) {
+            throw new CustomException(MemberError.FORBIDDEN);
+        }
+
+        // ADMIN 또는 본인(teacher)인 경우 전체 반환
+        if (requester.getRole() == Role.TEACHER || requester.getUsername().equals(teacherUsername)) {
+            return teacherStudents.stream().sorted().collect(Collectors.toList());
+        }
+
+        // 부모인 경우: 부모의 자녀와 teacherStudents의 교집합만 반환
+        if (requester.getRole() == Role.PARENT) {
+            Set<String> parentChildren = requester.getParentStudents().stream()
+                    .map(Member::getUsername).collect(Collectors.toSet());
+            return parentChildren.stream()
+                    .filter(teacherStudents::contains)
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+
+        // 학생 본인이나 그 외 역할은 허용하지 않음
+        throw new CustomException(MemberError.FORBIDDEN);
+    }
+
+
+    @Override
+    public List<String> listTeachersOfStudent(String requesterUsername, String studentUsername) {
+        Member student = memberRepository.findWithRelationsByUsername(studentUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다."));
+
+        Member requester = null;
+        if (requesterUsername != null) {
+            requester = memberRepository.findWithRelationsByUsername(requesterUsername)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
+        }
+
+        Set<String> studentTeachers = student.getTeachers().stream()
+                .map(Member::getUsername).collect(Collectors.toSet());
+
+        if (requester == null) {
+            throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다. 로그인 후 시도하세요.");
+        }
+
+        switch (requester.getRole()) {
+            case STUDENT:
+                if (requester.getUsername().equals(studentUsername)) {
+                    return studentTeachers.stream().sorted().collect(Collectors.toList());
+                }
+                break;
+
+            case PARENT:
+                // requester.getUsername()를 final 로컬 변수에 복사
+                final String requesterName = requester.getUsername();
+                boolean isParentOf = student.getParents().stream()
+                        .anyMatch(p -> p.getUsername().equals(requesterName));
+                if (isParentOf) {
+                    return studentTeachers.stream().sorted().collect(Collectors.toList());
+                }
+                break;
+
+            case TEACHER:
+                // 요청자가 그 학생의 담당 교사 목록에 포함되어 있으면 허용
+                if (studentTeachers.contains(requester.getUsername())) {
+                    return studentTeachers.stream().sorted().collect(Collectors.toList());
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        throw new CustomException(MemberError.FORBIDDEN);
     }
 }

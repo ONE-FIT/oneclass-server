@@ -1,9 +1,6 @@
 package oneclass.oneclass.domain.counsel.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,22 +8,27 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 public class Consultation {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;//학생이름
-    private String phone;//학생전번
-    private String parentPhone;//학부모전번
+    private String name;
+    private String phone;
+    private String parentPhone;
 
-    private LocalDateTime date;//희망 날짜
-
-    private String type;// 신규 or 재학생
-    private String subject;//과목
-    private String description;//상담 내용
-
-    private String status;//상담 신청됨(대기중) or 상담 날짜 확정
-    private LocalDateTime scheduleTime;
+    private LocalDateTime date;
+    private String type;
+    private String subject;
+    private String description;
 
     private LocalDateTime createAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ConsultationStatus status;
+
+    @PrePersist
+    void onCreate() {
+        if (createAt == null) createAt = LocalDateTime.now();
+        if (status == null) status = ConsultationStatus.REQUESTED;
+    }
 }

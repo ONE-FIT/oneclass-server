@@ -1,6 +1,5 @@
 package oneclass.oneclass.domain.member.dto;
 
-
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,11 +20,11 @@ public class SignupRequest {
     private Role role;
     private String verificationCode;
     private String academyCode;
-    private List<String> studentId = new ArrayList<>(); // 기본값으로 초기화
+    private List<String> studentUsername = new ArrayList<>(); // studentId → studentUsername
 
     @Builder
     public SignupRequest(String username, String password, String name, String email, String phone,
-                         Role role, String verificationCode, String academyCode, List<String> studentId) {
+                         Role role, String verificationCode, String academyCode, List<String> studentUsername) {
         this.username = username;
         this.password = password;
         this.checkPassword = password;
@@ -35,6 +34,6 @@ public class SignupRequest {
         this.role = role;
         this.verificationCode = verificationCode;
         this.academyCode = academyCode;
-        this.studentId = (studentId == null) ? new ArrayList<>() : studentId; // null 체크
+        this.studentUsername = (studentUsername == null) ? new ArrayList<>() : studentUsername;
     }
 }

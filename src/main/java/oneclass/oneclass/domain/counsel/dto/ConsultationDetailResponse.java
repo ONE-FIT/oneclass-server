@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.counsel.dto;
 
 import lombok.Data;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
+import oneclass.oneclass.domain.counsel.entity.ConsultationStatus;
 
 @Data
 public class ConsultationDetailResponse {
@@ -10,8 +11,7 @@ public class ConsultationDetailResponse {
     private String type;
     private String subject;
     private String description;
-    private String status;
-    private String scheduleTime;
+    private ConsultationStatus status;
 
     public static ConsultationDetailResponse from(Consultation consultation) {
         ConsultationDetailResponse res = new ConsultationDetailResponse();
