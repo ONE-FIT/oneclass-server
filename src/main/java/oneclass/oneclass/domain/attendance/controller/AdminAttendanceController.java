@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
-import oneclass.oneclass.domain.attendance.error.AttendanceError;
 import oneclass.oneclass.domain.attendance.service.AdminAttendanceService;
 import oneclass.oneclass.global.exception.CommonError;
 import oneclass.oneclass.global.exception.CustomException;
