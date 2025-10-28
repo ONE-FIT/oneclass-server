@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.attendance.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity

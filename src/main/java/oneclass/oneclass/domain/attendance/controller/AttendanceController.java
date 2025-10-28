@@ -2,9 +2,11 @@ package oneclass.oneclass.domain.attendance.controller;
 
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.service.AttendanceService;
+import oneclass.oneclass.global.auth.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,15 +26,14 @@ public class AttendanceController {
         byte[] qrImage = attendanceService.generateAttendanceQrPng(lessonId, qrValidityMinutes);
         return ResponseEntity.ok(qrImage);
     }
-    /**
-     * ✅ 학생이 QR을 스캔하면 nonce + lessonId + memberId를 서버로 전송 → 출석 처리
-     */
+    /** ✅ 학생이 QR을 스캔하면 nonce + lessonId만 전송 → 로그인 정보로 출석 처리 */
     @PostMapping("/check")
     public ResponseEntity<String> checkAttendance(
             @RequestParam String nonce,
             @RequestParam Long lessonId,
-            @RequestParam Long memberId
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        Long memberId = userDetails.getId(); // 🔒 로그인한 사용자 ID를 가져옴
         String result = attendanceService.recordAttendance(nonce, lessonId, memberId);
         return ResponseEntity.ok(result);
     }

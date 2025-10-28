@@ -6,6 +6,6 @@ public record UpdateLessonRequest(
         Long lessonId,
         String title,
         Long teacherId,
-        Member student
+        Member studentId
 ) {
 }

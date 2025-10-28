@@ -10,6 +10,7 @@ import oneclass.oneclass.domain.attendance.error.AttendanceError;
 import oneclass.oneclass.domain.attendance.repository.AttendanceNonceRepository;
 import oneclass.oneclass.domain.attendance.repository.AttendanceRepository;
 import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
@@ -126,17 +127,14 @@ public class AttendanceService {
     public boolean verifyNonce(String nonce, Long lessonId) {
         AttendanceNonce attendanceNonce = nonceRepository.findByNonce(nonce)
                 .orElseThrow(() -> new CustomException(AttendanceError.NOT_FOUND)); // or new InvalidNonceException()
-
         if (attendanceNonce.isUsed()) {
-            throw new CustomException(AttendanceError.NOT_FOUND);
+            throw new CustomException(AttendanceError.ALREADY_USED); // 예시: 에러 타입 분리
         }
-
         if (attendanceNonce.getExpireAt().isBefore(LocalDateTime.now())) {
-            throw new CustomException(AttendanceError.NOT_FOUND);
+            throw new CustomException(AttendanceError.EXPIRED); // 예시: 에러 타입 분리
         }
-
         if (!attendanceNonce.getLessonId().equals(lessonId)) {
-            throw new CustomException(AttendanceError.NOT_FOUND);
+            throw new CustomException(AttendanceError.INVALID_LESSON); // 예시: 에러 타입 분리
         }
         // ✅ 검증 성공 → 사용 처리
         attendanceNonce.setUsed(true);
@@ -164,14 +162,13 @@ public class AttendanceService {
 
         // ✅ 2. member 조회
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("Member not found"));
-
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         // ✅ 3. 중복 출석 방지
         boolean alreadyExists = attendanceRepository
                 .findByMemberIdAndDate(memberId, LocalDate.now())
                 .isPresent();
         if (alreadyExists) {
-            throw new RuntimeException("Already marked as attended today");
+            throw new CustomException(AttendanceError.ALREADY_ATTENDED); // 예시: CustomException 사용
         }
 
         // ✅ 4. 출석 저장
