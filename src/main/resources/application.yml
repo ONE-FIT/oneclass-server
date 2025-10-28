@@ -3,7 +3,9 @@ spring:
     default: dev
   application:
     name: oneclass
-
+app:
+  qr-code:
+    validity-minutes: 1
 server:
   port: 8080
   servlet:

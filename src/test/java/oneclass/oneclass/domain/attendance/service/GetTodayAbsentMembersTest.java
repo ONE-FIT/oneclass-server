@@ -28,7 +28,7 @@ public class GetTodayAbsentMembersTest {
     private MemberRepository memberRepository;
 
     @InjectMocks
-    private AdminAttendanceService adminAttendanceService;
+    private AttendanceService attendanceService;
 
     @Test
     void getTodayAbsentMembers_returnsAttendanceResponses() {
@@ -61,7 +61,7 @@ public class GetTodayAbsentMembersTest {
                 .thenReturn(List.of(member1, member2, member3));
 
         // Service 호출
-        List<AttendanceResponse> absentResponses = adminAttendanceService.getTodayAbsentMembers(today);
+        List<AttendanceResponse> absentResponses = attendanceService.getTodayAbsentMembers(today);
 
         // 검증
         assertThat(absentResponses).hasSize(3);
@@ -110,7 +110,7 @@ public class GetTodayAbsentMembersTest {
                 .thenReturn(List.of(member2, member3));
 
         // Service 호출
-        List<AttendanceResponse> absentResponses = adminAttendanceService.getTodayAbsentMembers(today);
+        List<AttendanceResponse> absentResponses = attendanceService.getTodayAbsentMembers(today);
 
         // 검증
         assertThat(absentResponses).hasSize(2);

@@ -1,14 +1,17 @@
 package oneclass.oneclass.domain.attendance.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.Attendance;
 import oneclass.oneclass.domain.attendance.entity.AttendanceNonce;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
+import oneclass.oneclass.domain.attendance.error.AttendanceError;
 import oneclass.oneclass.domain.attendance.repository.AttendanceNonceRepository;
 import oneclass.oneclass.domain.attendance.repository.AttendanceRepository;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
+import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -18,7 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AdminAttendanceService {
+public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
@@ -119,22 +122,22 @@ public class AdminAttendanceService {
      * 학생이 QR을 스캔한 후 서버로 보낸 nonce를 검증합니다.
      * @return 검증 성공 여부
      */
+    @Transactional
     public boolean verifyNonce(String nonce, Long lessonId) {
         AttendanceNonce attendanceNonce = nonceRepository.findByNonce(nonce)
-                .orElseThrow(() -> new RuntimeException("Invalid nonce"));
+                .orElseThrow(() -> new CustomException(AttendanceError.NOT_FOUND)); // or new InvalidNonceException()
 
         if (attendanceNonce.isUsed()) {
-            throw new RuntimeException("Nonce already used");
+            throw new CustomException(AttendanceError.NOT_FOUND);
         }
 
         if (attendanceNonce.getExpireAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Nonce expired");
+            throw new CustomException(AttendanceError.NOT_FOUND);
         }
 
         if (!attendanceNonce.getLessonId().equals(lessonId)) {
-            throw new RuntimeException("Lesson mismatch");
+            throw new CustomException(AttendanceError.NOT_FOUND);
         }
-
         // ✅ 검증 성공 → 사용 처리
         attendanceNonce.setUsed(true);
         nonceRepository.save(attendanceNonce);
@@ -152,5 +155,33 @@ public class AdminAttendanceService {
         } catch (Exception e) {
             throw new RuntimeException("QR 코드 생성 실패", e);
         }
+    }
+
+    @Transactional
+    public String recordAttendance(String nonce, Long lessonId, Long memberId) {
+        // ✅ 1. nonce 검증
+        verifyNonce(nonce, lessonId);
+
+        // ✅ 2. member 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+        // ✅ 3. 중복 출석 방지
+        boolean alreadyExists = attendanceRepository
+                .findByMemberIdAndDate(memberId, LocalDate.now())
+                .isPresent();
+        if (alreadyExists) {
+            throw new RuntimeException("Already marked as attended today");
+        }
+
+        // ✅ 4. 출석 저장
+        Attendance attendance = Attendance.builder()
+                .member(member)
+                .date(LocalDate.now())
+                .attendanceStatus(AttendanceStatus.PRESENT)
+                .build();
+
+        attendanceRepository.save(attendance);
+        return "Attendance recorded successfully";
     }
 }
