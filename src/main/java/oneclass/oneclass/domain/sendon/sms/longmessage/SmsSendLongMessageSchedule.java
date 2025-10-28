@@ -1,5 +1,6 @@
 package oneclass.oneclass.domain.sendon.sms.longmessage;
 
+import io.sendon.sms.request.LmsBuilder;
 import io.sendon.sms.request.MmsBuilder;
 import io.sendon.sms.request.Reservation;
 import io.sendon.sms.response.SendSms;
@@ -29,7 +30,7 @@ public class SmsSendLongMessageSchedule extends BaseScenario {
             phonePage = findTargets(pageable);
             if (!phonePage.getContent().isEmpty()) {
                 try {
-                    SendSms sendSms = sendon.sms.sendMms(new MmsBuilder()
+                    SendSms sendSms = sendon.sms.sendLms(new LmsBuilder()
                             .setFrom(SMS_MOBILE_FROM)
                             .setTo(phonePage.getContent())
                             .setTitle(title)

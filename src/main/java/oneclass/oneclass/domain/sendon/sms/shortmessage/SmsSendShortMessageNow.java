@@ -1,6 +1,7 @@
 package oneclass.oneclass.domain.sendon.sms.shortmessage;
 
 import io.sendon.sms.request.MmsBuilder;
+import io.sendon.sms.request.SmsBuilder;
 import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +13,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class SmsSendShortMessageNow extends BaseScenario implements ExecutableWithMessageTitleAndStudentIds {
 
@@ -29,7 +32,7 @@ public class SmsSendShortMessageNow extends BaseScenario implements ExecutableWi
         do {
             phonePage = memberRepository.findPhonesByIds(studentIds, pageable);
             if (!phonePage.getContent().isEmpty()) {
-                SendSms sendSms = sendon.sms.sendMms(new MmsBuilder()
+                SendSms sendSms = sendon.sms.sendSms(new SmsBuilder()
                         .setFrom(SMS_MOBILE_FROM)
                         .setTo(phonePage.getContent())
                         .setMessage(message)
