@@ -42,6 +42,9 @@ public class SecurityConfig {
             "/lesson/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
+
+            "/swagger-ui.html",
+            "/attendance/**",
             "/swagger-ui/index.html"
     };
 
@@ -65,7 +68,6 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-
                         // 역할별 접근 제어
                         .requestMatchers("/academy/logout").hasRole("ACADEMY")
                         .requestMatchers("/member/logout").hasAnyRole("STUDENT", "PARENT", "TEACHER")
