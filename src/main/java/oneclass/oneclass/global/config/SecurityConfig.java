@@ -46,6 +46,7 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/attendance/**",
             "/swagger-ui/index.html"
+
     };
 
     @Bean

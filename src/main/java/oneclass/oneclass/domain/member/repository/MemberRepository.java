@@ -35,4 +35,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     """)
     List<Member> findAbsentMembers(@Param("date") LocalDate date);
 
+    @Query("SELECT m.phone FROM Member m WHERE m.id IN :studentIds")
+    Page<String> findPhonesByIds(@Param("studentIds") List<Long> studentIds, Pageable pageable);
 }
