@@ -6,6 +6,8 @@ import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
 import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.error.MemberError;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.event.TaskAssignmentSavedEvent;
 import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
@@ -31,6 +33,7 @@ public class TaskService {
     private final TaskAssignmentRepository taskAssignmentRepository;
     private final LessonRepository lessonRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final MemberRepository memberRepository;
     //eventPublisher.publishEvent(new TaskSavedEvent(request.description(), request.title()));
 
     @Transactional
@@ -67,22 +70,28 @@ public class TaskService {
 
     @Transactional
     public TaskResponse createEachTask(CreateEachTaskRequest request) {
+        Member teacher = memberRepository.findById(request.teacherId())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+
+        Member student = memberRepository.findById(request.studentId())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+
         Task task = Task.builder()
                 .title(request.title())
                 .description(request.description())
                 .dueDate(request.dueDate())
-                .teacher(request.teacher())
+                .teacher(teacher)
                 .build();
 
         Task savedTask = taskRepository.save(task);
 
-        Long memberId = request.student().getId();
+        Long memberId = student.getId();
 
         eventPublisher.publishEvent(new TaskAssignmentSavedEvent(request.description(), request.title(), List.of(memberId)));
 
         TaskAssignment assignment = TaskAssignment.builder()
                 .task(savedTask)
-                .student(request.student())
+                .student(student)
                 .taskStatus(TaskStatus.ASSIGNED)
                 .build();
         taskAssignmentRepository.save(assignment);
@@ -114,7 +123,6 @@ public class TaskService {
     }
 
     public void deleteTask(Long id) {
-
         Task task = taskRepository.findById(id)
                 .orElseThrow(() ->new CustomException(TaskError.NOT_FOUND));
         taskRepository.delete(task);

@@ -5,8 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
-import oneclass.oneclass.domain.attendance.error.AttendanceError;
-import oneclass.oneclass.domain.attendance.service.AdminAttendanceService;
+import oneclass.oneclass.domain.attendance.service.AttendanceService;
 import oneclass.oneclass.global.exception.CommonError;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminAttendanceController {
 
-    private final AdminAttendanceService attendanceService;
+    private final AttendanceService attendanceService;
 
     @GetMapping
     @Operation(summary = "오늘 출석 상태별 회원 조회",
