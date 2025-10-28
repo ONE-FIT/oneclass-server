@@ -96,15 +96,15 @@ public class MemberController {
 
     @Operation(summary = "아이디 찾기", description = "이메일 또는 전화번호로 아이디를 조회합니다.")
     @GetMapping("/find-username")
-    public String findUsername(@RequestParam String emailOrPhone) {
-        return memberService.findUsername(emailOrPhone);
+    public String findUsername(@RequestParam String phone) {
+        return memberService.findUsername(phone);
     }
 
     @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
     @PostMapping("/send-reset-password-email")
     public void sendResetPasswordEmail(@RequestBody Map<String, String> request) {
-        String emailOrPhone = request.get("emailOrPhone");
-        memberService.sendResetPasswordEmail(emailOrPhone);
+        String phone = request.get("phone");
+        memberService.sendResetPasswordEmail(phone);
     }
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")

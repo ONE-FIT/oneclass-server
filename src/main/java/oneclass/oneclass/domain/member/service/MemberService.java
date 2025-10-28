@@ -8,8 +8,8 @@ import java.util.List;
 public interface MemberService {
     void signup(SignupRequest request);
     ResponseToken login(String username, String password);
-    String findUsername(String emailOrPhone);
-    void sendResetPasswordEmail(String emailOrPhone);
+    String findUsername(String phone);
+    void sendResetPasswordEmail(String phone);
     void resetPassword(String username, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃

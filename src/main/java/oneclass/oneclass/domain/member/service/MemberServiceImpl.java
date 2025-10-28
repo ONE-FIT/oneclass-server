@@ -65,7 +65,7 @@ public class MemberServiceImpl implements MemberService {
         }
 
         // 이메일/전화 중복
-        validateEmailOrPhoneDuplication(request.getEmail(), request.getPhone());
+        validatePhoneDuplication(request.getPhone());
 
         // 역할별 처리
         switch (selectRole) {
@@ -124,31 +124,31 @@ public class MemberServiceImpl implements MemberService {
 
     // 아이디 찾기
     @Override
-    public String findUsername(String emailOrPhone) {
-        Member member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
+    public String findUsername(String phone) {
+        Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         return member.getUsername();
     }
 
-    // 비번 재설정 이메일 발송
-    @Override
-    public void sendResetPasswordEmail(String emailOrPhone) {
-        var member = memberRepository.findByEmailOrPhone(emailOrPhone, emailOrPhone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        String username = member.getUsername();
-
-        String tempCode = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
-
-        verificationCodeRepository.save(
-                VerificationCode.builder()
-                        .usernameOrEmail(username)
-                        .code(tempCode) // 대문자로 저장
-                        .expiry(LocalDateTime.now().plusMinutes(5))
-                        .build()
-        );
-
-        emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode);
-    }
+//    // 비번 재설정 이메일 발송 <--- 이거를 전화번호로 보내게 바꿔야됨
+//    @Override
+//    public void sendResetPasswordEmail(String phone) {
+//        var member = memberRepository.findByPhone(phone)
+//                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+//        String username = member.getUsername();
+//
+//        String tempCode = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+//
+//        verificationCodeRepository.save(
+//                VerificationCode.builder()
+//                        .usernameOrEmail(username)
+//                        .code(tempCode) // 대문자로 저장
+//                        .expiry(LocalDateTime.now().plusMinutes(5))
+//                        .build()
+//        );
+//
+//        emailService.sendSimpleMail(member.getEmail(), "비밀번호 재설정", "인증코드: " + tempCode);
+//    }
 
     // 비번 재설정
     @Override
@@ -331,7 +331,7 @@ public class MemberServiceImpl implements MemberService {
                 .academy(academy)
                 .name(request.getName())
                 .phone(request.getPhone())
-                .email(request.getEmail())
+//                .email(request.getEmail())
                 .build();
 
         memberRepository.save(member);
@@ -352,7 +352,7 @@ public class MemberServiceImpl implements MemberService {
                 .academy(academy)
                 .name(request.getName())
                 .phone(request.getPhone())
-                .email(request.getEmail())
+//                .email(request.getEmail())
                 .build();
 
         memberRepository.save(member);
@@ -377,15 +377,15 @@ public class MemberServiceImpl implements MemberService {
                 .role(request.getRole())
                 .name(request.getName())
                 .phone(request.getPhone())
-                .email(request.getEmail())
+//                .email(request.getEmail())
                 .parentStudents(children)
                 .build();
 
         memberRepository.save(parent);
     }
 
-    private void validateEmailOrPhoneDuplication(String email, String phone) {
-        if (memberRepository.findByEmailOrPhone(email, phone).isPresent()) {
+    private void validatePhoneDuplication(String phone) {
+        if (memberRepository.findByPhone(phone).isPresent()) {
             throw new CustomException(MemberError.CONFLICT, "이미 사용중인 이메일 또는 전화번호입니다.");
         }
     }

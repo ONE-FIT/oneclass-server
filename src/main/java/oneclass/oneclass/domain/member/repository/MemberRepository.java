@@ -15,7 +15,7 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByUsername(String username);
-    Optional<Member> findByEmailOrPhone(String email, String phone);
+    Optional<Member> findByPhone(String phone);
 
     @EntityGraph(attributePaths = {"teachers", "teachingStudents", "parents", "parentStudents"})
     Optional<Member> findWithRelationsByUsername(String username);
@@ -35,4 +35,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     """)
     List<Member> findAbsentMembers(@Param("date") LocalDate date);
 
+    String phone(String phone);
+
+    String phone(String phone);
 }
