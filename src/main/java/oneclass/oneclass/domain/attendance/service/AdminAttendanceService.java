@@ -1,21 +1,18 @@
 package oneclass.oneclass.domain.attendance.service;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.MultiFormatWriter;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.Attendance;
+import oneclass.oneclass.domain.attendance.entity.AttendanceNonce;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
+import oneclass.oneclass.domain.attendance.repository.AttendanceNonceRepository;
 import oneclass.oneclass.domain.attendance.repository.AttendanceRepository;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
-import java.util.Base64;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,8 +22,9 @@ public class AdminAttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
+    private final AttendanceNonceRepository nonceRepository;
 
-    // 오늘 특정 상태의 출석 정보 조회 (AttendanceResponse 반환)
+    // ✅ 오늘 특정 상태의 출석 정보 조회
     public List<AttendanceResponse> getTodayMembersByStatus(AttendanceStatus status) {
         final LocalDate today = LocalDate.now();
         if (status == AttendanceStatus.ABSENT) {
@@ -38,13 +36,12 @@ public class AdminAttendanceService {
                 .toList();
     }
 
-
-    // 오늘 출석한 사람들 (AttendanceResponse 반환)
+    // ✅ 오늘 출석한 사람들
     public List<AttendanceResponse> getTodayPresentMembers() {
         return getTodayMembersByStatus(AttendanceStatus.PRESENT);
     }
 
-    // 오늘 결석한 사람들 (AttendanceResponse 반환)
+    // ✅ 오늘 결석한 사람들
     public List<AttendanceResponse> getTodayAbsentMembers(LocalDate date) {
         List<Member> absentMembers = memberRepository.findAbsentMembers(date);
 
@@ -53,17 +50,17 @@ public class AdminAttendanceService {
                 .toList();
     }
 
-    // 오늘 지각한 사람들 (AttendanceResponse 반환)
+    // ✅ 오늘 지각한 사람들
     public List<AttendanceResponse> getTodayLateMembers() {
         return getTodayMembersByStatus(AttendanceStatus.LATE);
     }
 
-    // 오늘 공결 처리된 사람들 (AttendanceResponse 반환)
+    // ✅ 오늘 공결한 사람들
     public List<AttendanceResponse> getTodayExcusedMembers() {
         return getTodayMembersByStatus(AttendanceStatus.EXCUSED);
     }
 
-    // 특정 학생 출석 기록 (AttendanceResponse 반환)
+    // ✅ 특정 학생 출석 기록
     public List<AttendanceResponse> getAttendanceByMember(Long memberId) {
         return attendanceRepository.findByMemberId(memberId)
                 .stream()
@@ -71,7 +68,7 @@ public class AdminAttendanceService {
                 .toList();
     }
 
-    // 특정 날짜 출석 기록 (AttendanceResponse 반환)
+    // ✅ 특정 날짜 출석 기록
     public List<AttendanceResponse> getAttendanceByDate(LocalDate date) {
         return attendanceRepository.findByDate(date)
                 .stream()
@@ -79,7 +76,7 @@ public class AdminAttendanceService {
                 .toList();
     }
 
-    // 엔티티 -> DTO 변환 메서드
+    // ✅ 엔티티 → DTO 변환 메서드
     private AttendanceResponse attendanceToResponse(Attendance attendance) {
         return new AttendanceResponse(
                 attendance.getMember().getName(),
@@ -88,45 +85,72 @@ public class AdminAttendanceService {
         );
     }
 
-
-    // --- QR 코드 생성 관련 메서드 추가 ---
+    // ✅ --- QR 코드 + nonce 저장/검증 기능 ---
 
     /**
-     * 수업용 출석 QR 페이로드를 생성하고 PNG 바이트 배열을 반환합니다.
-     * 페이로드 예시: {"type":"attendance","lessonId":123,"date":"2025-10-20","nonce":"uuid"}
+     * QR 생성 시 nonce를 DB에 저장하고 QR 이미지를 반환합니다.
+     * @param lessonId QR을 생성할 수업 ID
+     * @param validMinutes QR 유효 시간 (분 단위)
      */
-    public byte[] generateAttendanceQrPng(Long lessonId, LocalDate date) {
-        String payload = buildAttendancePayload(lessonId, date);
+    public byte[] generateAttendanceQrPng(Long lessonId, int validMinutes) {
+        String nonce = UUID.randomUUID().toString();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expireAt = now.plusMinutes(validMinutes);
+
+        AttendanceNonce attendanceNonce = AttendanceNonce.builder()
+                .lessonId(lessonId)
+                .nonce(nonce)
+                .createdAt(now)
+                .expireAt(expireAt)
+                .used(false)
+                .build();
+
+        nonceRepository.save(attendanceNonce);
+
+        String payload = String.format(
+                "{\"type\":\"attendance\",\"lessonId\":%d,\"nonce\":\"%s\"}",
+                lessonId, nonce
+        );
+
         return createQrImage(payload, 350, 350);
     }
 
     /**
-     * Base64 인코딩된 PNG 문자열 반환 (웹에서 <img src="data:image/png;base64,...">로 바로 사용 가능)
+     * 학생이 QR을 스캔한 후 서버로 보낸 nonce를 검증합니다.
+     * @return 검증 성공 여부
      */
-    public String generateAttendanceQrBase64(Long lessonId, LocalDate date) {
-        byte[] png = generateAttendanceQrPng(lessonId, date);
-        return Base64.getEncoder().encodeToString(png);
+    public boolean verifyNonce(String nonce, Long lessonId) {
+        AttendanceNonce attendanceNonce = nonceRepository.findByNonce(nonce)
+                .orElseThrow(() -> new RuntimeException("Invalid nonce"));
+
+        if (attendanceNonce.isUsed()) {
+            throw new RuntimeException("Nonce already used");
+        }
+
+        if (attendanceNonce.getExpireAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Nonce expired");
+        }
+
+        if (!attendanceNonce.getLessonId().equals(lessonId)) {
+            throw new RuntimeException("Lesson mismatch");
+        }
+
+        // ✅ 검증 성공 → 사용 처리
+        attendanceNonce.setUsed(true);
+        nonceRepository.save(attendanceNonce);
+
+        return true;
     }
 
-    private String buildAttendancePayload(Long lessonId, LocalDate date) {
-        String nonce = UUID.randomUUID().toString();
-        // TODO: nonce를 DB에 저장해서 재사용/재발급 방지, 만료 시간 체크 로직 추가 권장
-        org.json.simple.JSONObject payload = new org.json.simple.JSONObject();
-        payload.put("type", "attendance");
-        payload.put("lessonId", lessonId);
-        payload.put("date", date.toString());
-        payload.put("nonce", nonce);
-        return payload.toJSONString();
-    }
-
+    // ✅ QR 이미지 생성 헬퍼
     private byte[] createQrImage(String text, int width, int height) {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            BitMatrix matrix = new MultiFormatWriter().encode(text, BarcodeFormat.QR_CODE, width, height);
-            MatrixToImageWriter.writeToStream(matrix, "PNG", baos);
+        try (java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream()) {
+            com.google.zxing.common.BitMatrix matrix = new com.google.zxing.MultiFormatWriter()
+                    .encode(text, com.google.zxing.BarcodeFormat.QR_CODE, width, height);
+            com.google.zxing.client.j2se.MatrixToImageWriter.writeToStream(matrix, "PNG", baos);
             return baos.toByteArray();
-        } catch (com.google.zxing.WriterException | java.io.IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("QR 코드 생성 실패", e);
         }
     }
-
 }

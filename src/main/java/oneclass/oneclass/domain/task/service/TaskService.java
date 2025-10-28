@@ -80,7 +80,6 @@ public class TaskService {
                 .description(request.description())
                 .dueDate(request.dueDate())
                 .teacher(teacher)
-                .student(student)
                 .build();
 
         Task savedTask = taskRepository.save(task);
