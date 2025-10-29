@@ -58,7 +58,7 @@ public class MemberController {
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
     @PostMapping("/login")
     public ResponseToken login(@RequestBody LoginRequest request) {
-        return memberService.login(request.getUsername(), request.getPassword());
+        return memberService.login(request.getName(), request.getPassword());
     }
 
     @Operation(
@@ -100,12 +100,17 @@ public class MemberController {
         return memberService.findUsername(phone);
     }
 
-    @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
-    @PostMapping("/send-reset-password-email")
-    public void sendResetPasswordEmail(@RequestBody Map<String, String> request) {
-        String phone = request.get("phone");
-        memberService.sendResetPasswordEmail(phone);
+    @PostMapping("/create-username")
+    public void createUsername(@RequestParam String username) {
+        memberService.createUsername(username);
     }
+
+//    @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
+//    @PostMapping("/send-reset-password-email")
+//    public void sendResetPasswordEmail(@RequestBody Map<String, String> request) {
+//        String phone = request.get("phone");
+//        memberService.sendResetPasswordEmail(phone);
+//    }
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")

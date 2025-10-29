@@ -117,6 +117,7 @@ public class SecurityConfig {
                         // 과제: 관리자성(교사/학원) 조회는 제한, 나머지 조회는 인증 사용자
                         .requestMatchers(HttpMethod.GET, "/task/*/members").hasAnyRole("TEACHER","ACADEMY")
                         .requestMatchers("/task/**").authenticated()
+                        .requestMatchers("/member/create-username").authenticated()
 
                         // 그 외 전부 인증 필요
                         .anyRequest().authenticated()
