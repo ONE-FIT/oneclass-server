@@ -32,6 +32,7 @@ public class EntitySavedEventListener {
         smsSendShortMessageNow.send(event.description(), event.title(), event.memberId());
     }
 
+    // 예약 공지가 저장되면 메세지 발송
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleReservationSavedEvent(ReservationAnnounceSavedEvent event) {

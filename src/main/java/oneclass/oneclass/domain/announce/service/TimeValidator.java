@@ -32,8 +32,8 @@ public class TimeValidator {
         }
 
         // 2. [조건 3] 현재 시간과 비교
-        LocalDateTime now = LocalDateTime.now();
-        if (!parsedTime.isAfter(now)) { // isBefore() 또는 isEqual()
+        LocalDateTime minimumReservationTime = LocalDateTime.now().plusMinutes(30);
+        if (!parsedTime.isAfter(minimumReservationTime)) { // isBefore() 또는 isEqual()
             throw new CustomException(AnnounceError.PAST_TIME);
         }
 
