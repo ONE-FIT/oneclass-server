@@ -1,7 +1,5 @@
 package oneclass.oneclass.domain.announce.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.announce.dto.request.CreateAnnounceRequest;
 import oneclass.oneclass.domain.announce.dto.request.UpdateAnnounceRequest;
@@ -18,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/announce")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class AnnounceController {
     private final AnnounceService announceService;
 
