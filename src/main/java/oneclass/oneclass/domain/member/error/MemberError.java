@@ -16,7 +16,8 @@ public enum MemberError implements CustomError {
     PASSWORD_CONFIRM_MISMATCH(400,"비밀번호가 일치하지 않습니다."),
     USERNAME_REQUIRED(400,"username이 작성되지 않았습니다."),
     VERIFICATION_CODE_REQUIRED(400,"인증코드가 필요합니다."),
-    NOT_FOUND_VERIFICATION_CODE(404,"인증코드를 찾을 수 없습니다.");
+    NOT_FOUND_VERIFICATION_CODE(404,"인증코드를 찾을 수 없습니다."),
+    UNAUTHORIZED(401, "로그인이 필요합니다.");
 
     private final int status;
     private final String message;

@@ -12,6 +12,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.security.Principal;
+
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +31,9 @@ public class AnnounceServiceTest {
     @Test
     void createAnnounce_publishesEvent() {
         // given
+
+        Principal mockPrincipal = Mockito.mock(Principal.class);
+        Mockito.when(mockPrincipal.getName()).thenReturn("teacher01");
         CreateAnnounceRequest request = new CreateAnnounceRequest(
                 "공지 제목",
                 "공지 내용",
@@ -47,7 +52,7 @@ public class AnnounceServiceTest {
         Mockito.when(announceRepository.save(any(Announce.class))).thenReturn(savedAnnounce);
 
         // when
-        announceService.createAnnounce(request);
+        announceService.createAnnounce(mockPrincipal, request);
 
         // then
         Mockito.verify(eventPublisher).publishEvent(any(AnnounceSavedEvent.class));

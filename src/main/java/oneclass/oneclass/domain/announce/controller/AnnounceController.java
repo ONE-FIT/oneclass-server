@@ -7,6 +7,7 @@ import oneclass.oneclass.domain.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.domain.announce.service.AnnounceService;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -17,8 +18,8 @@ public class AnnounceController {
     private final AnnounceService announceService;
 
     @PostMapping("/create")
-    public AnnounceResponse createAnnounce(@RequestBody CreateAnnounceRequest request) {
-        return announceService.createAnnounce(request);
+    public AnnounceResponse createAnnounce(Principal principal, @RequestBody CreateAnnounceRequest request) {
+        return announceService.createAnnounce(principal, request);
     }
 
     @GetMapping("/id/{id}")
