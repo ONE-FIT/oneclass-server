@@ -33,5 +33,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     """)
     List<Member> findAbsentMembers(LocalDate date);
 
+
     boolean existsByUsername(String username);
 }
+
+    
+}
+

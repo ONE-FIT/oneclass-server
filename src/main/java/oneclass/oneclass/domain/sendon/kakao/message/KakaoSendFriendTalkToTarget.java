@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
+@Deprecated
 @RequiredArgsConstructor
 public class KakaoSendFriendTalkToTarget extends BaseScenario {
 

@@ -2,7 +2,7 @@ package oneclass.oneclass.domain.attendance.controller;
 
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
-import oneclass.oneclass.domain.attendance.service.AdminAttendanceService;
+import oneclass.oneclass.domain.attendance.service.AttendanceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -24,7 +24,7 @@ public class AdminAttendanceControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private AdminAttendanceService attendanceService;
+    private AttendanceService attendanceService;
 
     @InjectMocks
     private AdminAttendanceController attendanceController;

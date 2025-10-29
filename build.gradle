@@ -25,6 +25,10 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.google.zxing:core:3.5.0'
+    implementation 'com.google.zxing:javase:3.5.0'
+
+    // 이미 존재할 가능성이 높은 다른 의존성들
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -51,6 +55,7 @@ dependencies {
 
     // 테스트용
     testImplementation 'com.h2database:h2'
+
 
 }
 

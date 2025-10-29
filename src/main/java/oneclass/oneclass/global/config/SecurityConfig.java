@@ -49,7 +49,11 @@ public class SecurityConfig {
             // swagger
             "/v3/api-docs/**",
             "/swagger-ui/**",
+
+            "/swagger-ui.html",
+            "/attendance/**",
             "/swagger-ui/index.html"
+
     };
 
     @Bean
@@ -74,9 +78,12 @@ public class SecurityConfig {
                         // 공개
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
 
+
                         // 멤버 로그아웃: 멤버(학생/부모/교사)
                         .requestMatchers("/member/logout").hasAnyRole("STUDENT","PARENT","TEACHER")
-                        // 학원 로그아웃
+                      // 학원 로그아웃
+                        // 역할별 접근 제어
+
                         .requestMatchers("/academy/logout").hasRole("ACADEMY")
 
                         // 부모 전용: 자녀 추가 (POST /member/add-students) — 주체 일치 @PreAuthorize로 추가 검증

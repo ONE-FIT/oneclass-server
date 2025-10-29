@@ -2,7 +2,7 @@ package oneclass.oneclass.global.exception;
 
 import oneclass.oneclass.domain.attendance.controller.AdminAttendanceController;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
-import oneclass.oneclass.domain.attendance.service.AdminAttendanceService;
+import oneclass.oneclass.domain.attendance.service.AttendanceService;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.global.auth.jwt.JwtFilter;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
@@ -34,13 +34,13 @@ class GlobalExceptionHandlerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private AdminAttendanceService attendanceService;
+    private AttendanceService attendanceService;
 
     @TestConfiguration
     static class MockServiceConfig {
         @Bean
-        public AdminAttendanceService attendanceService() {
-            return Mockito.mock(AdminAttendanceService.class);
+        public AttendanceService attendanceService() {
+            return Mockito.mock(AttendanceService.class);
         }
 
         @Bean
