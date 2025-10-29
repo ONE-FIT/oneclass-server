@@ -3,6 +3,7 @@ package oneclass.oneclass.domain.sendon.event;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.sendon.kakao.message.KakaoSendFriendTalkToAll;
 import oneclass.oneclass.domain.sendon.kakao.message.KakaoSendFriendTalkToTarget;
+import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageSchedule;
 import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToAllNow;
 import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsSendShortMessageNow;
 import org.springframework.scheduling.annotation.Async;
@@ -15,6 +16,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class EntitySavedEventListener {
     private final SmsSendLongMessageToAllNow smsSendLongMessageToAllNow;
     private final SmsSendShortMessageNow smsSendShortMessageNow;
+    private final SmsSendLongMessageSchedule smsSendLongMessageSchedule;
 
     // 공지가 생성되면 메세지 발송
     @Async
@@ -28,5 +30,11 @@ public class EntitySavedEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleTaskAssignmentSavedEvent(TaskAssignmentSavedEvent event) {
         smsSendShortMessageNow.send(event.description(), event.title(), event.memberId());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleReservationSavedEvent(ReservationAnnounceSavedEvent event) {
+        smsSendLongMessageSchedule.send(event.content(), event.title(), event.reservation());
     }
 }

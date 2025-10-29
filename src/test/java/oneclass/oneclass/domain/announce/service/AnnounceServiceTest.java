@@ -32,7 +32,8 @@ public class AnnounceServiceTest {
         CreateAnnounceRequest request = new CreateAnnounceRequest(
                 "공지 제목",
                 "공지 내용",
-                true
+                true,
+                "2025-10-29 18:00:00"
         );
 
         Announce savedAnnounce = Announce.builder()

@@ -1,5 +1,6 @@
 package oneclass.oneclass.domain.task.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
@@ -18,7 +19,7 @@ public class TaskController {
     private final TaskService taskService;
 
     @PostMapping("/create/{lessonId}")
-    public TaskResponse createLessonTask(@RequestBody CreateTaskRequest request,@PathVariable Long lessonId) {
+    public TaskResponse createLessonTask(@Valid @RequestBody CreateTaskRequest request, @PathVariable Long lessonId) {
         return taskService.createLessonTask(request,lessonId);
     }
 

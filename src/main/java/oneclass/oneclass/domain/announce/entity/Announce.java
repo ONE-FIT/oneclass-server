@@ -29,4 +29,10 @@ public class Announce {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member author;
 
+    @Enumerated(EnumType.STRING)
+    AnnounceType announceType;
+
+    @Enumerated(EnumType.STRING)
+    AnnounceStatus announceStatus;
+
 }
