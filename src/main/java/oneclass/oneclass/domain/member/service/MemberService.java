@@ -12,9 +12,9 @@ public interface MemberService {
     void resetPassword(String username, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃
-    void logout(String username, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
+    void logout(String phone, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
 
-    void sendSignupVerificationCode(String academyCode, String username);
+//    void sendSignupVerificationCode(String academyCode, String username);
     void addStudentsToParent(String username, String password, List<String> studentUsername);
     void deleteParent(Long parentId);
     void removeStudentsFromTeacher(String teacherUsername, List<String> studentUsernames);
