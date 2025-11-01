@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 
-import oneclass.oneclass.domain.attendance.service.AdminAttendanceService;
 
 import oneclass.oneclass.domain.attendance.service.AttendanceService;
 import oneclass.oneclass.global.exception.CommonError;

@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -73,7 +74,7 @@ public class MemberServiceImpl implements MemberService {
     // 전화번호 로그인(토큰 발급/회전)
     @Override
     public ResponseToken login(String phone, String password) {
-        Member member = memberRepository.findByPhone(phone.trim())
+        Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         if (!passwordEncoder.matches(password, member.getPassword())) {
@@ -183,13 +184,10 @@ public class MemberServiceImpl implements MemberService {
 
     // 로그아웃: 특정 refresh 토큰만 폐기 (이제 phone 기준)
     @Override
-    public void logout(String username, String refreshToken) {
-        // 현재 컨트롤러에서 jwtProvider.getUsername(rt)로 subject를 전달 → phone임
-        String phone = username;
+    public void logout(String phone, String refreshToken) {
+        // 컨트롤러에서 이미 토큰을 cleanupToken으로 정리해서 넘김
         boolean exists = refreshTokenRepository.existsByPhoneAndToken(phone, refreshToken);
-        if (!exists) {
-            throw new CustomException(TokenError.UNAUTHORIZED);
-        }
+        if (!exists) throw new CustomException(TokenError.UNAUTHORIZED);
         refreshTokenRepository.deleteByPhoneAndToken(phone, refreshToken);
     }
 
@@ -307,7 +305,7 @@ public class MemberServiceImpl implements MemberService {
         for (int i = 0; i < t.length(); i++) if (t.charAt(i) == '.') dots++;
         return dots == 4;
     }
-    // 회원가입 코드(선생님)
+     //회원가입 코드(선생님)
     @Override
     public void sendSignupVerificationCode(String academyCode, String name) {
         if (academyCode == null) {
@@ -399,6 +397,106 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(teacher);
     }
 
+    @Override
+    public void removeStudentsFromTeacher(String teacherUsername, List<String> studentUsernames) {
+        if (teacherUsername == null || teacherUsername.isBlank() || studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
+        }
+
+        Member teacher = memberRepository.findByUsername(teacherUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
+
+        if (teacher.getRole() != Role.TEACHER) {
+            throw new CustomException(MemberError.BAD_REQUEST, "해당 사용자는 선생님이 아닙니다.");
+        }
+
+        for (String s : studentUsernames) {
+            Member student = memberRepository.findByUsername(s)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + s));
+            teacher.removeStudent(student);
+        }
+        memberRepository.save(teacher);
+    }
+
+    @Override
+    public List<String> listStudentsOfTeacher(String requesterUsername, String teacherUsername) {
+        // teacher 조회(연관관계 포함)
+        Member teacher = memberRepository.findWithRelationsByUsername(teacherUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
+
+        if (requesterUsername == null || requesterUsername.isBlank()) {
+            throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다. 로그인 후 시도하세요.");
+        }
+        Member requester = memberRepository.findWithRelationsByUsername(requesterUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
+
+        Set<String> teacherStudents = teacher.getTeachingStudents().stream()
+                .map(Member::getUsername)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // 본인(교사) → 전체 반환
+        if (requester.getRole() == Role.TEACHER && requesterUsername.equals(teacherUsername)) {
+            return teacherStudents.stream().sorted().toList();
+        }
+
+        // 부모 → 본인 자녀 ∩ 교사 담당 학생
+        if (requester.getRole() == Role.PARENT) {
+            Set<String> parentChildren = requester.getParentStudents().stream()
+                    .map(Member::getUsername)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            return parentChildren.stream()
+                    .filter(teacherStudents::contains)
+                    .sorted()
+                    .toList();
+        }
+
+        throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+    }
+
+    @Override
+    public List<String> listTeachersOfStudent(String requesterUsername, String studentUsername) {
+        Member student = memberRepository.findWithRelationsByUsername(studentUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다."));
+
+        if (requesterUsername == null || requesterUsername.isBlank()) {
+            throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다. 로그인 후 시도하세요.");
+        }
+        Member requester = memberRepository.findWithRelationsByUsername(requesterUsername)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
+
+        Set<String> studentTeachers = student.getTeachers().stream()
+                .map(Member::getUsername)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        switch (requester.getRole()) {
+            case STUDENT:
+                if (requesterUsername.equals(studentUsername)) {
+                    return studentTeachers.stream().sorted().toList();
+                }
+                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+            case PARENT:
+                boolean isParentOf = student.getParents().stream()
+                        .map(Member::getUsername)
+                        .filter(Objects::nonNull)
+                        .anyMatch(u -> u.equals(requesterUsername));
+                if (isParentOf) {
+                    return studentTeachers.stream().sorted().toList();
+                }
+                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+            case TEACHER:
+                if (studentTeachers.contains(requesterUsername)) {
+                    return studentTeachers.stream().sorted().toList();
+                }
+                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+            default:
+                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+        }
+    }
+
 }
+
 
 

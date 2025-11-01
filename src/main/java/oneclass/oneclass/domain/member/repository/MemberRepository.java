@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -35,8 +36,11 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
 
     boolean existsByUsername(String username);
+
+    @Query("SELECT m.phone FROM Member m WHERE m.id IN :studentIds")
+    Page<String> findPhonesByIds(@Param("studentIds") List<Long> studentIds, Pageable pageable);
 }
 
-    
-}
+
+
 

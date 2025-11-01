@@ -12,7 +12,7 @@ public interface MemberService {
     void resetPassword(String username, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃
-    void logout(String username, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
+    void logout(String phone, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
 
     void sendSignupVerificationCode(String academyCode, String username);
     void addStudentsToParent(String username, String password, List<String> studentUsername);
@@ -35,5 +35,5 @@ public interface MemberService {
      * 요청자(requesterUsername)의 권한을 검사한 뒤,
      * studentUsername의 담당 교사(username 리스트)를 반환한다.
      */
-    java.util.List<String> listTeachersOfStudent(String requesterUsername, String studentUsername);
+    List<String> listTeachersOfStudent(String requesterUsername, String studentUsername);
 }

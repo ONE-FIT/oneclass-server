@@ -23,9 +23,9 @@ public class JwtProvider {
 
     private static final Logger log = LoggerFactory.getLogger(JwtProvider.class);
 
+    // common claim keys
     public static final String ROLE_CLAIM_KEY = "role";
     public static final String ROLES_CLAIM_KEY = "roles";
-
     public static final String PHONE_CLAIM_KEY = "phone";
     public static final String USERNAME_CLAIM_KEY = "username";
     public static final String NAME_CLAIM_KEY = "name";
@@ -60,7 +60,7 @@ public class JwtProvider {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // ===== 발급 =====
+    // ===== 발급 (subject는 호출부에서 결정) =====
     public ResponseToken generateToken(String subject, String roleValue) {
         String access = generateAccessToken(subject, roleValue);
         String refresh = generateRefreshToken(subject);
@@ -77,7 +77,9 @@ public class JwtProvider {
         return buildJwt(subject, Map.of(), null, exp);
     }
 
-    // 전화번호 로그인용(실무 권장)
+    // ===== 전화번호 로그인 전용(권장) =====
+    // access: phone/username/name(+role) 포함
+    // refresh: 표준 클레임만(sub/iss/iat/exp/jti). 부가 클레임 미포함 → 토큰 길이 최소화
     public ResponseToken generateTokenByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull) {
         long now = System.currentTimeMillis();
         String access = buildJwtByPhone(phone, roleValue, usernameOrNull, nameOrNull, now + accessValidityMillis, true);
@@ -86,13 +88,16 @@ public class JwtProvider {
     }
 
     public String generateAccessTokenByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull) {
-        return buildJwtByPhone(phone, roleValue, usernameOrNull, nameOrNull, System.currentTimeMillis() + accessValidityMillis, true);
+        return buildJwtByPhone(phone, roleValue, usernameOrNull, nameOrNull,
+                System.currentTimeMillis() + accessValidityMillis, true);
     }
 
     public String generateRefreshTokenByPhone(String phone, String usernameOrNull, String nameOrNull) {
-        return buildJwtByPhone(phone, null, usernameOrNull, nameOrNull, System.currentTimeMillis() + refreshValidityMillis, false);
+        return buildJwtByPhone(phone, null, usernameOrNull, nameOrNull,
+                System.currentTimeMillis() + refreshValidityMillis, false);
     }
 
+    // 공통 빌더
     private String buildJwt(String subject, Map<String, Object> extraClaims, String roleValue, long expiryEpochMillis) {
         Date now = new Date();
         Date exp = new Date(expiryEpochMillis);
@@ -114,11 +119,22 @@ public class JwtProvider {
         return builder.signWith(key, SignatureAlgorithm.HS256).compact();
     }
 
-    private String buildJwtByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull, long expiryEpochMillis, boolean access) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(PHONE_CLAIM_KEY, phone);
-        if (usernameOrNull != null && !usernameOrNull.isBlank()) claims.put(USERNAME_CLAIM_KEY, usernameOrNull);
-        if (nameOrNull != null && !nameOrNull.isBlank()) claims.put(NAME_CLAIM_KEY, nameOrNull);
+    // access=true → 부가 클레임 포함, access=false(refresh) → 부가 클레임 제외(길이 최소화)
+    private String buildJwtByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull,
+                                   long expiryEpochMillis, boolean access) {
+        Map<String, Object> claims;
+        if (access) {
+            Map<String, Object> c = new HashMap<>();
+            // subject가 phone이지만, 접근 편의를 위해 access에는 보조 클레임도 포함
+            c.put(PHONE_CLAIM_KEY, phone);
+            if (usernameOrNull != null && !usernameOrNull.isBlank()) c.put(USERNAME_CLAIM_KEY, usernameOrNull);
+            if (nameOrNull != null && !nameOrNull.isBlank()) c.put(NAME_CLAIM_KEY, nameOrNull);
+            claims = c;
+        } else {
+            // refresh는 sub/iss/iat/exp/jti(+서명)만 포함
+            claims = Map.of();
+        }
+
         String roleToInclude = access ? roleValue : null;
         return buildJwt(phone, claims, roleToInclude, expiryEpochMillis);
     }
@@ -176,6 +192,7 @@ public class JwtProvider {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
     }
 
+    // ===== JWE 복호화(필요 시) =====
     public String decryptToken(String jweToken) {
         try {
             String useKey = (jweSecret != null && !jweSecret.isBlank()) ? jweSecret : secret;
@@ -190,6 +207,7 @@ public class JwtProvider {
         }
     }
 
+    // ===== 편의 =====
     public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) return bearerToken.substring(7);
@@ -205,12 +223,17 @@ public class JwtProvider {
         Set<String> roleSet = new LinkedHashSet<>();
         Object single = claims.get(ROLE_CLAIM_KEY);
         if (single instanceof String s) roleSet.add(normalizeRole(s));
+
         Object multi = claims.get(ROLES_CLAIM_KEY);
         if (multi instanceof Collection<?> col) {
             for (Object o : col) if (o != null) roleSet.add(normalizeRole(o.toString()));
         } else if (multi instanceof String csv) {
-            Arrays.stream(csv.split(",")).map(String::trim).filter(v -> !v.isEmpty()).forEach(v -> roleSet.add(normalizeRole(v)));
+            Arrays.stream(csv.split(","))
+                    .map(String::trim)
+                    .filter(v -> !v.isEmpty())
+                    .forEach(v -> roleSet.add(normalizeRole(v)));
         }
+
         if (roleSet.isEmpty()) roleSet.add("ROLE_USER");
         return new ArrayList<>(roleSet);
     }
