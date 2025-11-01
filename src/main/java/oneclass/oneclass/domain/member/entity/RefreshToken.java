@@ -26,6 +26,12 @@ public class RefreshToken {
     @Column(nullable = false)
     private LocalDateTime expiryDate;
 
-    public boolean isExpired() { return expiryDate.isBefore(LocalDateTime.now()); }
-    public void rotate(String newToken, LocalDateTime newExpiry) { this.token = newToken; this.expiryDate = newExpiry; }
+    public boolean isExpired() {
+        return expiryDate.isBefore(LocalDateTime.now());
+    }
+
+    public void rotate(String newToken, LocalDateTime newExpiry) {
+        this.token = newToken;
+        this.expiryDate = newExpiry;
+    }
 }

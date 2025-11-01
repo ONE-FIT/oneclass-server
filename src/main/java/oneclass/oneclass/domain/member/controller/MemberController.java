@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.*;
+import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
@@ -102,13 +104,18 @@ public class MemberController {
 
         // 4) 인증 주체의 phone을 확보 (JwtFilter가 넣어준 request attribute 활용)
         String phoneFromAuth = (String) request.getAttribute("auth.phone");
+
         if (phoneFromAuth == null || phoneFromAuth.isBlank()) {
-            // 폴백: authentication.getName()이 username일 수 있으니 필요시 DB 조회로 phone 매핑
             String principal = authentication.getName();
-            // username일 수도, 이미 phone일 수도 있음. 숫자만으로 판단하거나 서비스에 위임.
-            // 여기서는 안전하게 서비스/레포로 매핑하는 방법을 권장.
-            // 예시) memberService가 principal을 받아 phone으로 변환하는 헬퍼를 제공한다면 그걸 사용하세요.
-            throw new CustomException(TokenError.UNAUTHORIZED);
+            // 전화번호 형식이면 바로 사용
+            if (principal != null && principal.matches("^\\d{10,}$")) {
+                phoneFromAuth = principal;
+            } else {
+                // username인 경우 DB에서 조회
+                Member member = memberRepository.findByUsername(principal)
+                        .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+                phoneFromAuth = member.getPhone();
+            }
         }
 
         // 5) 주체 일치 확인: 인증된 사용자와 refresh의 subject가 동일한지
@@ -122,7 +129,6 @@ public class MemberController {
         return ResponseEntity.noContent().build();
     }
 
-    /* 컨트롤러 유틸 (없으면 추가) */
     private String cleanupToken(String token) {
         if (token == null) return null;
         String v = token.trim();
@@ -154,7 +160,7 @@ public class MemberController {
     @PostMapping("/reset-password")
     public void resetPassword(@RequestBody ResetPasswordRequest request) {
         memberService.resetPassword(
-                request.getUsername(),
+                request.getPhone(),
                 request.getNewPassword(),
                 request.getVerificationCode(),
                 request.getCheckPassword()

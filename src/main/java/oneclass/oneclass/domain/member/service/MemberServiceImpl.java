@@ -12,7 +12,7 @@ import oneclass.oneclass.domain.member.dto.SignupRequest;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.entity.RefreshToken;
 import oneclass.oneclass.domain.member.entity.Role;
-//import oneclass.oneclass.domain.member.entity.VerificationCode;
+import oneclass.oneclass.domain.member.entity.VerificationCode;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
@@ -20,14 +20,15 @@ import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
-//import org.springframework.mail.SimpleMailMessage;
-//import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +43,7 @@ public class MemberServiceImpl implements MemberService {
     private final VerificationCodeRepository verificationCodeRepository;
     private final AcademyRepository academyRepository;
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
-//    private final JavaMailSender javaMailSender;
+    private final JavaMailSender javaMailSender;
 
     @Override
     public void signup(SignupRequest request) {
@@ -184,11 +185,10 @@ public class MemberServiceImpl implements MemberService {
     // 로그아웃: 특정 refresh 토큰만 폐기 (이제 phone 기준)
     @Override
     public void logout(String phone, String refreshToken) {
-        // 중복 정리를 피하고 싶으면 controller에서 cleanup 후 raw rt를 넘긴다
-        String rt = cleanupToken(refreshToken);
-        boolean exists = refreshTokenRepository.existsByPhoneAndToken(phone, rt);
+        // 컨트롤러에서 이미 토큰을 cleanupToken으로 정리해서 넘김
+        boolean exists = refreshTokenRepository.existsByPhoneAndToken(phone, refreshToken);
         if (!exists) throw new CustomException(TokenError.UNAUTHORIZED);
-        refreshTokenRepository.deleteByPhoneAndToken(phone, rt);
+        refreshTokenRepository.deleteByPhoneAndToken(phone, refreshToken);
     }
 
     private String cleanupToken(String token) {
@@ -305,37 +305,37 @@ public class MemberServiceImpl implements MemberService {
         for (int i = 0; i < t.length(); i++) if (t.charAt(i) == '.') dots++;
         return dots == 4;
     }
-    // 회원가입 코드(선생님)
-//    @Override
-//    public void sendSignupVerificationCode(String academyCode, String name) {
-//        if (academyCode == null) {
-//            throw new CustomException(MemberError.BAD_REQUEST);
-//        }
-//        Academy academy = academyRepository.findByAcademyCode(academyCode)
-//                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-//        String email = academy.getEmail();
-//        String academyName = academy.getAcademyName();
-//
-//        String tempCode = UUID.randomUUID().toString().substring(0, 13);
-//        AcademyVerificationCode verificationCode = AcademyVerificationCode.builder()
-//                .academyCode(academyCode)
-//                .code(tempCode)
-//                .expiry(LocalDateTime.now().plusMinutes(10))
-//                .build();
-//        academyVerificationCodeRepository.save(verificationCode);
-//
-//        String subject = "회원가입 인증코드 안내";
-//        String text = String.format(
-//                "%s님이 %s 학원으로 가입하려고 합니다.%n아래 인증코드를 10분 내에 입력해주세요.%n%n인증코드: %s",
-//                name, academyName, tempCode
-//        );
-//
-//        SimpleMailMessage message = new SimpleMailMessage();
-//        message.setTo(email);
-//        message.setSubject(subject);
-//        message.setText(text);
-//        javaMailSender.send(message);
-//    }
+     //회원가입 코드(선생님)
+    @Override
+    public void sendSignupVerificationCode(String academyCode, String name) {
+        if (academyCode == null) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+        String email = academy.getEmail();
+        String academyName = academy.getAcademyName();
+
+        String tempCode = UUID.randomUUID().toString().substring(0, 13);
+        AcademyVerificationCode verificationCode = AcademyVerificationCode.builder()
+                .academyCode(academyCode)
+                .code(tempCode)
+                .expiry(LocalDateTime.now().plusMinutes(10))
+                .build();
+        academyVerificationCodeRepository.save(verificationCode);
+
+        String subject = "회원가입 인증코드 안내";
+        String text = String.format(
+                "%s님이 %s 학원으로 가입하려고 합니다.%n아래 인증코드를 10분 내에 입력해주세요.%n%n인증코드: %s",
+                name, academyName, tempCode
+        );
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject(subject);
+        message.setText(text);
+        javaMailSender.send(message);
+    }
 
     // 부모-자식: 자녀 추가(부모님)
     @Override
@@ -413,55 +413,50 @@ public class MemberServiceImpl implements MemberService {
         for (String s : studentUsernames) {
             Member student = memberRepository.findByUsername(s)
                     .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + s));
-            teacher.removeStudent(student); // 양방향 해제
+            teacher.removeStudent(student);
         }
         memberRepository.save(teacher);
     }
 
     @Override
-    public java.util.List<String> listStudentsOfTeacher(String requesterUsername, String teacherUsername) {
+    public List<String> listStudentsOfTeacher(String requesterUsername, String teacherUsername) {
         // teacher 조회(연관관계 포함)
         Member teacher = memberRepository.findWithRelationsByUsername(teacherUsername)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
 
-        // 요청자 필수
         if (requesterUsername == null || requesterUsername.isBlank()) {
             throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다. 로그인 후 시도하세요.");
         }
         Member requester = memberRepository.findWithRelationsByUsername(requesterUsername)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
 
-        // 교사가 맡고 있는 학생 username 목록
-        java.util.Set<String> teacherStudents = teacher.getTeachingStudents().stream()
+        Set<String> teacherStudents = teacher.getTeachingStudents().stream()
                 .map(Member::getUsername)
                 .filter(Objects::nonNull)
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
 
-        // 권한 규칙
-        // 1) 해당 교사 본인(TEACHER + 동일 username) → 전부 반환
+        // 본인(교사) → 전체 반환
         if (requester.getRole() == Role.TEACHER && requesterUsername.equals(teacherUsername)) {
             return teacherStudents.stream().sorted().toList();
         }
 
-        // 2) 부모 → 자신의 자녀와 교사의 학생 교집합만 반환
+        // 부모 → 본인 자녀 ∩ 교사 담당 학생
         if (requester.getRole() == Role.PARENT) {
-            java.util.Set<String> parentChildren = requester.getParentStudents().stream()
+            Set<String> parentChildren = requester.getParentStudents().stream()
                     .map(Member::getUsername)
                     .filter(Objects::nonNull)
-                    .collect(java.util.stream.Collectors.toSet());
+                    .collect(Collectors.toSet());
             return parentChildren.stream()
                     .filter(teacherStudents::contains)
                     .sorted()
                     .toList();
         }
 
-        // 그 외는 금지
         throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
     }
 
     @Override
-    public java.util.List<String> listTeachersOfStudent(String requesterUsername, String studentUsername) {
-        // student 조회(연관관계 포함)
+    public List<String> listTeachersOfStudent(String requesterUsername, String studentUsername) {
         Member student = memberRepository.findWithRelationsByUsername(studentUsername)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다."));
 
@@ -471,20 +466,18 @@ public class MemberServiceImpl implements MemberService {
         Member requester = memberRepository.findWithRelationsByUsername(requesterUsername)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
 
-        java.util.Set<String> studentTeachers = student.getTeachers().stream()
+        Set<String> studentTeachers = student.getTeachers().stream()
                 .map(Member::getUsername)
                 .filter(Objects::nonNull)
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
 
         switch (requester.getRole()) {
-            case STUDENT -> {
-                // 본인만 허용
+            case STUDENT:
                 if (requesterUsername.equals(studentUsername)) {
                     return studentTeachers.stream().sorted().toList();
                 }
-            }
-            case PARENT -> {
-                // 요청자가 해당 학생의 부모인지 확인
+                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+            case PARENT:
                 boolean isParentOf = student.getParents().stream()
                         .map(Member::getUsername)
                         .filter(Objects::nonNull)
@@ -492,21 +485,18 @@ public class MemberServiceImpl implements MemberService {
                 if (isParentOf) {
                     return studentTeachers.stream().sorted().toList();
                 }
-            }
-            case TEACHER -> {
-                // 요청자가 그 학생의 담당 교사라면 허용
+                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+            case TEACHER:
                 if (studentTeachers.contains(requesterUsername)) {
                     return studentTeachers.stream().sorted().toList();
                 }
-            }
-            default -> {
-                // 그 외 역할은 허용하지 않음
-            }
+                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+            default:
+                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
         }
-
-        throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
     }
 
 }
+
 
 
