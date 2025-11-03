@@ -20,6 +20,7 @@ public interface MemberService {
     void removeStudentsFromTeacher(String teacherUsername, List<String> studentUsernames);
     void addStudentsToTeacher(String teacherUsername, List<String> studentUsernames, String password);
     void createUsername(String username);
+    void deleteUser(String phone, String refreshToken);
 
     //refreshToken 검증
     ResponseToken reissue(String refreshToken);

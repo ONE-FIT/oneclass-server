@@ -126,6 +126,9 @@ public class SecurityConfig {
                         .requestMatchers("/task/**").authenticated()
                         .requestMatchers("/member/create-username").authenticated()
 
+                        //계정 탈퇴
+                        .requestMatchers("/member/delete-user").hasAnyRole("STUDENT","TEACHER","PARENT")
+
                         // 그 외 전부 인증 필요
                         .anyRequest().authenticated()
                 )
