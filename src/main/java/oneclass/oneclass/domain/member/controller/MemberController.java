@@ -137,11 +137,12 @@ public class MemberController {
     }
 
     @DeleteMapping("/delete-user")
-    public void deleteUser(
+    public ResponseEntity<Void> deleteUser(
             @RequestParam String phone,
             @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
     ){
         memberService.deleteUser(phone, refreshToken);
+        return ResponseEntity.noContent().build();
     }
 
 
