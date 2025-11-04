@@ -1,5 +1,6 @@
 package oneclass.oneclass.domain.attendance.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.service.AttendanceService;
 import oneclass.oneclass.global.auth.CustomUserDetails;
@@ -21,6 +22,7 @@ public class AttendanceController {
     private int qrValidityMinutes;
 
     /** QR 코드 생성 API */
+    @Operation
     @GetMapping(value = "/qr/{lessonId}", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateQr(@PathVariable Long lessonId) {
         byte[] qrImage = attendanceService.generateAttendanceQrPng(lessonId, qrValidityMinutes);

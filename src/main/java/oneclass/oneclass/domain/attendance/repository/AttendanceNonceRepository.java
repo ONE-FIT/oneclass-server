@@ -13,8 +13,8 @@ import java.util.Optional;
 public interface AttendanceNonceRepository extends JpaRepository<AttendanceNonce, Long> {
     Optional<AttendanceNonce> findByNonce(String nonce);
     Optional<AttendanceNonce> findTopByLessonIdAndUsedFalseOrderByCreatedAtDesc(Long lessonId);
-    @Query("SELECT DISTINCT a.lessonId FROM AttendanceNonce a WHERE a.expireAt > :now AND a.used = false")
-    List<Long> findActiveLessonIds(@Param("now") LocalDateTime now);
+    @Query("SELECT a FROM AttendanceNonce a WHERE a.expireAt > :now AND a.used = false")
+    List<AttendanceNonce> findActiveNonces(@Param("now") LocalDateTime now);
     @Query("DELETE FROM AttendanceNonce a WHERE a.used = true OR a.expireAt <= :now")
     @Modifying
     void deleteExpiredOrUsed(@Param("now") LocalDateTime now);
