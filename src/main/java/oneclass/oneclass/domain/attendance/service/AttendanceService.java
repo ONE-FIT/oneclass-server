@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.attendance.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.Attendance;
 import oneclass.oneclass.domain.attendance.entity.AttendanceNonce;
@@ -19,12 +20,19 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
+
 public class AttendanceService {
 
+    // ✅ QR 캐시: lessonId -> QR 이미지(byte[]) 저장
+    private final Map<Long, byte[]> qrCache = new ConcurrentHashMap<>();
     private final AttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
     private final AttendanceNonceRepository nonceRepository;
@@ -98,26 +106,39 @@ public class AttendanceService {
      * @param validMinutes QR 유효 시간 (분 단위)
      */
     public byte[] generateAttendanceQrPng(Long lessonId, int validMinutes) {
-        String nonce = UUID.randomUUID().toString();
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expireAt = now.plusMinutes(validMinutes);
 
-        AttendanceNonce attendanceNonce = AttendanceNonce.builder()
-                .lessonId(lessonId)
-                .nonce(nonce)
-                .createdAt(now)
-                .expireAt(expireAt)
-                .used(false)
-                .build();
+        Optional<AttendanceNonce> opt = nonceRepository.findTopByLessonIdAndUsedFalseOrderByCreatedAtDesc(lessonId);
+        AttendanceNonce current;
 
-        nonceRepository.save(attendanceNonce);
+        if (opt.isPresent()) {
+            current = opt.get();
+            current.setNonce(UUID.randomUUID().toString());
+            current.setCreatedAt(now);
+            current.setExpireAt(now.plusMinutes(validMinutes));
+        } else {
+            // 처음 생성 시
+            current = AttendanceNonce.builder()
+                    .lessonId(lessonId)
+                    .nonce(UUID.randomUUID().toString())
+                    .createdAt(now)
+                    .expireAt(now.plusMinutes(validMinutes))
+                    .used(false)
+                    .build();
+        }
 
-        String payload = String.format(
-                "{\"type\":\"attendance\",\"lessonId\":%d,\"nonce\":\"%s\"}",
-                lessonId, nonce
+        nonceRepository.save(current);
+
+        // ✅ QR 이미지 생성 및 캐시 저장
+        byte[] qrCodeImage = createQrImage(
+                String.format("{\"type\":\"attendance\",\"lessonId\":%d,\"nonce\":\"%s\"}",
+                        lessonId, current.getNonce()),
+                350, 350
         );
+        qrCache.put(lessonId, qrCodeImage);
 
-        return createQrImage(payload, 350, 350);
+        log.info("Generated & cached QR for lessonId {} at {}", lessonId, now);
+        return qrCodeImage;
     }
 
     /**
@@ -183,18 +204,34 @@ public class AttendanceService {
         return "Attendance recorded successfully";
     }
 
-    // ✅ Scheduled method to regenerate QR code every minute for active lessons
+    @Transactional
     @Scheduled(fixedRate = 60000)
     public void regenerateQrCodes() {
-        // For demonstration, assume active lessons are those with attendance records today
+        // Rotate the current active (unused & unexpired) nonce for each lesson instead of inserting a new row
         LocalDateTime now = LocalDateTime.now();
         List<Long> activeLessonIds = nonceRepository.findActiveLessonIds(now);
-        int validMinutes = 5; // QR code validity in minutes
+        int validMinutes = 1; // QR code validity in minutes (update every minute)
 
         for (Long lessonId : activeLessonIds) {
-            byte[] qrCodeImage = generateAttendanceQrPng(lessonId, validMinutes);
-            // For now, just log the regeneration event; in real scenario, save or update cache/db
-            System.out.println("Regenerated QR code for lessonId: " + lessonId + " at " + LocalDateTime.now());
+            // find the latest active nonce for this lesson (if any)
+            Optional<AttendanceNonce> opt = nonceRepository.findTopByLessonIdAndUsedFalseOrderByCreatedAtDesc(lessonId);
+            if (opt.isEmpty()) {
+                // no existing active nonce to rotate — skip
+                continue;
+            }
+
+            AttendanceNonce current = opt.get();
+            // rotate the nonce (replace value and extend expiry)
+            current.setNonce(UUID.randomUUID().toString());
+            current.setCreatedAt(now);
+            current.setExpireAt(now.plusMinutes(validMinutes));
+
+            nonceRepository.save(current);
+            log.info("Rotated QR nonce for lessonId {} at {}", lessonId, now);
         }
+    }
+    // ✅ 최신 QR을 반환하는 메서드
+    public byte[] getCachedQr(Long lessonId) {
+        return qrCache.getOrDefault(lessonId, new byte[0]);
     }
 }

@@ -37,4 +37,9 @@ public class AttendanceController {
         String result = attendanceService.recordAttendance(nonce, lessonId, memberId);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping(value = "/qr/{lessonId}", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> getQr(@PathVariable Long lessonId) {
+        return ResponseEntity.ok(attendanceService.getCachedQr(lessonId));
+    }
 }
