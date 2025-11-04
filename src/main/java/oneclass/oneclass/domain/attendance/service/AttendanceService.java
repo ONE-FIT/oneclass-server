@@ -108,24 +108,15 @@ public class AttendanceService {
     public byte[] generateAttendanceQrPng(Long lessonId, int validMinutes) {
         LocalDateTime now = LocalDateTime.now();
 
-        Optional<AttendanceNonce> opt = nonceRepository.findTopByLessonIdAndUsedFalseOrderByCreatedAtDesc(lessonId);
-        AttendanceNonce current;
+        AttendanceNonce current = nonceRepository.findTopByLessonIdAndUsedFalseOrderByCreatedAtDesc(lessonId)
+                .orElseGet(() -> AttendanceNonce.builder()
+                        .lessonId(lessonId)
+                        .used(false)
+                        .build());
 
-        if (opt.isPresent()) {
-            current = opt.get();
-            current.setNonce(UUID.randomUUID().toString());
-            current.setCreatedAt(now);
-            current.setExpireAt(now.plusMinutes(validMinutes));
-        } else {
-            // 처음 생성 시
-            current = AttendanceNonce.builder()
-                    .lessonId(lessonId)
-                    .nonce(UUID.randomUUID().toString())
-                    .createdAt(now)
-                    .expireAt(now.plusMinutes(validMinutes))
-                    .used(false)
-                    .build();
-        }
+        current.setNonce(UUID.randomUUID().toString());
+        current.setCreatedAt(now);
+        current.setExpireAt(now.plusMinutes(validMinutes));
 
         nonceRepository.save(current);
 
@@ -214,24 +205,32 @@ public class AttendanceService {
 
         for (Long lessonId : activeLessonIds) {
             // find the latest active nonce for this lesson (if any)
-            Optional<AttendanceNonce> opt = nonceRepository.findTopByLessonIdAndUsedFalseOrderByCreatedAtDesc(lessonId);
-            if (opt.isEmpty()) {
-                // no existing active nonce to rotate — skip
-                continue;
-            }
+            nonceRepository.findTopByLessonIdAndUsedFalseOrderByCreatedAtDesc(lessonId).ifPresent(current -> {
+                // rotate the nonce (replace value and extend expiry)
+                current.setNonce(UUID.randomUUID().toString());
+                current.setCreatedAt(now);
+                current.setExpireAt(now.plusMinutes(validMinutes));
+                nonceRepository.save(current);
 
-            AttendanceNonce current = opt.get();
-            // rotate the nonce (replace value and extend expiry)
-            current.setNonce(UUID.randomUUID().toString());
-            current.setCreatedAt(now);
-            current.setExpireAt(now.plusMinutes(validMinutes));
-
-            nonceRepository.save(current);
-            log.info("Rotated QR nonce for lessonId {} at {}", lessonId, now);
+                // QR 이미지 재생성 및 캐시 업데이트
+                byte[] qrCodeImage = createQrImage(
+                        String.format("{\"type\":\"attendance\",\"lessonId\":%d,\"nonce\":\"%s\"}",
+                                lessonId, current.getNonce()),
+                        350, 350
+                );
+                qrCache.put(lessonId, qrCodeImage);
+                log.info("Rotated QR nonce for lessonId {} at {}", lessonId, now);
+            });
         }
     }
     // ✅ 최신 QR을 반환하는 메서드
     public byte[] getCachedQr(Long lessonId) {
-        return qrCache.getOrDefault(lessonId, new byte[0]);
+        byte[] qrImage = qrCache.get(lessonId);
+        if (qrImage == null) {
+            // QR 코드를 찾을 수 없다는 의미로 404를 반환하기 위해 예외를 던집니다.
+            // 추후 `QR_CODE_NOT_FOUND`와 같이 더 적절한 Error Enum을 추가하는 것을 고려해볼 수 있습니다.
+            throw new CustomException(AttendanceError.NOT_FOUND);
+        }
+        return qrImage;
     }
 }
