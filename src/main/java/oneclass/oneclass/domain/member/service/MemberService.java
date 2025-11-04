@@ -7,9 +7,9 @@ import java.util.List;
 
 public interface MemberService {
     void signup(SignupRequest request);
-    ResponseToken login(String name, String password);
+    ResponseToken login(String phone, String password);
     String findUsername(String phone);
-    void resetPassword(String username, String newPassword, String checkPassword, String verificationCode);
+    void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃
     void logout(String phone, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
@@ -20,7 +20,7 @@ public interface MemberService {
     void removeStudentsFromTeacher(String teacherUsername, List<String> studentUsernames);
     void addStudentsToTeacher(String teacherUsername, List<String> studentUsernames, String password);
     void createUsername(String username);
-    void deleteUser(String phone, String refreshToken);
+    void deleteUser(String phone);
 
     //refreshToken 검증
     ResponseToken reissue(String refreshToken);

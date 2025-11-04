@@ -38,7 +38,7 @@ public class MemberServiceImpl implements MemberService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-//    private final EmailService emailService;
+    //    private final EmailService emailService;
     private final VerificationCodeRepository verificationCodeRepository;
     private final AcademyRepository academyRepository;
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
@@ -191,7 +191,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public void deleteUser(String phone, String refreshToken) {
+    public void deleteUser(String phone) {
         Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         memberRepository.delete(member);
@@ -311,7 +311,7 @@ public class MemberServiceImpl implements MemberService {
         for (int i = 0; i < t.length(); i++) if (t.charAt(i) == '.') dots++;
         return dots == 4;
     }
-     //회원가입 코드(선생님)
+    //회원가입 코드(선생님)
     @Override
     public void sendSignupVerificationCode(String academyCode, String name) {
         if (academyCode == null) {
@@ -505,6 +505,3 @@ public class MemberServiceImpl implements MemberService {
 
 
 }
-
-
-

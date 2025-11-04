@@ -138,10 +138,26 @@ public class MemberController {
 
     @DeleteMapping("/delete-user")
     public ResponseEntity<Void> deleteUser(
-            @RequestParam String phone,
-            @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
+            Authentication authentication,
+            HttpServletRequest request
     ){
-        memberService.deleteUser(phone, refreshToken);
+        if (authentication == null) {
+            throw new CustomException(TokenError.UNAUTHORIZED);
+        }
+
+        String phoneFromAuth = (String) request.getAttribute("auth.phone");
+        if (phoneFromAuth == null || phoneFromAuth.isBlank()) {
+            String principal = authentication.getName();
+            if (principal != null && principal.matches("^\\d{10,}$")) {
+                phoneFromAuth = principal;
+            } else {
+                Member member = memberRepository.findByUsername(principal)
+                        .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+                phoneFromAuth = member.getPhone();
+            }
+        }
+
+        memberService.deleteUser(phoneFromAuth); // 서비스 레이어 시그니처도 변경 필요
         return ResponseEntity.noContent().build();
     }
 
