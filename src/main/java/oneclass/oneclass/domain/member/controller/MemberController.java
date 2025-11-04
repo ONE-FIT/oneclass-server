@@ -20,7 +20,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
 @RestController
@@ -76,7 +75,7 @@ public class MemberController {
     )
     @PostMapping("/logout")
     @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
-    public ResponseEntity<Void> logoutMember(
+    public ResponseEntity<Void> logout(
             Authentication authentication,
             HttpServletRequest request,
             @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
@@ -135,6 +134,31 @@ public class MemberController {
         if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
         if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
         return v;
+    }
+
+    @DeleteMapping("/delete-user")
+    public ResponseEntity<Void> deleteUser(
+            Authentication authentication,
+            HttpServletRequest request
+    ){
+        if (authentication == null) {
+            throw new CustomException(TokenError.UNAUTHORIZED);
+        }
+
+        String phoneFromAuth = (String) request.getAttribute("auth.phone");
+        if (phoneFromAuth == null || phoneFromAuth.isBlank()) {
+            String principal = authentication.getName();
+            if (principal != null && principal.matches("^\\d{10,}$")) {
+                phoneFromAuth = principal;
+            } else {
+                Member member = memberRepository.findByUsername(principal)
+                        .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+                phoneFromAuth = member.getPhone();
+            }
+        }
+
+        memberService.deleteUser(phoneFromAuth); // 서비스 레이어 시그니처도 변경 필요
+        return ResponseEntity.noContent().build();
     }
 
 
