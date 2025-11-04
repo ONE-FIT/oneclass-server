@@ -1,6 +1,7 @@
 package oneclass.oneclass.domain.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -18,7 +19,8 @@ public class Member {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(unique = true, length = 100)
+    @Nullable
     private String username;
 
     private String password;
@@ -27,7 +29,7 @@ public class Member {
     private String name;
 
     private String phone;
-    private String email;
+//    private String email;
 
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -80,7 +82,7 @@ public class Member {
         this.password = password;
         this.name = name;
         this.phone = phone;
-        this.email = email;
+//        this.email = email;
         this.role = role;
         if (teachingStudents != null) teachingStudents.forEach(this::addStudent);
         if (teachers != null) teachers.forEach(this::addTeacher);

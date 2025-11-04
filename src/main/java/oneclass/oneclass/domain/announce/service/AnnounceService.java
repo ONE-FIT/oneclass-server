@@ -54,6 +54,7 @@ public class AnnounceService {
         return AnnounceResponse.of(announce);
     }
 
+    @Transactional
     public AnnounceResponse updateAnnounce(UpdateAnnounceRequest request) {
         Announce announce = announceRepository.findById(request.id())
                 .orElseThrow(() -> new CustomException(AnnounceError.NOT_FOUND));
@@ -64,6 +65,7 @@ public class AnnounceService {
         return AnnounceResponse.of(announceRepository.save(announce));
     }
 
+    @Transactional
     public void deleteAnnounce(Long id) {
         Announce announce = announceRepository.findById(id)
                 .orElseThrow(() -> new CustomException(AnnounceError.NOT_FOUND));

@@ -1,0 +1,29 @@
+spring:
+  profiles:
+    default: dev
+  application:
+    name: oneclass
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:.env.${spring.profiles.active:dev}[.properties]
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+app:
+  qr-code:
+    validity-minutes: 1
+
+logging:
+  level:
+    org.springframework: INFO
+
+jwt:
+  # 공통 만료시간
+  token-validity-in-seconds: 3600
+  refresh-validity-in-seconds: 1209600
+  # 개발 편의용 fallback(운영에서는 application-prod.yml에서 강제)
+  secret: ${JWT_SECRET:dev-secret-change-me-at-least-32-characters-xxxxxxxx}

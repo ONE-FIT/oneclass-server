@@ -49,32 +49,32 @@ public class ConsultationService {
     public Consultation changeStatus(ChangeConsultationStatusRequest request) {
         Consultation consultation = resolveTarget(request);
 
-        // 과거 데이터 보호: null 상태는 REQUESTED로 보정
+        // null 상태는 REQUESTED로 보정
         ConsultationStatus current = consultation.getStatus() != null
                 ? consultation.getStatus()
                 : ConsultationStatus.REQUESTED;
 
         ConsultationStatus target = request.getStatus();
 
-        // 1) 상태 입력 없이 보조 필드만 갱신
+        // 상태 입력 없이 보조 필드만 갱신
         if (target == null) {
             applyOptionalUpdates(consultation, request);
             return consultationRepository.save(consultation);
         }
 
-        // 2) 같은 상태라면 보조 필드만 갱신
+        // 같은 상태라면 보조 필드만 갱신
         if (current == target) {
             applyOptionalUpdates(consultation, request);
             return consultationRepository.save(consultation);
         }
 
-        // 3) 전이 가능 여부 검증
+        // 전이 가능 여부 검증
         Set<ConsultationStatus> allowedNext = ALLOWED.getOrDefault(current, Set.of());
         if (!allowedNext.contains(target)) {
             throw new CustomException(CounselError.BAD_REQUEST, "상태 전이가 허용되지 않습니다: " + current + " -> " + target);
         }
 
-        // 4) 상태 및 기타 필드 갱신
+        // 상태 및 기타 필드 갱신
         consultation.setStatus(target);
         applyOptionalUpdates(consultation, request);
 
@@ -90,17 +90,22 @@ public class ConsultationService {
 
         // name+phone fallback (둘 중 하나라도 없으면 400)
         if (request.getName() == null || request.getPhone() == null) {
-            throw new CustomException(CounselError.BAD_REQUEST, "상담 ID 또는 (이름+전화)가 필요합니다.");
+            throw new CustomException(CounselError.BAD_REQUEST);
         }
 
-        long dup = consultationRepository.countByNameAndPhone(request.getName(), request.getPhone());
-        if (dup > 1) {
-            throw new CustomException(CounselError.CONFLICT, "동일한 이름/전화 상담이 여러 건입니다. ID로 요청하세요.");
+        // 한 번의 쿼리로 결과를 가져와서 개수에 따라 분기 처리
+        List<Consultation> matches = consultationRepository.findByNameAndPhone(request.getName(), request.getPhone());
+
+        if (matches.isEmpty()) {
+            throw new CustomException(CounselError.NOT_FOUND);
+        }
+        if (matches.size() > 1) {
+            throw new CustomException(CounselError.CONFLICT);
         }
 
-        return consultationRepository.findByNameAndPhone(request.getName(), request.getPhone())
-                .orElseThrow(() -> new CustomException(CounselError.NOT_FOUND));
+        return matches.get(0);
     }
+
 
     private void applyOptionalUpdates(Consultation consultation, ChangeConsultationStatusRequest request) {
         if (request.getDate() != null) {
@@ -116,9 +121,20 @@ public class ConsultationService {
 
 
     public ConsultationDetailResponse getConsultationDetail(String name, String phone) {
-        Consultation consultation = consultationRepository.findByNameAndPhone(name, phone)
-                .orElseThrow(() -> new CustomException(CounselError.NOT_FOUND));
-        return ConsultationDetailResponse.from(consultation);
+        if (name == null || phone == null) {
+            throw new CustomException(CounselError.BAD_REQUEST);
+        }
+
+        List<Consultation> matches = consultationRepository.findByNameAndPhone(name, phone);
+
+        if (matches.isEmpty()) {
+            throw new CustomException(CounselError.NOT_FOUND);
+        }
+        if (matches.size() > 1) {
+            throw new CustomException(CounselError.CONFLICT);
+        }
+
+        return ConsultationDetailResponse.from(matches.get(0));
     }
 
     //전체조회

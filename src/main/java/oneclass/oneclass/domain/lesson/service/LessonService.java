@@ -24,9 +24,12 @@ public class LessonService {
     private final MemberRepository memberRepository;
 
     public LessonResponse createLesson(CreateLessonRequest request) {
+        Member teacher = memberRepository.findById(request.teacherId())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+
         Lesson lesson  = Lesson.builder()
                 .title(request.title())
-                .teacher(request.teacher())
+                .teacher(teacher)
                 .build();
         return LessonResponse.of(lessonRepository.save(lesson));
     }
@@ -49,7 +52,11 @@ public class LessonService {
         Lesson lesson = lessonRepository.findById(request.lessonId())
                 .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
         lesson.setTitle(request.title());
-        lesson.setTeacher(request.teacher());
+
+        Member teacher = memberRepository.findById(request.teacherId())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        lesson.setTeacher(teacher);
+
         lessonRepository.save(lesson);
 
         return LessonResponse.of(lesson);
