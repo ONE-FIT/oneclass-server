@@ -114,25 +114,11 @@ public class AttendanceService {
                         .lessonId(lessonId)
                         .used(false)
                         .build());
-
-        current.setNonce(UUID.randomUUID().toString());
-        current.setCreatedAt(now);
-        current.setExpireAt(now.plusMinutes(validMinutes));
-
-        nonceRepository.save(current);
-
-        // ✅ QR 이미지 생성 및 캐시 저장
-        byte[] qrCodeImage = createQrImage(
-                String.format("{\"type\":\"attendance\",\"lessonId\":%d,\"nonce\":\"%s\"}",
-                        lessonId, current.getNonce()),
-                350, 350
-        );
-        qrCache.put(lessonId, qrCodeImage);
-
+        byte[] qrCodeImage = updateNonceAndGenerateQr(current, validMinutes, now);
         log.info("Generated & cached QR for lessonId {} at {}", lessonId, now);
         return qrCodeImage;
     }
-    
+
     private byte[] updateNonceAndGenerateQr(AttendanceNonce nonce, int validMinutes, LocalDateTime now) {
         nonce.setNonce(UUID.randomUUID().toString());
         nonce.setCreatedAt(now);
@@ -250,5 +236,12 @@ public class AttendanceService {
             throw new CustomException(AttendanceError.NOT_FOUND);
         }
         return qrImage;
+    }
+
+    @Transactional
+    @Scheduled(cron = "0 0 4 * * ?") // 매일 새벽 4시에 실행
+    public void cleanupNonces() {
+        log.info("Cleaning up used and expired nonces.");
+        nonceRepository.deleteExpiredOrUsed(LocalDateTime.now());
     }
 }

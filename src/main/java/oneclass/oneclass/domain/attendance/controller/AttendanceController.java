@@ -22,7 +22,7 @@ public class AttendanceController {
     private int qrValidityMinutes;
 
     /** QR 코드 생성 API */
-    @Operation
+    @Operation(summary = "Qr 생성", description = "Qr을 생성합니다.")
     @GetMapping(value = "/qr/{lessonId}", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateQr(@PathVariable Long lessonId) {
         byte[] qrImage = attendanceService.generateAttendanceQrPng(lessonId, qrValidityMinutes);
