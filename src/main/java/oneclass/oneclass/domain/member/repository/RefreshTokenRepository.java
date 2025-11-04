@@ -6,10 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, String> {
-    boolean existsByUsername(String username);
-    Optional<RefreshToken> findByUsername(String username);
+    Optional<RefreshToken> findByPhone(String phone);
 
-    // 토큰 단위 폐기(다중 세션 지원)
-    boolean existsByUsernameAndToken(String username, String token);
-    void deleteByUsernameAndToken(String username, String token);
+    // 토큰 단위 폐기(다중 세션 지원 시 유용)
+    boolean existsByPhoneAndToken(String phone, String token);
+    void deleteByPhoneAndToken(String phone, String token);
 }

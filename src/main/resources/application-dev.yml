@@ -4,9 +4,10 @@ spring:
       on-profile: dev
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/oneclass
-    username: root
-    password:
+    # 로컬에서 .env(.env.dev)에 아래 3개를 정의하거나, 여기서 기본값을 줄 수도 있습니다.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/oneclass}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -21,8 +22,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: abcb090125@gmail.com
-    password: ${SPRING_MAIL_PASSWORD}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -30,18 +31,9 @@ spring:
           starttls.enable: true
           ssl.trust: smtp.gmail.com
 
-jwt:
-  secret: "dev-very-long-secret-6YtQ3pV9mN2aR7sK4xH8cL1jW5zE0uD3bF6gIqT9yX4v"
-
 logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
     org.hibernate.type.descriptor.sql.BasicBinder: OFF
     org.springframework.security.config.annotation.authentication.configuration.UserDetailsServiceAutoConfiguration: ERROR
-
-#toss:
-ret-key: test_sk_xxxxxxxxxxxxxxxxx
-
-#  secret-key: test_sk_xxxxxxxxxxxxxxxxx
-
