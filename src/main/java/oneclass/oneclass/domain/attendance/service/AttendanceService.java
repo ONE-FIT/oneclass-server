@@ -13,6 +13,7 @@ import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -180,5 +181,20 @@ public class AttendanceService {
 
         attendanceRepository.save(attendance);
         return "Attendance recorded successfully";
+    }
+
+    // ✅ Scheduled method to regenerate QR code every minute for active lessons
+    @Scheduled(fixedRate = 60000)
+    public void regenerateQrCodes() {
+        // For demonstration, assume active lessons are those with attendance records today
+        LocalDateTime now = LocalDateTime.now();
+        List<Long> activeLessonIds = nonceRepository.findActiveLessonIds(now);
+        int validMinutes = 5; // QR code validity in minutes
+
+        for (Long lessonId : activeLessonIds) {
+            byte[] qrCodeImage = generateAttendanceQrPng(lessonId, validMinutes);
+            // For now, just log the regeneration event; in real scenario, save or update cache/db
+            System.out.println("Regenerated QR code for lessonId: " + lessonId + " at " + LocalDateTime.now());
+        }
     }
 }
