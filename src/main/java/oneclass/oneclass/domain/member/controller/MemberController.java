@@ -31,25 +31,13 @@ public class MemberController {
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
 
-    @Operation(summary = "부모님 삭제", description = "학생계정에 등록된 부모님을 삭제합니다.")
-    @DeleteMapping("/parent/{parentId}")
-    public ResponseEntity<Void> deleteParent(@PathVariable Long parentId) {
-        memberService.deleteParent(parentId);
-        return ResponseEntity.noContent().build();
-    }
 
-    @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
-    @PostMapping("/add-students")
-    public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
-        memberService.addStudentsToParent(request.getUsername(), request.getPassword(), request.getStudentUsernames());
-        return ResponseEntity.noContent().build();
-    }
 
-//    @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
-//    @PostMapping("/signup-code")
-//    public void sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
-//        memberService.sendSignupVerificationCode(academyCode, name);
-//    }
+    @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
+    @PostMapping("/signup-code")
+    public void sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
+        memberService.sendSignupVerificationCode(academyCode, name);
+    }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
@@ -135,7 +123,7 @@ public class MemberController {
         if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
         return v;
     }
-
+    @Operation(summary = "계정탈퇴", description = "계정을 탈퇴합니다.")
     @DeleteMapping("/delete-user")
     public ResponseEntity<Void> deleteUser(
             Authentication authentication,
@@ -162,12 +150,12 @@ public class MemberController {
     }
 
 
-    @Operation(summary = "아이디 찾기", description = "이메일 또는 전화번호로 아이디를 조회합니다.")
-    @GetMapping("/find-username")
-    public String findUsername(@RequestParam String phone) {
-        return memberService.findUsername(phone);
-    }
-
+//    @Operation(summary = "아이디 찾기", description = "이메일 또는 전화번호로 아이디를 조회합니다.")
+//    @GetMapping("/find-username")
+//    public String findUsername(@RequestParam String phone) {
+//        return memberService.findUsername(phone);
+//    }
+    @Operation(summary = "닉네임 생성", description = "닉네임을 생성합니다.")
     @PostMapping("/create-username")
     public void createUsername(@RequestParam String username) {
         memberService.createUsername(username);
@@ -191,62 +179,80 @@ public class MemberController {
         );
     }
 
-    private String cleanToken(String t) {
-        String v = t.trim();
-        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
-        if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
-        return v;
-    }
+//    private String cleanToken(String t) {
+//        String v = t.trim();
+//        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
+//        if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
+//        return v;
+//    }
 
     private boolean isLikelyJwe(String t) {
         return TokenUtils.isLikelyJwe(t); // 5 segments
     }
 
-    //선생님한테 배우는 학생 추가
     @Operation(summary = "선생님 계정에 학생 추가", description = "학생을 추가합니다.")
-    @PostMapping("/teachers/{teacherUsername}/students")
-    public ResponseEntity<Void> addStudentsToTeacher(
-            @PathVariable String teacherUsername,
+    @PostMapping("/teachers/{teacherPhone}/students")
+    public ResponseEntity<TeacherStudentsResponse> addStudentsToTeacher(
+            @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request,
             Authentication authentication // 인증 정보(필요 시 요청자 확인)
     ) {
-        // 현재 서비스 시그니처는 teacherUsername, studentUsernames, password 를 받음.
-        // 요청자가 본인(teacher)인지 검증하려면 authentication을 사용해 토큰 기반 확인을 추가 구현 가능.
-        memberService.addStudentsToTeacher(teacherUsername, request.getStudentUsernames(), request.getPassword());
-        return ResponseEntity.noContent().build();
+        TeacherStudentsResponse response = memberService.addStudentsToTeacher(
+                teacherPhone,
+                request.getPhone(),
+                request.getPassword()
+        );
+        return ResponseEntity.ok(response);
     }
 
-    // 선생님에게서 여러 학생 제거
-    @DeleteMapping("/teachers/{teacherUsername}/students")
+    // 선생님에게서 여러 학생 제거 (phone 기준)
+    @Operation(summary = "선생님 계정에 학생 제거", description = "학생을 제거합니다.")
+    @DeleteMapping("/teachers/{teacherPhone}/students")
     public ResponseEntity<Void> removeStudentsFromTeacher(
-            @PathVariable String teacherUsername,
+            @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request,
             Authentication authentication
     ) {
-        // remove에서는 password가 현재 필요없음(서비스 레벨에서 role 체크)
-        memberService.removeStudentsFromTeacher(teacherUsername, request.getStudentUsernames());
+        memberService.removeStudentsFromTeacher(teacherPhone, request.getPhone());
         return ResponseEntity.noContent().build();
     }
 
-    // 선생님이 맡고 있는 학생 username 리스트 조회
-    @GetMapping("/teachers/{teacherUsername}/students")
+    // 선생님이 맡고 있는 학생 phone 리스트 조회 (phone 기준)
+    @Operation(summary = "특정 선생님 맡고있는 학생 리스트조회", description = "학생을 조회합니다.")
+    @GetMapping("/teachers/{teacherPhone}/students")
     public ResponseEntity<List<String>> listStudentsOfTeacher(
-            @PathVariable String teacherUsername,
+            @PathVariable String teacherPhone,
             Authentication authentication
     ) {
         String requester = (authentication != null) ? authentication.getName() : null;
-        List<String> students = memberService.listStudentsOfTeacher(requester, teacherUsername);
+        List<String> students = memberService.listStudentsOfTeacher(requester, teacherPhone);
         return ResponseEntity.ok(students);
     }
 
-    // 특정 학생의 담당 선생님 username 리스트 조회
-    @GetMapping("/students/{studentUsername}/teachers")
+    // 특정 학생의 담당 선생님 phone 리스트 조회 (phone 기준)
+    @Operation(summary = "특정 학생의 선생님 조회", description = "선생님을 조회합니다.")
+    @GetMapping("/students/{studentPhone}/teachers")
     public ResponseEntity<List<String>> listTeachersOfStudent(
-            @PathVariable String studentUsername,
+            @PathVariable String studentPhone,
             Authentication authentication
     ) {
         String requester = (authentication != null) ? authentication.getName() : null;
-        List<String> teachers = memberService.listTeachersOfStudent(requester, studentUsername);
+        List<String> teachers = memberService.listTeachersOfStudent(requester, studentPhone);
         return ResponseEntity.ok(teachers);
+    }
+
+    @Operation(summary = "부모님 삭제", description = "학생계정에 등록된 부모님을 삭제합니다.")
+    @DeleteMapping("/parent/{parentId}")
+    public ResponseEntity<Void> deleteParent(@PathVariable Long parentId) {
+        memberService.deleteParent(parentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
+    @PostMapping("/parent/add-students")
+    public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
+        // 부모 식별자는 전화번호(request.getPhone()), 자녀 리스트도 전화번호 리스트(request.getStudentPhone())
+        memberService.addStudentsToParent(request.getPhone(), request.getPassword(), request.getStudentPhone());
+        return ResponseEntity.noContent().build();
     }
 }

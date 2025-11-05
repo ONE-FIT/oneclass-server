@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +40,11 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT m.phone FROM Member m WHERE m.id IN :studentIds")
     Page<String> findPhonesByIds(@Param("studentIds") List<Long> studentIds, Pageable pageable);
+
+
+    // 배치 조회
+    List<Member> findAllByPhoneIn(Collection<String> phones);
+    List<Member> findAllByUsernameIn(Collection<String> usernames);
 }
 
 

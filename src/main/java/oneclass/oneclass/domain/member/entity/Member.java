@@ -1,26 +1,28 @@
 package oneclass.oneclass.domain.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Member {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, length = 100)
-    @Nullable
     private String username;
 
     private String password;
@@ -28,114 +30,87 @@ public class Member {
     @Column(nullable = false)
     private String name;
 
+    @Column(unique = true)
     private String phone;
-//    private String email;
 
     @Enumerated(EnumType.STRING)
     @NotNull
     private Role role;
 
-    // 선생 → 학생
-    @ManyToMany
-    @JoinTable(
-            name = "teacher_student",
-            joinColumns = @JoinColumn(name = "teacher_username", referencedColumnName = "username"),
-            inverseJoinColumns = @JoinColumn(name = "student_username", referencedColumnName = "username")
-    )
-    @JsonIgnore
-    private List<Member> teachingStudents = new ArrayList<>();
-
-    // 학생 → 선생
-    @ManyToMany(mappedBy = "teachingStudents")
-    @JsonIgnore
-    private List<Member> teachers = new ArrayList<>();
-
-    // 부모 → 자녀
-    @ManyToMany
-    @JoinTable(
-            name = "parent_student",
-            joinColumns = @JoinColumn(name = "parent_username", referencedColumnName = "username"),
-            inverseJoinColumns = @JoinColumn(name = "student_username", referencedColumnName = "username")
-    )
-    @JsonIgnore
-    private List<Member> parentStudents = new ArrayList<>();
-
-    // 자녀 → 부모
-    @ManyToMany(mappedBy = "parentStudents")
-    @JsonIgnore
-    private List<Member> parents = new ArrayList<>();
-
-    // 학원
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "academy_code", referencedColumnName = "academyCode")
     @JsonIgnore
     private Academy academy;
 
-    @Builder
-    private Member(Long id, String username, String password, String name,
-                   String phone, String email, Role role,
-                   List<Member> teachingStudents, List<Member> teachers,
-                   List<Member> parentStudents, List<Member> parents,
-                   Academy academy) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-        this.name = name;
-        this.phone = phone;
-//        this.email = email;
-        this.role = role;
-        if (teachingStudents != null) teachingStudents.forEach(this::addStudent);
-        if (teachers != null) teachers.forEach(this::addTeacher);
-        if (parentStudents != null) parentStudents.forEach(this::addParentStudent);
-        if (parents != null) parents.forEach(this::addParent);
-        this.academy = academy;
-    }
+    // Teacher -> Students
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(
+            name = "teacher_student",
+            joinColumns = @JoinColumn(name = "teacher_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
+    )
+    private Set<Member> teachingStudents = new HashSet<>();
 
-    // ===== 편의 메서드(Teacher↔Student) =====
+    // Student -> Teachers (inverse)
+    @Builder.Default
+    @ManyToMany(mappedBy = "teachingStudents")
+    private Set<Member> teachers = new HashSet<>();
+
+    // Parent -> Children
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(
+            name = "parent_student",
+            joinColumns = @JoinColumn(name = "parent_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
+    )
+    private Set<Member> parentStudents = new HashSet<>();
+
+    // Child -> Parents (inverse)
+    @Builder.Default
+    @ManyToMany(mappedBy = "parentStudents")
+    private Set<Member> parents = new HashSet<>();
+
+    // 명시적 getter들(IDE Lombok 문제 회피용)
+    public Set<Member> getTeachers() { return teachers; }
+    public Set<Member> getTeachingStudents() { return teachingStudents; }
+    public Set<Member> getParentStudents() { return parentStudents; }
+    public Set<Member> getParents() { return parents; }
+
+    // 편의 메서드(양방향 동기화 + 중복 방지)
     public void addStudent(Member student) {
-        if (!this.teachingStudents.contains(student)) {
-            this.teachingStudents.add(student);
-        }
-        if (!student.teachers.contains(this)) {
+        if (this.teachingStudents == null) this.teachingStudents = new HashSet<>();
+        if (student.teachers == null) student.teachers = new HashSet<>();
+        if (this.teachingStudents.add(student)) {
             student.teachers.add(this);
         }
     }
-
     public void removeStudent(Member student) {
-        this.teachingStudents.remove(student);
-        student.teachers.remove(this);
-    }
-
-    public void addTeacher(Member teacher) {
-        if (!this.teachers.contains(teacher)) {
-            this.teachers.add(teacher);
-        }
-        if (!teacher.teachingStudents.contains(this)) {
-            teacher.teachingStudents.add(this);
+        if (this.teachingStudents != null && this.teachingStudents.remove(student)) {
+            if (student.teachers != null) student.teachers.remove(this);
         }
     }
-
-    public void removeTeacher(Member teacher) {
-        this.teachers.remove(teacher);
-        teacher.teachingStudents.remove(this);
-    }
-
-    // ===== 편의 메서드(Parent↔Child) =====
     public void addParentStudent(Member child) {
-        if (!this.parentStudents.contains(child)) {
-            this.parentStudents.add(child);
-        }
-        if (!child.parents.contains(this)) {
+        if (this.parentStudents == null) this.parentStudents = new HashSet<>();
+        if (child.parents == null) child.parents = new HashSet<>();
+        if (this.parentStudents.add(child)) {
             child.parents.add(this);
         }
     }
-
-    public void addParent(Member parent) {
-        if (!this.parents.contains(parent)) {
-            this.parents.add(parent);
-        }
-        if (!parent.parentStudents.contains(this)) {
-            parent.parentStudents.add(this);
+    public void removeParentStudent(Member child) {
+        if (this.parentStudents != null && this.parentStudents.remove(child)) {
+            if (child.parents != null) child.parents.remove(this);
         }
     }
+
+    // Set 안정성: id 기반 equals/hashCode
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Member m)) return false;
+        return id != null && Objects.equals(id, m.id);
+    }
+    @Override
+    public int hashCode() { return 31; }
 }
