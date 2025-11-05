@@ -22,14 +22,17 @@ public class AttendanceController {
     private int qrValidityMinutes;
 
     /** QR 코드 생성 API */
-    @Operation(summary = "Qr 생성", description = "Qr을 생성합니다.")
     @GetMapping(value = "/qr/{lessonId}", produces = MediaType.IMAGE_PNG_VALUE)
+    @Operation(summary = "Qr 생성",
+            description = "Qr을 생성합니다.")
     public ResponseEntity<byte[]> generateQr(@PathVariable Long lessonId) {
         byte[] qrImage = attendanceService.generateAttendanceQrPng(lessonId, qrValidityMinutes);
         return ResponseEntity.ok(qrImage);
     }
     /** ✅ 학생이 QR을 스캔하면 nonce + lessonId만 전송 → 로그인 정보로 출석 처리 */
     @PostMapping("/check")
+    @Operation(summary = "학생 출석",
+            description = "Qr을 스캔하면 출석처리합니다.")
     public ResponseEntity<String> checkAttendance(
             @RequestParam String nonce,
             @RequestParam Long lessonId,
@@ -39,8 +42,10 @@ public class AttendanceController {
         String result = attendanceService.recordAttendance(nonce, lessonId, memberId);
         return ResponseEntity.ok(result);
     }
-
+    
     @GetMapping(value = "/qr/{lessonId}/cached", produces = MediaType.IMAGE_PNG_VALUE)
+    @Operation(summary = "Qr이미지",
+            description = "캐시에 저장된 최신 QR 코드 이미지를 반환합니다.")
     public ResponseEntity<byte[]> getQr(@PathVariable Long lessonId) {
         return ResponseEntity.ok(attendanceService.getCachedQr(lessonId));
     }
