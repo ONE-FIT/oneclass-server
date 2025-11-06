@@ -21,7 +21,7 @@ public class JwtProviderTest {
         long accessValiditySeconds = 3600; // 1시간
         long refreshValiditySeconds = 7200; // 2시간
 
-        jwtProvider = new JwtProvider(secret, accessValiditySeconds, refreshValiditySeconds);
+//        jwtProvider = new JwtProvider(secret, accessValiditySeconds, refreshValiditySeconds);
         jwtProvider.init(); // @PostConstruct 직접 호출
     }
 

@@ -15,7 +15,7 @@ public class SignupRequest {
     private String password;
     private String checkPassword;
     private String name;
-    private String email;
+//    private String email;
     private String phone;
     private Role role;
     private String verificationCode;
@@ -29,7 +29,7 @@ public class SignupRequest {
         this.password = password;
         this.checkPassword = password;
         this.name = name;
-        this.email = email;
+//        this.email = email;
         this.phone = phone;
         this.role = role;
         this.verificationCode = verificationCode;
