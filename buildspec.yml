@@ -1,20 +1,37 @@
 version: 0.2
+
+env:
+  variables:
+    EC2_HOST: "13.125.229.116"
+    EC2_USER: "ubuntu"
+    JAR_NAME: "oneclass-0.0.1-SNAPSHOT.jar"
+
+  secrets-manager:
+    SSH_PRIVATE_KEY: "your-parameter-name" # 실제 키 이름
+
 phases:
   install:
     commands:
-    # 필요한 패키지 설치 등
+      - mkdir -p ~/.ssh
+      - echo "$SSH_PRIVATE_KEY" > ~/.ssh/key.pem
+      - chmod 600 ~/.ssh/key.pem
+      - ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+
   pre_build:
     commands:
-    # 빌드 준비 등
+      - echo "빌드 시작"
+
   build:
     commands:
-      ./gradlew build  # 예시: Spring Boot 빌드
+      - ./gradlew clean build -x test
+
   post_build:
     commands:
-      # 여기서 EC2로 배포(ssh/scp) 및 서버 재시작
-      scp -i /path/to/key.pem build/libs/oneclass-0.0.1-SNAPSHOT.jar ec2-user@[EC2-IP]:~/oneclass-0.0.1-SNAPSHOT.jar
-      ssh -i /path/to/key.pem ec2-user@[EC2-IP] "pkill -f 'java' || true"
-      ssh -i /path/to/key.pem ec2-user@[EC2-IP] "nohup java -jar ~/oneclass-0.0.1-SNAPSHOT.jar > ~/app.log 2>&1 &"
+      - scp -i ~/.ssh/key.pem build/libs/$JAR_NAME $EC2_USER@$EC2_HOST:~/
+      - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pkill -f '$JAR_NAME' || pkill -f java || true"
+      - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "nohup java -jar ~/$JAR_NAME > ~/app.log 2>&1 &"
+      - echo "배포 완료"
+
 artifacts:
   files:
-    - build/libs/oneclass-0.0.1-SNAPSHOT.jar
+    - build/libs/$JAR_NAME
