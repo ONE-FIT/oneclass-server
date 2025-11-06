@@ -27,7 +27,10 @@ phases:
       - ls -al build/libs/
       - scp -i ~/.ssh/key.pem build/libs/$JAR_NAME $EC2_USER@$EC2_HOST:~/
       - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "ls -al ~/"
-      - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pgrep -af java || echo 'No java process'; pkill -f $JAR_NAME || echo '[WARN] pkill failed with code $?'; true"
+      # 자바 프로세스가 없으면 0 반환, 있어도 현재 bash는 안죽임
+      - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pgrep -fl java; pids=\$(pgrep -f $JAR_NAME); if [ -n \"\$pids\" ]; then kill \$pids; fi; sleep 2"
+      # 또는 pkill의 결과를 무시해 확실히 종료코드 0으로 만듦
+      # - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pkill -f $JAR_NAME || true"
       - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "nohup java -jar ~/$JAR_NAME > ~/app.log 2>&1 &"
       - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "tail -n 10 ~/app.log"
       - echo "배포 완료"
