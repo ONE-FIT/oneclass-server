@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 
 @Slf4j
+@Deprecated
 public abstract class KakaoSendFriendTalk extends BaseScenario {
 
     public void execute(String message, boolean isAd) {
