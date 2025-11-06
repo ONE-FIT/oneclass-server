@@ -215,7 +215,6 @@ public class AttendanceService {
             current.setNonce(UUID.randomUUID().toString());
             current.setCreatedAt(now);
             current.setExpireAt(now.plusMinutes(validMinutes));
-            nonceRepository.save(current);
 
             // QR 이미지 재생성 및 캐시 업데이트
             byte[] qrCodeImage = createQrImage(
@@ -225,8 +224,8 @@ public class AttendanceService {
             );
             qrCache.put(current.getLessonId(), qrCodeImage);
             log.info("Rotated QR nonce for lessonId {} at {}", current.getLessonId(), now);
-            nonceRepository.saveAll(latestNoncesByLessonId.values());
         });
+        nonceRepository.saveAll(latestNoncesByLessonId.values());
     }
     // ✅ 최신 QR을 반환하는 메서드
     public byte[] getCachedQr(Long lessonId) {
