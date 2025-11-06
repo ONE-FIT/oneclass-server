@@ -26,10 +26,11 @@ phases:
     commands:
       - ls -al build/libs/
       - scp -i ~/.ssh/key.pem build/libs/$JAR_NAME $EC2_USER@$EC2_HOST:~/
-      - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "ls -al ~/"
-      - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pgrep -af java || echo 'No java process'; pkill -9 -f \"java -jar ~/$JAR_NAME\" || true"
-      - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "nohup java -jar ~/$JAR_NAME > ~/app.log 2>&1 &"
-      - ssh -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "tail -n 10 ~/app.log"
+      - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "ls -al ~/"
+      - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pgrep -af java || echo 'No java process'"
+      - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pkill -9 -f 'java -jar ~/$JAR_NAME'" || true
+      - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "nohup java -jar ~/$JAR_NAME > ~/app.log 2>&1 &"
+      - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "tail -n 10 ~/app.log"
       - echo "배포 완료"
 
 artifacts:
