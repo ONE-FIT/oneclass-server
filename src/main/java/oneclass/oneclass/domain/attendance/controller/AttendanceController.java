@@ -44,7 +44,7 @@ public class AttendanceController {
     }
     
     @GetMapping(value = "/qr/{lessonId}/cached", produces = MediaType.IMAGE_PNG_VALUE)
-    @Operation(summary = "Qr이미지",
+    @Operation(summary = "Qr이미지 ",
             description = "캐시에 저장된 최신 QR 코드 이미지를 반환합니다.")
     public ResponseEntity<byte[]> getQr(@PathVariable Long lessonId) {
         return ResponseEntity.ok(attendanceService.getCachedQr(lessonId));

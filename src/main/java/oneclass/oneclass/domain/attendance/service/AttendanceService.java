@@ -225,6 +225,7 @@ public class AttendanceService {
             );
             qrCache.put(current.getLessonId(), qrCodeImage);
             log.info("Rotated QR nonce for lessonId {} at {}", current.getLessonId(), now);
+            nonceRepository.saveAll(latestNoncesByLessonId.values());
         });
     }
     // ✅ 최신 QR을 반환하는 메서드
