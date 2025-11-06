@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class CodePipeLineTestController {
-    @GetMapping("/codepipelinetesting")
+    @GetMapping("/codepipelinetest")
     public ResponseEntity<?> codePipeLineTest() {
         return ResponseEntity.ok("자동 베포 성공!");
     }
