@@ -12,9 +12,9 @@ phases:
   post_build:
     commands:
       # 여기서 EC2로 배포(ssh/scp) 및 서버 재시작
-      scp -i /path/to/key.pem build/libs/myapp.jar ec2-user@[EC2-IP]:~/myapp.jar
+      scp -i /path/to/key.pem build/libs/oneclass-0.0.1-SNAPSHOT.jar ec2-user@[EC2-IP]:~/oneclass-0.0.1-SNAPSHOT.jar
       ssh -i /path/to/key.pem ec2-user@[EC2-IP] "pkill -f 'java' || true"
-      ssh -i /path/to/key.pem ec2-user@[EC2-IP] "nohup java -jar ~/myapp.jar > ~/app.log 2>&1 &"
+      ssh -i /path/to/key.pem ec2-user@[EC2-IP] "nohup java -jar ~/oneclass-0.0.1-SNAPSHOT.jar > ~/app.log 2>&1 &"
 artifacts:
   files:
     - build/libs/oneclass-0.0.1-SNAPSHOT.jar
