@@ -17,4 +17,4 @@ phases:
       ssh -i /path/to/key.pem ec2-user@[EC2-IP] "nohup java -jar ~/myapp.jar > ~/app.log 2>&1 &"
 artifacts:
   files:
-    - build/libs/oneclass-oneclass-0.0.1-SNAPSHOT.jar
+    - build/libs/oneclass-0.0.1-SNAPSHOT.jar
