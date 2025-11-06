@@ -7,7 +7,7 @@ env:
     JAR_NAME: "oneclass-0.0.1-SNAPSHOT.jar"
 
   secrets-manager:
-    SSH_PRIVATE_KEY: "your-parameter-name" # 실제 키 이름
+    SSH_PRIVATE_KEY: "oneclass-key" # 실제 키 이름
 
 phases:
   install:
