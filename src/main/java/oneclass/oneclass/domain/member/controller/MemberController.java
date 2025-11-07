@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.request.*;
-import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.TokenResponse;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
@@ -60,7 +60,7 @@ public class MemberController {
 
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
     @PostMapping("/login")
-    public ResponseEntity<ResponseToken> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest req) {
         String phone = normalizePhone(req.getPhone());
         return ResponseEntity.ok(memberService.login(phone, req.getPassword()));
     }

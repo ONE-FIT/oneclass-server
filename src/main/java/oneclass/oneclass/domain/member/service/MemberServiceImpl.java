@@ -7,7 +7,7 @@ import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
-import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.TokenResponse;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.entity.RefreshToken;
@@ -72,7 +72,7 @@ public class MemberServiceImpl implements MemberService {
 
     // 전화번호 로그인(토큰 발급/회전)
     @Override
-    public ResponseToken login(String phone, String password) {
+    public TokenResponse login(String phone, String password) {
         Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
@@ -91,13 +91,13 @@ public class MemberServiceImpl implements MemberService {
                 accessToken = jwtProvider.generateAccessTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
                 refreshTokenString = refresh.getToken();
             } else {
-                ResponseToken pair = jwtProvider.generateTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
+                TokenResponse pair = jwtProvider.generateTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
                 refresh.rotate(pair.getRefreshToken(), LocalDateTime.now().plusDays(28));
                 accessToken = pair.getAccessToken();
                 refreshTokenString = pair.getRefreshToken();
             }
         } else {
-            ResponseToken pair = jwtProvider.generateTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
+            TokenResponse pair = jwtProvider.generateTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
             RefreshToken newRt = RefreshToken.builder()
                     .phone(phone)
                     .token(pair.getRefreshToken())
@@ -109,7 +109,7 @@ public class MemberServiceImpl implements MemberService {
             refreshTokenString = pair.getRefreshToken();
         }
 
-        return new ResponseToken(accessToken, refreshTokenString);
+        return new TokenResponse(accessToken, refreshTokenString);
     }
 
     // username 만들기(선택)
@@ -205,7 +205,7 @@ public class MemberServiceImpl implements MemberService {
         return v;
     }
 
-    public ResponseToken reissue(String refreshToken) {
+    public TokenResponse reissue(String refreshToken) {
         String rt = cleanupToken(refreshToken);
 
         if (isLikelyJwe(rt)) {
@@ -228,7 +228,7 @@ public class MemberServiceImpl implements MemberService {
         String roleClaim = "ROLE_" + member.getRole().name();
         String newAccessToken = jwtProvider.generateAccessTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
 
-        return new ResponseToken(newAccessToken, rt);
+        return new TokenResponse(newAccessToken, rt);
     }
 
     private void signupTeacher(SignupRequest request) {

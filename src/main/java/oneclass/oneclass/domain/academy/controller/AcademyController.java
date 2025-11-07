@@ -7,7 +7,7 @@ import oneclass.oneclass.domain.academy.dto.response.MadeAcademyResponse;
 import oneclass.oneclass.domain.academy.dto.request.MadeRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.service.AcademyService;
-import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.TokenResponse;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
@@ -33,8 +33,8 @@ public class AcademyController {
 
     @Operation(summary = "로그인", description = "학원계정으로 로그인합니다.")
     @PostMapping("/login")
-    public ResponseEntity<ResponseToken> login(@RequestBody AcademyLoginRequest request) {
-        ResponseToken token = academyService.login(request.getAcademyCode(), request.getAcademyName(), request.getPassword());
+    public ResponseEntity<TokenResponse> login(@RequestBody AcademyLoginRequest request) {
+        TokenResponse token = academyService.login(request.getAcademyCode(), request.getAcademyName(), request.getPassword());
         return ResponseEntity.ok(token);
     }
 

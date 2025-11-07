@@ -14,7 +14,7 @@ import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRefreshTokenRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
-import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.TokenResponse;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.mail.SimpleMailMessage;
@@ -87,7 +87,7 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
-    public ResponseToken login(String academyCode, String academyName, String password) {
+    public TokenResponse login(String academyCode, String academyName, String password) {
         Academy academy = academyRepository.findByAcademyCode(academyCode)
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
         if (!passwordEncoder.matches(password, academy.getPassword())) {
@@ -111,15 +111,15 @@ public class AcademyServiceImpl implements AcademyService {
 
             if (!needRotate && !saved.isExpired()) {
                 String accessToken = jwtProvider.generateAccessToken(academyCode, roleClaim);
-                return new ResponseToken(accessToken, saved.getToken());
+                return new TokenResponse(accessToken, saved.getToken());
             }
 
-            ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
+            TokenResponse pair = jwtProvider.generateToken(academyCode, roleClaim);
             saved.rotate(pair.getRefreshToken(), LocalDateTime.now().plusDays(28));
-            return new ResponseToken(pair.getAccessToken(), pair.getRefreshToken());
+            return new TokenResponse(pair.getAccessToken(), pair.getRefreshToken());
         }
 
-        ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
+        TokenResponse pair = jwtProvider.generateToken(academyCode, roleClaim);
         AcademyRefreshToken tokenToSave = AcademyRefreshToken.builder()
                 .academyCode(academyCode)
                 .token(pair.getRefreshToken())
@@ -127,7 +127,7 @@ public class AcademyServiceImpl implements AcademyService {
                 .build();
         academyRefreshTokenRepository.save(tokenToSave);
 
-        return new ResponseToken(pair.getAccessToken(), pair.getRefreshToken());
+        return new TokenResponse(pair.getAccessToken(), pair.getRefreshToken());
     }
 
     @Override

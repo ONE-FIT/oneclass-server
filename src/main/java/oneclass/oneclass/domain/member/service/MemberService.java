@@ -1,13 +1,13 @@
 package oneclass.oneclass.domain.member.service;
 
-import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.TokenResponse;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 
 import java.util.List;
 
 public interface MemberService {
     void signup(SignupRequest request);
-    ResponseToken login(String phone, String password);
+    TokenResponse login(String phone, String password);
     String findUsername(String phone);
     void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
@@ -23,7 +23,7 @@ public interface MemberService {
     void deleteUser(String phone);
 
     //refreshToken 검증
-    ResponseToken reissue(String refreshToken);
+    TokenResponse reissue(String refreshToken);
 
     // ---------- 조회 관련 서비스 메서드 추가 ----------
     /**

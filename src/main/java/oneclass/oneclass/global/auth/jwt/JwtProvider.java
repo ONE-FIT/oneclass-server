@@ -6,7 +6,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
-import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.TokenResponse;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.global.exception.CustomException;
 import org.slf4j.Logger;
@@ -61,10 +61,10 @@ public class JwtProvider {
     }
 
     // ===== 발급 (subject는 호출부에서 결정) =====
-    public ResponseToken generateToken(String subject, String roleValue) {
+    public TokenResponse generateToken(String subject, String roleValue) {
         String access = generateAccessToken(subject, roleValue);
         String refresh = generateRefreshToken(subject);
-        return new ResponseToken(access, refresh);
+        return new TokenResponse(access, refresh);
     }
 
     public String generateAccessToken(String subject, String roleValue) {
@@ -80,11 +80,11 @@ public class JwtProvider {
     // ===== 전화번호 로그인 전용(권장) =====
     // access: phone/username/name(+role) 포함
     // refresh: 표준 클레임만(sub/iss/iat/exp/jti). 부가 클레임 미포함 → 토큰 길이 최소화
-    public ResponseToken generateTokenByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull) {
+    public TokenResponse generateTokenByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull) {
         long now = System.currentTimeMillis();
         String access = buildJwtByPhone(phone, roleValue, usernameOrNull, nameOrNull, now + accessValidityMillis, true);
         String refresh = buildJwtByPhone(phone, null, usernameOrNull, nameOrNull, now + refreshValidityMillis, false);
-        return new ResponseToken(access, refresh);
+        return new TokenResponse(access, refresh);
     }
 
     public String generateAccessTokenByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull) {
