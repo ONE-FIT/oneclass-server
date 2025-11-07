@@ -54,7 +54,7 @@ public class SecurityConfig {
             "/attendance/**",
             "/swagger-ui/index.html",
 
-            "/codepipelinetest"
+            "/codepipelinetesting"
 
     };
 
