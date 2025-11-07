@@ -1,0 +1,12 @@
+name: CI/CD Pipeline Example
+
+on:
+  push:
+    branches: [ "main" ]   # main branch에 push가 발생하면 동작
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say hi
+        run: echo "Hello, Github Actions!"
