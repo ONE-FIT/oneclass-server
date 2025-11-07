@@ -18,6 +18,25 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << 'ENV_EOF'
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}
+          SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          SMS_MOBILE_FROM=${{ secrets.SMS_MOBILE_FROM }}
+          USER_ID=${{ secrets.USER_ID }}
+          USER_APIKEY=${{ secrets.USER_APIKEY }}
+          ENV_EOF
+
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
@@ -35,6 +54,9 @@ jobs:
       - name: Copy JAR to EC2
         run: scp -i key.pem build/libs/oneclass-0.0.1-SNAPSHOT.jar ubuntu@${{ secrets.EC2_HOST }}:~/
 
+      - name: Copy .env file to EC2
+        run: scp -i key.pem .env ubuntu@${{ secrets.EC2_HOST }}:~/
+
       - name: Create deployment script
         run: |
           cat > deploy.sh << 'SCRIPT_END'
@@ -47,34 +69,15 @@ jobs:
           pkill -9 -f 'java -jar ~/oneclass-0.0.1-SNAPSHOT.jar' || true
           sleep 2
           
-          # Set all environment variables
-          export DB_HOST='${{ secrets.DB_HOST }}'
-          export DB_PORT='${{ secrets.DB_PORT }}'
-          export DB_NAME='${{ secrets.DB_NAME }}'
-          export DB_USER='${{ secrets.DB_USER }}'
-          export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
-          export SPRING_DATASOURCE_URL='${{ secrets.SPRING_DATASOURCE_URL }}'
-          export SPRING_DATASOURCE_USERNAME='${{ secrets.SPRING_DATASOURCE_USERNAME }}'
-          export SPRING_DATASOURCE_PASSWORD='${{ secrets.SPRING_DATASOURCE_PASSWORD }}'
-          export SPRING_MAIL_USERNAME='${{ secrets.SPRING_MAIL_USERNAME }}'
-          export SPRING_MAIL_PASSWORD='${{ secrets.SPRING_MAIL_PASSWORD }}'
-          export JWT_SECRET='${{ secrets.JWT_SECRET }}'
-          export SMS_MOBILE_FROM='${{ secrets.SMS_MOBILE_FROM }}'
-          export USER_ID='${{ secrets.USER_ID }}'
-          export USER_APIKEY='${{ secrets.USER_APIKEY }}'
-          
           # Start application in background
           echo "Starting new application..."
+          cd ~
           nohup java -jar ~/oneclass-0.0.1-SNAPSHOT.jar > ~/app.log 2>&1 &
           
           echo "=== Deployment script completed ==="
           SCRIPT_END
           
           chmod +x deploy.sh
-
-      - name: Create .env file from secrets
-        run: |
-          cat > .env << 'ENV_EOF'    
 
       - name: Copy deployment script to EC2
         run: scp -i key.pem deploy.sh ubuntu@${{ secrets.EC2_HOST }}:~/
@@ -84,14 +87,19 @@ jobs:
 
       - name: Verify deployment
         run: |
-          echo "Waiting 5 seconds for application to start..."
-          sleep 5
+          echo "Waiting 10 seconds for application to fully start..."
+          sleep 10
           ssh -i key.pem ubuntu@${{ secrets.EC2_HOST }} '
             echo "=== Java Process Status ==="
-            ps aux | grep "[j]ava -jar ~/oneclass-0.0.1-SNAPSHOT.jar" || echo "⚠️ Warning: Java process not found"
+            if ps aux | grep "[j]ava -jar ~/oneclass-0.0.1-SNAPSHOT.jar" > /dev/null; then
+              echo "✅ Application is running!"
+              ps aux | grep "[j]ava -jar ~/oneclass-0.0.1-SNAPSHOT.jar"
+            else
+              echo "⚠️ Warning: Java process not found"
+            fi
             echo ""
-            echo "=== Last 30 lines of application log ==="
-            tail -n 30 ~/app.log 2>/dev/null || echo "⚠️ Log file not created yet"
+            echo "=== Last 50 lines of application log ==="
+            tail -n 50 ~/app.log 2>/dev/null || echo "⚠️ Log file not found"
           '
 
       - name: Deployment completed
