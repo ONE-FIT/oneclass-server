@@ -61,22 +61,48 @@ jobs:
         run: |
           cat > deploy.sh << 'SCRIPT_END'
           #!/bin/bash
-          
+
           echo "=== Starting deployment ==="
-          
-          # Stop existing Java process
+
+          # Stop ALL java processes (더 확실한 방법)
           echo "Stopping existing application..."
-          pkill -9 -f 'java -jar ~/oneclass-0.0.1-SNAPSHOT.jar' || true
-          sleep 2
-          
+          pkill -9 java || true
+          sleep 3
+
+          # 혹시 남아있는 프로세스 확인 및 제거
+          if pgrep -f "oneclass.*\.jar" > /dev/null; then
+            echo "Force killing remaining processes..."
+            pkill -9 -f "oneclass.*\.jar"
+            sleep 2
+          fi
+
+          # 프로세스가 완전히 종료되었는지 확인
+          if pgrep java > /dev/null; then
+            echo "⚠️ Warning: Java process still running!"
+            ps aux | grep java
+          else
+            echo "✅ All Java processes stopped"
+          fi
+
           # Start application in background
           echo "Starting new application..."
-          cd ~
-          nohup java -jar ~/oneclass-0.0.1-SNAPSHOT.jar > ~/app.log 2>&1 &
-          
+          cd /home/ubuntu
+          nohup java -jar /home/ubuntu/oneclass-0.0.1-SNAPSHOT.jar > /home/ubuntu/app.log 2>&1 &
+
+          sleep 2
+
+          # 새 프로세스 확인
+          if pgrep -f "oneclass.*\.jar" > /dev/null; then
+            echo "✅ Application started successfully"
+            ps aux | grep java | grep -v grep
+          else
+            echo "❌ Failed to start application"
+            tail -n 20 /home/ubuntu/app.log
+          fi
+
           echo "=== Deployment script completed ==="
           SCRIPT_END
-          
+
           chmod +x deploy.sh
 
       - name: Copy deployment script to EC2
