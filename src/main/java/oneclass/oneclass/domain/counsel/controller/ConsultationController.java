@@ -2,9 +2,9 @@ package oneclass.oneclass.domain.counsel.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.counsel.dto.ChangeConsultationStatusRequest;
-import oneclass.oneclass.domain.counsel.dto.ConsultationDetailResponse;
-import oneclass.oneclass.domain.counsel.dto.ConsultationRequest;
+import oneclass.oneclass.domain.counsel.dto.request.ChangeConsultationStatusRequest;
+import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
+import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
 import oneclass.oneclass.domain.counsel.service.ConsultationService;
 import org.springframework.http.ResponseEntity;

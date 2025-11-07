@@ -2,12 +2,12 @@ package oneclass.oneclass.domain.academy.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.academy.dto.AcademyLoginRequest;
-import oneclass.oneclass.domain.academy.dto.MadeAcademyResponse;
-import oneclass.oneclass.domain.academy.dto.MadeRequest;
-import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
+import oneclass.oneclass.domain.academy.dto.request.AcademyLoginRequest;
+import oneclass.oneclass.domain.academy.dto.response.MadeAcademyResponse;
+import oneclass.oneclass.domain.academy.dto.request.MadeRequest;
+import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.service.AcademyService;
-import oneclass.oneclass.domain.member.dto.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;

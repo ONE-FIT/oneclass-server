@@ -1,9 +1,9 @@
 package oneclass.oneclass.domain.academy.service;
 
-import oneclass.oneclass.domain.academy.dto.MadeAcademyResponse;
-import oneclass.oneclass.domain.academy.dto.MadeRequest;
-import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
-import oneclass.oneclass.domain.member.dto.ResponseToken;
+import oneclass.oneclass.domain.academy.dto.response.MadeAcademyResponse;
+import oneclass.oneclass.domain.academy.dto.request.MadeRequest;
+import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 
 public interface AcademyService {
     MadeAcademyResponse madeAcademy(MadeRequest request);

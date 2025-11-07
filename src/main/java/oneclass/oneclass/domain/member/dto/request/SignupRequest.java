@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.member.dto;
+package oneclass.oneclass.domain.member.dto.request;
 
 import lombok.Builder;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.academy.dto;
+package oneclass.oneclass.domain.academy.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

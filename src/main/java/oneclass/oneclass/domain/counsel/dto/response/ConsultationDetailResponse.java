@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.counsel.dto;
+package oneclass.oneclass.domain.counsel.dto.response;
 
 import lombok.Data;
 import oneclass.oneclass.domain.counsel.entity.Consultation;

@@ -1,7 +1,7 @@
 package oneclass.oneclass.domain.member.service;
 
-import oneclass.oneclass.domain.member.dto.ResponseToken;
-import oneclass.oneclass.domain.member.dto.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 
 import java.util.List;
 
