@@ -50,7 +50,7 @@ public class AttendanceService {
         List<Member> absentMembers = memberRepository.findAbsentMembers(date);
 
         return absentMembers.stream()
-                .map(m -> new AttendanceResponse(m.getName(), AttendanceStatus.ABSENT, date))
+                .map(m -> new AttendanceResponse(m.getId(), m.getName(), AttendanceStatus.ABSENT, date))
                 .toList();
     }
 
@@ -83,6 +83,7 @@ public class AttendanceService {
     // ✅ 엔티티 → DTO 변환 메서드
     private AttendanceResponse attendanceToResponse(Attendance attendance) {
         return new AttendanceResponse(
+                attendance.getId(),
                 attendance.getMember().getName(),
                 attendance.getAttendanceStatus(),
                 attendance.getDate()

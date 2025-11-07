@@ -10,7 +10,9 @@ import java.time.LocalDateTime;
 
 @Getter
 public class AttendanceResponse {
-    public String name;
+    private Long id;
+
+    private String name;
 
     private LocalDate date;
 
@@ -20,7 +22,8 @@ public class AttendanceResponse {
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
 
-    public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate now) {
+    public AttendanceResponse(Long id, String username, AttendanceStatus attendanceStatus, LocalDate now) {
+        this.id = id;
         this.name = username;
         this.attendanceStatus = attendanceStatus;
         this.date = now;

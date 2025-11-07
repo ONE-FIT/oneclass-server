@@ -7,7 +7,7 @@ public record AnnounceResponse (
         String title,
         String content
 ){
-    public static AnnounceResponse of  (Announce announce) {
+    public static AnnounceResponse of (Announce announce) {
         return new AnnounceResponse(
                 announce.getId(),
                 announce.getTitle(),
