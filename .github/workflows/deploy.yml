@@ -1,12 +1,68 @@
-name: CI/CD Pipeline Example
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]   # main branch에 push가 발생하면 동작
+    branches: [ "main" ]
 
 jobs:
-  say-hello:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Say hi
-        run: echo "Hello, Github Actions!"
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Add EC2 to known_hosts
+        run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy JAR to EC2
+        run: scp -i key.pem build/libs/oneclass-0.0.1-SNAPSHOT.jar ubuntu@${{ secrets.EC2_HOST }}:~/
+
+      - name: Deploy and run JAR on EC2
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          SPRING_MAIL_USERNAME: ${{ secrets.SPRING_MAIL_USERNAME }}
+          SPRING_MAIL_PASSWORD: ${{ secrets.SPRING_MAIL_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SMS_MOBILE_FROM: ${{ secrets.SMS_MOBILE_FROM }}
+          USER_ID: ${{ secrets.USER_ID }}
+          USER_APIKEY: ${{ secrets.USER_APIKEY }}
+        run: |
+          ssh -i key.pem ubuntu@${{ secrets.EC2_HOST }} "
+            pkill -9 -f 'java -jar ~/oneclass-0.0.1-SNAPSHOT.jar' || true
+            DB_HOST='$DB_HOST' \
+            DB_PORT='$DB_PORT' \
+            DB_NAME='$DB_NAME' \
+            DB_USER='$DB_USER' \
+            DB_PASSWORD='$DB_PASSWORD' \
+            SPRING_DATASOURCE_URL='$SPRING_DATASOURCE_URL' \
+            SPRING_DATASOURCE_USERNAME='$SPRING_DATASOURCE_USERNAME' \
+            SPRING_DATASOURCE_PASSWORD='$SPRING_DATASOURCE_PASSWORD' \
+            SPRING_MAIL_USERNAME='$SPRING_MAIL_USERNAME' \
+            SPRING_MAIL_PASSWORD='$SPRING_MAIL_PASSWORD' \
+            JWT_SECRET='$JWT_SECRET' \
+            SMS_MOBILE_FROM='$SMS_MOBILE_FROM' \
+            USER_ID='$USER_ID' \
+            USER_APIKEY='$USER_APIKEY' \
+            nohup java -jar ~/oneclass-0.0.1-SNAPSHOT.jar > ~/app.log 2>&1 &"
