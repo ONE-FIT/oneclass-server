@@ -29,7 +29,7 @@ phases:
       - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "ls -al ~/"
       - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pgrep -af java || echo 'No java process'"
       - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "pkill -9 -f 'java -jar ~/$JAR_NAME'" || true
-      - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "nohup java -jar ~/$JAR_NAME > ~/app.log 2>&1 &"
+      - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "SPRING_DATASOURCE_URL='$SPRING_DATASOURCE_URL' SPRING_DATASOURCE_USERNAME='$SPRING_DATASOURCE_USERNAME' SPRING_DATASOURCE_PASSWORD='$SPRING_DATASOURCE_PASSWORD' SPRING_MAIL_USERNAME='$SPRING_MAIL_USERNAME' SPRING_MAIL_PASSWORD='$SPRING_MAIL_PASSWORD' JWT_SECRET='$JWT_SECRET' DB_HOST='$DB_HOST' DB_PORT='$DB_PORT' DB_NAME='$DB_NAME' DB_USER='$DB_USER' DB_PASSWORD='$DB_PASSWORD' SMS_MOBILE_FROM='$SMS_MOBILE_FROM' USER_ID='$USER_ID' USER_APIKEY='$USER_APIKEY' nohup java -jar ~/$JAR_NAME > ~/app.log 2>&1 &"
       - ssh -o LogLevel=error -i ~/.ssh/key.pem $EC2_USER@$EC2_HOST "tail -n 10 ~/app.log"
       - echo "배포 완료"
 
