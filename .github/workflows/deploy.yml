@@ -35,6 +35,28 @@ jobs:
       - name: Copy JAR to EC2
         run: scp -i key.pem build/libs/oneclass-0.0.1-SNAPSHOT.jar ubuntu@${{ secrets.EC2_HOST }}:~/
 
+      - name: Check if secrets are loaded
+        run: |
+          echo "EC2_HOST length: ${#EC2_HOST}"
+          echo "EC2_HOST first 5 chars: ${EC2_HOST:0:5}"
+          echo "DB_PASSWORD length: ${#DB_PASSWORD}"
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Verify SSH key file
+        run: |
+          echo "key.pem file size: $(wc -c < key.pem) bytes"
+          echo "key.pem first line:"
+          head -n 1 key.pem
+          echo "key.pem last line:"
+          tail -n 1 key.pem    
+
       - name: Deploy and run JAR on EC2
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
