@@ -38,8 +38,3 @@ out/
 
 ### macOS system files ###
 .DS_Store
-
-### Environment files ###
-.env
-.env.dev
-.env.prod
