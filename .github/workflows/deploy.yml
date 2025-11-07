@@ -72,6 +72,10 @@ jobs:
           
           chmod +x deploy.sh
 
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << 'ENV_EOF'    
+
       - name: Copy deployment script to EC2
         run: scp -i key.pem deploy.sh ubuntu@${{ secrets.EC2_HOST }}:~/
 
