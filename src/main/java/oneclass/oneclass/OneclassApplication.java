@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.EnableAsync;
 
+@SpringBootApplication(scanBasePackages = "oneclass.oneclass")
 @EnableAsync(proxyTargetClass = true)
 @SpringBootApplication
 @EnableScheduling

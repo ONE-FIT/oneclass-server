@@ -24,12 +24,20 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("""
     SELECT m FROM Member m
-    WHERE NOT EXISTS (
+    WHERE m IN (
+        SELECT s FROM Lesson l
+        JOIN l.students s
+        WHERE l.lessonId = :lessonId
+    )
+    AND NOT EXISTS (
         SELECT 1 FROM Attendance a
         WHERE a.member.id = m.id
           AND a.date = :date
           AND a.attendanceStatus IN ('PRESENT', 'LATE', 'EXCUSED')
     )
+""")
+    List<Member> findAbsentMembersByLessonAndDate(@Param("lessonId") Long lessonId,
+                                                  @Param("date") LocalDate date);
     """)
     List<Member> findAbsentMembers(LocalDate date);
 
