@@ -3,6 +3,7 @@ package oneclass.oneclass.domain.attendance.dto.response;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Getter;
+import oneclass.oneclass.domain.attendance.entity.Attendance;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 
 import java.time.LocalDate;
@@ -24,5 +25,13 @@ public class AttendanceResponse {
         this.name = username;
         this.attendanceStatus = attendanceStatus;
         this.date = now;
+    }
+
+    public static AttendanceResponse fromEntity(Attendance attendance) {
+        return new AttendanceResponse(
+                attendance.getMember().getName(),
+                attendance.getAttendanceStatus(),
+                attendance.getDate()
+        );
     }
 }
