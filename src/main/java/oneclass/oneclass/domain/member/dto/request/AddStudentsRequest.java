@@ -15,5 +15,5 @@ public class AddStudentsRequest {
     @NotBlank
     private String password; // 부모 비밀번호 확인
     @NotEmpty
-    private List<String> studentPhone; // 자녀 phone
+    private List<String> studentPhones; // 자녀 phone
 }

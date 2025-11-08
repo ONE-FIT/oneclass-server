@@ -130,9 +130,8 @@ public class MemberController {
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
-        // 주의: MemberService.resetPassword 시그니처가 (username, newPassword, checkPassword, verificationCode) 라면 순서/의미 맞춰 확인 필요
         memberService.resetPassword(
-                request.getPhone(),            // 현재 구현이 phone을 username처럼 사용 중이면 service 시그니처 맞춰 조정 필요
+                request.getPhone(),
                 request.getNewPassword(),
                 request.getCheckPassword(),
                 request.getVerificationCode()
@@ -208,7 +207,7 @@ public class MemberController {
     @PostMapping("/parent/add-students")
     @PreAuthorize("hasAnyRole('PARENT')")
     public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
-        memberService.addStudentsToParent(request.getPhone(), request.getPassword(), request.getStudentPhone());
+        memberService.addStudentsToParent(request.getPhone(), request.getPassword(), request.getStudentPhones());
         return ResponseEntity.noContent().build();
     }
 

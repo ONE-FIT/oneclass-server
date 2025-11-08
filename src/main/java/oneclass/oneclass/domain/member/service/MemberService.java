@@ -14,10 +14,10 @@ public interface MemberService {
     // 로그아웃
     void logout(String phone, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
 
-    void sendSignupVerificationCode(String academyCode, String username);
-    void addStudentsToParent(String username, String password, List<String> studentPhone);
+    void sendSignupVerificationCode(String academyCode, String name);
+    void addStudentsToParent(String parentPhone, String password, List<String> studentPhone);
     void deleteParent(Long parentId);
-    void removeStudentsFromTeacher(String teacherUsername, List<String> studentPhones);
+    void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones);
     TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password);
     void createUsername(String username);
     void deleteUser(String phone);

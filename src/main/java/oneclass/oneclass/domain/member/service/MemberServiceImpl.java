@@ -137,12 +137,12 @@ public class MemberServiceImpl implements MemberService {
 
 
     @Override
-    public void resetPassword(String username, String newPassword, String checkPassword, String verificationCode) {
+    public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
         if (newPassword == null || !newPassword.equals(checkPassword)) {
             throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
-        if (username == null || username.isBlank()) {
-            throw new CustomException(MemberError.USERNAME_REQUIRED);
+        if (phone == null || phone.isBlank()) {
+            throw new CustomException(MemberError.USERNAME_REQUIRED); // 필요하면 PHONE_REQUIRED 새 에러 추가
         }
         if (verificationCode == null || verificationCode.isBlank()) {
             throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
@@ -150,11 +150,11 @@ public class MemberServiceImpl implements MemberService {
 
         String provided = normalizeCode(verificationCode);
 
-        var codeEntry = verificationCodeRepository.findById(username)
+        // 인증코드를 phone을 key로 저장/조회하도록 변경했어야 동작 (기존이 username 기반이면 DB 저장 로직도 함께 바꿔야 함)
+        var codeEntry = verificationCodeRepository.findById(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
         String saved = normalizeCode(codeEntry.getCode());
-
         if (!saved.equals(provided)) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE, "인증코드가 일치하지 않습니다.");
         }
@@ -162,9 +162,9 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.TOKEN_EXPIRED, "인증코드가 만료되었습니다.");
         }
 
-        verificationCodeRepository.deleteById(username);
+        verificationCodeRepository.deleteById(phone);
 
-        var member = memberRepository.findByUsername(username)
+        Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         member.setPassword(passwordEncoder.encode(newPassword));
@@ -363,7 +363,8 @@ public class MemberServiceImpl implements MemberService {
         // 학생 일괄 조회 (phone 기준)
         List<Member> children = memberRepository.findAllByPhoneIn(studentPhones);
         Map<String, Member> byPhone = children.stream()
-                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m));
+                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
+                        (existing, replacement) -> existing));
 
         for (String phone : studentPhones) {
             Member child = byPhone.get(phone);
@@ -403,7 +404,8 @@ public class MemberServiceImpl implements MemberService {
         // N+1 방지: 일괄 조회
         List<Member> students = memberRepository.findAllByPhoneIn(studentPhones);
         Map<String, Member> byPhone = students.stream()
-                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m));
+                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
+                        (existing, replacement) -> existing));
 
         for (String phone : studentPhones) {
             Member student = byPhone.get(phone);
@@ -428,12 +430,7 @@ public class MemberServiceImpl implements MemberService {
 
         List<MemberDto> studentsDto = teacher.getTeachingStudents().stream()
                 .map(s -> new MemberDto(s.getId(), s.getUsername(), s.getName(), s.getPhone(), s.getRole()))
-                .sorted((a,b) -> {
-                    if (a.getName() == null) return 1;
-                    if (b.getName() == null) return -1;
-                    return a.getName().compareTo(b.getName());
-                })
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(MemberDto::getName, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
 
         return new TeacherStudentsResponse(teacherDto, studentsDto);
     }
@@ -455,7 +452,8 @@ public class MemberServiceImpl implements MemberService {
         // 학생 일괄 조회
         List<Member> students = memberRepository.findAllByPhoneIn(studentPhones);
         Map<String, Member> byPhone = students.stream()
-                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m));
+                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
+                        (existing, replacement) -> existing));
 
         for (String phone : studentPhones) {
             Member student = byPhone.get(phone);
