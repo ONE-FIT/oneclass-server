@@ -35,6 +35,7 @@ public class AttendanceController {
         return ResponseEntity.ok(qrImage);
     }
     /** ✅ 학생이 QR을 스캔하면 nonce + lessonId만 전송 → 로그인 정보로 출석 처리 */
+    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
     @PostMapping("/check")
     @Operation(summary = "학생 출석",
             description = "Qr을 스캔하면 출석처리합니다.")
