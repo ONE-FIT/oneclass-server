@@ -48,7 +48,7 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
-    public AcademySignupResponse AcademySignup(AcademySignupRequest request) {
+    public AcademySignupResponse academySignup(AcademySignupRequest request) {
         Role role = Role.ACADEMY;
         String randomAcademyCode;
 

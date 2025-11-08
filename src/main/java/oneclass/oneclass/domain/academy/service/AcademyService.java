@@ -6,7 +6,7 @@ import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 
 public interface AcademyService {
-    AcademySignupResponse AcademySignup(AcademySignupRequest request);
+    AcademySignupResponse academySignup(AcademySignupRequest request);
     ResponseToken login(String academyCode, String academyName, String password);
     void sendResetPasswordEmail(String code, String name);
     void resetPassword(ResetAcademyPasswordRequest request);

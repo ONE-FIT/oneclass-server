@@ -112,5 +112,5 @@ public class Member {
         return id != null && Objects.equals(id, m.id);
     }
     @Override
-    public int hashCode() { return 31; }
+    public int hashCode() { return Objects.hash(id); }
 }
