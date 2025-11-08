@@ -56,13 +56,11 @@ public class AttendanceService {
 
     // ✅ 오늘 결석한 사람들
     public List<AttendanceResponse> getTodayAbsentMembers(Long lessonId, LocalDate date) {
-        List<Member> absentMembers = memberRepository.findAbsentMembers(date);
-
+        List<Member> absentMembers = memberRepository.findAbsentMembersByLessonAndDate(lessonId, date);
         return absentMembers.stream()
-                .map(m -> new AttendanceResponse(m.getName(), AttendanceStatus.ABSENT, date))
+                .map(member -> new AttendanceResponse(member.getName(), AttendanceStatus.ABSENT, date))
                 .toList();
     }
-
     // ✅ 오늘 지각한 사람들
     public List<AttendanceResponse> getTodayLateMembers(Long lessonId) {
         return getTodayMembersByStatus(lessonId, AttendanceStatus.LATE);

@@ -87,7 +87,12 @@ public class AttendanceController {
             @PathVariable("lessonId") Long lessonId,
             @PathVariable("date") String date
     ) {
-        LocalDate localDate = LocalDate.parse(date);
+        LocalDate localDate;
+        try {
+            localDate = LocalDate.parse(date);
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new oneclass.oneclass.global.exception.CustomException(oneclass.oneclass.global.exception.CommonError.INVALID_INPUT_VALUE, "날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요.");
+        }
         List<AttendanceResponse> attendanceList =
                 attendanceService.getAttendanceByDate(lessonId, localDate);
         return ResponseEntity.ok(attendanceList);
