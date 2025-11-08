@@ -7,7 +7,6 @@ import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import oneclass.oneclass.domain.sendon.ExecutableWithMessage;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;

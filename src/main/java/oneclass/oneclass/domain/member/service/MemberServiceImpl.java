@@ -22,7 +22,6 @@ import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
 import oneclass.oneclass.domain.sendon.event.VerificationCodeSavedEvent;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
-import org.springframework.cglib.core.Local;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -155,9 +154,9 @@ public class MemberServiceImpl implements MemberService {
                 .expiry(expiry)
                 .build();
 
-        eventPublisher.publishEvent(new VerificationCodeSavedEvent(tempCode, phone));
-
         verificationCodeRepository.save(verificationCode);
+
+        eventPublisher.publishEvent(new VerificationCodeSavedEvent(tempCode, phone));
     }
 
     @Override

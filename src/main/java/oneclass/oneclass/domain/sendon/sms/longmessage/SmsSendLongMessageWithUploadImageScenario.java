@@ -6,7 +6,6 @@ import io.sendon.sms.response.UploadImage;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import oneclass.oneclass.domain.sendon.ExecutableWithMessageAndTitle;
 
 import java.io.File;
 import java.util.Arrays;
