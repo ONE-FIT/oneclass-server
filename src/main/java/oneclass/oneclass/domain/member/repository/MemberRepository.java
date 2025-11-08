@@ -9,16 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByUsername(String username);
-    Optional<Member> findByEmailOrPhone(String email, String phone);
+    Optional<Member> findByPhone(String phone);
 
-    @EntityGraph(attributePaths = {"teachers", "teachingStudents", "parents", "parentStudents"})
-    Optional<Member> findWithRelationsByUsername(String username);
 
 
     @Query("select m.phone from Member m")
@@ -33,6 +31,32 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
           AND a.attendanceStatus IN ('PRESENT', 'LATE', 'EXCUSED')
     )
     """)
-    List<Member> findAbsentMembers(@Param("date") LocalDate date);
+    List<Member> findAbsentMembers(LocalDate date);
 
+
+    boolean existsByPhone(String phone);
+    boolean existsByUsername(String username);
+
+    @Query("SELECT m.phone FROM Member m WHERE m.id IN :studentIds")
+    Page<String> findPhonesByIds(@Param("studentIds") List<Long> studentIds, Pageable pageable);
+
+
+    // 배치 조회
+    List<Member> findAllByPhoneIn(Collection<String> phones);
+
+    @EntityGraph(attributePaths = {"teachingStudents"})
+    Optional<Member> findWithTeachingStudentsByPhone(String phone);
+
+    @EntityGraph(attributePaths = {"teachers", "parents"})
+    Optional<Member> findWithTeachersAndParentsByPhone(String phone);
+
+    @Query("select distinct m from Member m " +
+            "left join fetch m.teachers " +
+            "left join fetch m.parents " +
+            "where m.phone = :phone")
+    Optional<Member> findStudentWithTeachersAndParentsByPhoneFetchJoin(String phone);
 }
+
+
+
+

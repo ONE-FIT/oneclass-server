@@ -16,12 +16,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class RefreshToken {
-
     @Id
-    @Column(length = 100)
-    private String username;   // PK = username (유저당 1개)
+    @Column(nullable = false, unique = true)
+    private String phone;
 
-    @Column(nullable = false, length = 300)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String token;
 
     @Column(nullable = false)
@@ -35,5 +34,4 @@ public class RefreshToken {
         this.token = newToken;
         this.expiryDate = newExpiry;
     }
-
 }

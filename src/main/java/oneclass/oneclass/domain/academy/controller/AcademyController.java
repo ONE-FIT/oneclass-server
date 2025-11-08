@@ -2,12 +2,12 @@ package oneclass.oneclass.domain.academy.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.academy.dto.AcademyLoginRequest;
-import oneclass.oneclass.domain.academy.dto.MadeAcademyResponse;
-import oneclass.oneclass.domain.academy.dto.MadeRequest;
-import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
+import oneclass.oneclass.domain.academy.dto.request.AcademyLoginRequest;
+import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
+import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
+import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.service.AcademyService;
-import oneclass.oneclass.domain.member.dto.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
@@ -26,8 +26,8 @@ public class AcademyController {
 
     @Operation(summary = "회원가입(학원)", description = "새로운 학원을 등록합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<MadeAcademyResponse> made(@RequestBody MadeRequest request) {
-        MadeAcademyResponse response = academyService.madeAcademy(request);
+    public ResponseEntity<AcademySignupResponse> signup(@RequestBody AcademySignupRequest request) {
+        AcademySignupResponse response = academyService.academySignup(request);
         return ResponseEntity.ok(response);
     }
 

@@ -1,11 +1,11 @@
-package oneclass.oneclass.domain.academy.dto;
+package oneclass.oneclass.domain.academy.dto.request;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class MadeRequest {
+public class AcademySignupRequest {
     private String academyName;
     private String email;
     private String password;
