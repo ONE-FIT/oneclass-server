@@ -13,13 +13,17 @@ import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.entity.RefreshToken;
 import oneclass.oneclass.domain.member.entity.Role;
+import oneclass.oneclass.domain.member.entity.VerificationCode;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
+import oneclass.oneclass.domain.sendon.event.VerificationCodeSavedEvent;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.cglib.core.Local;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,6 +47,7 @@ public class MemberServiceImpl implements MemberService {
     private final VerificationCodeRepository verificationCodeRepository;
     private final AcademyRepository academyRepository;
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private final JavaMailSender javaMailSender;
 
     @Override
@@ -135,6 +140,26 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(member);
     }
 
+    @Override
+    public void sendResetPasswordCode(Long userId) {
+
+        Member member = memberRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        String username = member.getUsername();
+        String tempCode = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
+        LocalDateTime expiry = LocalDateTime.now().plusMinutes(10);
+        String phone = member.getPhone();
+
+        VerificationCode verificationCode = VerificationCode.builder()
+                .usernameOrEmail(username)
+                .code(tempCode)
+                .expiry(expiry)
+                .build();
+
+        eventPublisher.publishEvent(new VerificationCodeSavedEvent(tempCode, phone));
+
+        verificationCodeRepository.save(verificationCode);
+    }
 
     @Override
     public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {

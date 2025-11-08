@@ -9,6 +9,7 @@ import java.util.List;
 public interface MemberService {
     void signup(SignupRequest request);
     ResponseToken login(String phone, String password);
+    void sendResetPasswordCode(Long userId);
     void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃

@@ -19,7 +19,7 @@ public class SmsResetPasswordCode extends BaseScenario {
 
     private final MemberRepository memberRepository;
 
-    public void execute(String message, String phone, List<Long> studentIds) {
+    public void execute(String message, String phone) {
 
         SendSms sendSms = sendon.sms.sendSms(new SmsBuilder()
                 .setFrom(SMS_MOBILE_FROM)
@@ -36,7 +36,7 @@ public class SmsResetPasswordCode extends BaseScenario {
     }
 
     @Async
-    public void send(String message, String phone, List<Long> studentIds) {
-        execute(message, phone, studentIds);
+    public void send(String message, String phone) {
+        execute(message, phone);
     }
 }
