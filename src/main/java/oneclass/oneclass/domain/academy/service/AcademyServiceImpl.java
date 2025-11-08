@@ -1,11 +1,11 @@
 package oneclass.oneclass.domain.academy.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import oneclass.oneclass.domain.academy.dto.MadeAcademyResponse;
-import oneclass.oneclass.domain.academy.dto.MadeRequest;
-import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
+import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
+import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
+import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyRefreshToken;
 import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
@@ -14,7 +14,7 @@ import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRefreshTokenRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
-import oneclass.oneclass.domain.member.dto.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.mail.SimpleMailMessage;
@@ -48,7 +48,7 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
-    public MadeAcademyResponse madeAcademy(MadeRequest request) {
+    public AcademySignupResponse academySignup(AcademySignupRequest request) {
         Role role = Role.ACADEMY;
         String randomAcademyCode;
 
@@ -78,7 +78,7 @@ public class AcademyServiceImpl implements AcademyService {
 
         academyRepository.save(academy);
 
-        return new MadeAcademyResponse(
+        return new AcademySignupResponse(
                 randomAcademyCode,
                 request.getAcademyName(),
                 request.getEmail(),

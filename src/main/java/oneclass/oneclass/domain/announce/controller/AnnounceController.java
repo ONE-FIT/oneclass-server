@@ -12,7 +12,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/announce")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AnnounceController {
     private final AnnounceService announceService;
 

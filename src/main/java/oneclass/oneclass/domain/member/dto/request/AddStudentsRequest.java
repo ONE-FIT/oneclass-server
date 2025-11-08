@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.member.dto;
+package oneclass.oneclass.domain.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -11,9 +11,9 @@ import java.util.List;
 @NoArgsConstructor
 public class AddStudentsRequest {
     @NotBlank
-    private String username; // 부모 username
+    private String phone; // 부모 phone
     @NotBlank
     private String password; // 부모 비밀번호 확인
     @NotEmpty
-    private List<String> studentUsernames; // 자녀 usernames
+    private List<String> studentPhones; // 자녀 phone
 }
