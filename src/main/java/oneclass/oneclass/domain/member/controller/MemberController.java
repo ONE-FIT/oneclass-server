@@ -42,7 +42,7 @@ public class MemberController {
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<Void> signup(@RequestBody @Valid SignupRequest request) {
         memberService.signup(request);
         return ResponseEntity.noContent().build();
     }

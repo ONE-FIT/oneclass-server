@@ -7,8 +7,8 @@ import jakarta.validation.constraints.Size;
 import oneclass.oneclass.domain.member.entity.Role;
 
 public record SignupRequest(
-        @NotBlank @Size(min = 8, max = 64) String password,
-        @NotBlank @Size(min = 8, max = 64) String checkPassword,
+        @Size(min = 8, max = 64) String password,
+        @Size(min = 8, max = 64) String checkPassword,
         @NotBlank String name,
         @NotBlank @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 10~11자리 숫자여야 합니다.") String phone,
         @NotNull Role role,

@@ -50,8 +50,7 @@ public class MemberServiceImpl implements MemberService {
         Role selectRole = request.role();
         if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
-        if (request.password() == null || request.checkPassword() == null
-                || !request.password().equals(request.checkPassword())) {
+        if (!request.password().equals(request.checkPassword())) {
             throw new CustomException(MemberError.BAD_REQUEST, "비밀번호 확인이 일치하지 않습니다.");
         }
 

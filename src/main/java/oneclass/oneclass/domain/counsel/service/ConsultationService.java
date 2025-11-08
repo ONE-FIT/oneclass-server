@@ -30,12 +30,10 @@ public class ConsultationService {
         con.setName(request.name());//학생이름
         con.setPhone(request.phone());//학생 전화번호
         con.setParentPhone(request.parentPhone());//학부모 전화번호
-        con.setDate(request.date());//희망하는 날짜
+        con.setDate(request.date());//희망하는 날짜 ex) 2025-05-23 15:45
         con.setType(request.type());
         con.setSubject(request.subject());
         con.setDescription(request.description());
-        con.setStatus(ConsultationStatus.REQUESTED);//상담 신청이 완료되었다 라는 것을 보여주기 위함(확정이 아님)
-        con.setCreateAt(LocalDateTime.now());
         return consultationRepository.save(con);
     }
 
