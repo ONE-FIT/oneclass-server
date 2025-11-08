@@ -42,14 +42,14 @@ public class MemberController {
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<Void> signup(@RequestBody @Valid SignupRequest request) {
         memberService.signup(request);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
     @PostMapping("/login")
-    public ResponseEntity<ResponseToken> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<ResponseToken> login(@RequestBody @Valid LoginRequest req) {
         String phone = normalizePhone(req.getPhone());
         return ResponseEntity.ok(memberService.login(phone, req.getPassword()));
     }
@@ -129,7 +129,7 @@ public class MemberController {
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         memberService.resetPassword(
                 request.getPhone(),
                 request.getNewPassword(),
@@ -206,7 +206,7 @@ public class MemberController {
     @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
     @PostMapping("/parent/add-students")
     @PreAuthorize("hasAnyRole('PARENT')")
-    public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
+    public ResponseEntity<Void> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
         memberService.addStudentsToParent(request.getPhone(), request.getPassword(), request.getStudentPhones());
         return ResponseEntity.noContent().build();
     }
