@@ -153,7 +153,7 @@ public class MemberController {
     ) {
         TeacherStudentsResponse response = memberService.addStudentsToTeacher(
                 teacherPhone,
-                request.getStudentPhones(),
+                request.studentPhones(),
                 request.password()
         );
         return ResponseEntity.ok(response);
@@ -167,7 +167,7 @@ public class MemberController {
             @RequestBody @Valid TeacherStudentsRequest request,
             Authentication authentication
     ) {
-        memberService.removeStudentsFromTeacher(teacherPhone, request.getStudentPhones());
+        memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones());
         return ResponseEntity.noContent().build();
     }
 
