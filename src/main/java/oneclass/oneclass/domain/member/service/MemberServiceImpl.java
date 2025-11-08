@@ -145,13 +145,12 @@ public class MemberServiceImpl implements MemberService {
 
         Member member = memberRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        String username = member.getUsername();
         String tempCode = UUID.randomUUID().toString().replace("-", "").substring(0, 6).toUpperCase();
         LocalDateTime expiry = LocalDateTime.now().plusMinutes(10);
         String phone = member.getPhone();
 
         VerificationCode verificationCode = VerificationCode.builder()
-                .usernameOrEmail(username)
+                .phone(phone)
                 .code(tempCode)
                 .expiry(expiry)
                 .build();

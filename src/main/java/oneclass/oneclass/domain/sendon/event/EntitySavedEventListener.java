@@ -33,7 +33,7 @@ public class EntitySavedEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleVerificationCodeSavedEvent(VerificationCodeSavedEvent event) {
-        smsResetPasswordCode.send("비밀번호 재설정 코드 : " + event.TempCode(), event.phone());
+        smsResetPasswordCode.send("비밀번호 재설정 코드 : " + event.tempCode(), event.phone());
     }
 
 }
