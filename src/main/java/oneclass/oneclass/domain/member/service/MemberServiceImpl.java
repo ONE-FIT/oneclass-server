@@ -1,15 +1,14 @@
 package oneclass.oneclass.domain.member.service;
 
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
+import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.MemberDto;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
-import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.entity.RefreshToken;
@@ -26,6 +25,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;

@@ -14,11 +14,10 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Deprecated
-public class SmsSendLongMessageWithUploadImageScenario extends BaseScenario implements ExecutableWithMessageAndTitle {
+public class SmsSendLongMessageWithUploadImageScenario extends BaseScenario {
 
     private final MemberRepository memberRepository;
 
-    @Override
     public void execute(String message, String title) {
         List<File> images = Arrays.asList(new File("./img/aligo.png"));
         UploadImage uploadImage = sendon.sms.uploadImages(images);

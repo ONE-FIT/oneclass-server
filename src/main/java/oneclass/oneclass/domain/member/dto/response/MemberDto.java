@@ -1,8 +1,8 @@
 package oneclass.oneclass.domain.member.dto.response;
 
-import oneclass.oneclass.domain.member.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import oneclass.oneclass.domain.member.entity.Role;
 
 @Getter
 @AllArgsConstructor

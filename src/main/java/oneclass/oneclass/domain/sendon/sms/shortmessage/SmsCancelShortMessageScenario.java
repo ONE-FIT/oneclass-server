@@ -14,11 +14,10 @@ import java.util.Arrays;
 
 @RequiredArgsConstructor
 @Deprecated
-public class SmsCancelShortMessageScenario extends BaseScenario implements ExecutableWithMessage {
+public class SmsCancelShortMessageScenario extends BaseScenario {
 
     private final MemberRepository memberRepository;
 
-    @Override
     public void execute(String message) {
         OffsetDateTime reservationTime = OffsetDateTime.now().plusMinutes(30);
         Reservation reservation = new Reservation(reservationTime.toString());

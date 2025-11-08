@@ -12,11 +12,10 @@ import java.util.Arrays;
 
 @RequiredArgsConstructor
 @Deprecated
-public class SmsQueryShortMessageScenario extends BaseScenario implements ExecutableWithMessage {
+public class SmsQueryShortMessageScenario extends BaseScenario {
 
     private final MemberRepository memberRepository;
 
-    @Override
     public void execute(String message) {
         SendSms sendSms = sendon.sms.sendSms(SMS_MOBILE_FROM,
                 Arrays.asList(SMS_MOBILE_TO),
