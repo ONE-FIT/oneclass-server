@@ -464,7 +464,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public List<String> listStudentsOfTeacher(String requesterPhone, String teacherPhone) {
         // teachingStudents까지 한 번에 로드
-        Member teacher = (Member) memberRepository.findWithTeachingStudentsByPhone(teacherPhone)
+        Member teacher = memberRepository.findWithTeachingStudentsByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
 
         if (requesterPhone == null || requesterPhone.isBlank()) {

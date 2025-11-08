@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import oneclass.oneclass.global.validation.PasswordMatches;
 
-@PasswordMatches(password = "password", confirm = "checkPassword")
+@PasswordMatches(password = "newPassword", confirm = "checkPassword")
 public record ResetAcademyPasswordRequest(
         @NotBlank String academyCode,
         @NotBlank String academyName,
