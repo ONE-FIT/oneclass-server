@@ -1,11 +1,11 @@
-package oneclass.oneclass.domain.academy.dto;
+package oneclass.oneclass.domain.academy.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class MadeAcademyResponse {
+public class AcademySignupResponse {
     private String academyCode;
     private String academyName;
     private String email;
