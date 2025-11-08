@@ -8,5 +8,4 @@ public record MemberDto(
         String name,
         String phone,
         Role role
-) {
-}
+) { }
