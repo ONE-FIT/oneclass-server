@@ -3,8 +3,8 @@ package oneclass.oneclass.domain.academy.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import oneclass.oneclass.domain.academy.dto.MadeAcademyResponse;
-import oneclass.oneclass.domain.academy.dto.MadeRequest;
+import oneclass.oneclass.domain.academy.dto.MakeAcademyResponse;
+import oneclass.oneclass.domain.academy.dto.MakeAcademyRequest;
 import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyRefreshToken;
@@ -48,7 +48,7 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
-    public MadeAcademyResponse madeAcademy(MadeRequest request) {
+    public MakeAcademyResponse makeAcademy(MakeAcademyRequest request) {
         Role role = Role.ACADEMY;
         String randomAcademyCode;
 
@@ -78,7 +78,7 @@ public class AcademyServiceImpl implements AcademyService {
 
         academyRepository.save(academy);
 
-        return new MadeAcademyResponse(
+        return new MakeAcademyResponse(
                 randomAcademyCode,
                 request.getAcademyName(),
                 request.getEmail(),

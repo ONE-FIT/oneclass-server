@@ -3,8 +3,8 @@ package oneclass.oneclass.domain.academy.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.dto.AcademyLoginRequest;
-import oneclass.oneclass.domain.academy.dto.MadeAcademyResponse;
-import oneclass.oneclass.domain.academy.dto.MadeRequest;
+import oneclass.oneclass.domain.academy.dto.MakeAcademyResponse;
+import oneclass.oneclass.domain.academy.dto.MakeAcademyRequest;
 import oneclass.oneclass.domain.academy.dto.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.service.AcademyService;
 import oneclass.oneclass.domain.member.dto.ResponseToken;
@@ -26,8 +26,8 @@ public class AcademyController {
 
     @Operation(summary = "회원가입(학원)", description = "새로운 학원을 등록합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<MadeAcademyResponse> made(@RequestBody MadeRequest request) {
-        MadeAcademyResponse response = academyService.madeAcademy(request);
+    public ResponseEntity<MakeAcademyResponse> makeAcademy(@RequestBody MakeAcademyRequest request) {
+        MakeAcademyResponse response = academyService.makeAcademy(request);
         return ResponseEntity.ok(response);
     }
 

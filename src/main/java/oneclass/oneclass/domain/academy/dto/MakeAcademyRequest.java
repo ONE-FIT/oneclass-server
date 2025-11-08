@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class MadeRequest {
+public class MakeAcademyRequest {
     private String academyName;
     private String email;
     private String password;

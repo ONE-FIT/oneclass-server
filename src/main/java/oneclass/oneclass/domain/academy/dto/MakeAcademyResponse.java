@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class MadeAcademyResponse {
+public class MakeAcademyResponse {
     private String academyCode;
     private String academyName;
     private String email;
