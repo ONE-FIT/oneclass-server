@@ -52,10 +52,10 @@ public class AcademyServiceImpl implements AcademyService {
         Role role = Role.ACADEMY;
         String randomAcademyCode;
 
-        if (academyRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (academyRepository.findByEmail(request.email()).isPresent()) {
             throw new CustomException(AcademyError.DUPLICATE_EMAIL);
         }
-        if (academyRepository.findByPhone(request.getPhone()).isPresent()) {
+        if (academyRepository.findByPhone(request.phone()).isPresent()) {
             throw new CustomException(AcademyError.DUPLICATE_PHONE);
         }
 
@@ -63,26 +63,24 @@ public class AcademyServiceImpl implements AcademyService {
             randomAcademyCode = generateRandomCode(8);
         } while (academyRepository.findByAcademyCode(randomAcademyCode).isPresent());
 
-        if (!request.getPassword().equals(request.getCheckPassword())) {
-            throw new CustomException(AcademyError.PASSWORD_MISMATCH);
-        }
+        // 비밀번호 일치 검증은 DTO(@PasswordMatches)에서 수행
 
         Academy academy = Academy.builder()
                 .role(role)
                 .academyCode(randomAcademyCode)
-                .academyName(request.getAcademyName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .academyName(request.academyName())
+                .email(request.email())
+                .phone(request.phone())
+                .password(passwordEncoder.encode(request.password()))
                 .build();
 
         academyRepository.save(academy);
 
         return new AcademySignupResponse(
                 randomAcademyCode,
-                request.getAcademyName(),
-                request.getEmail(),
-                request.getPhone()
+                request.academyName(),
+                request.email(),
+                request.phone()
         );
     }
 
@@ -115,19 +113,19 @@ public class AcademyServiceImpl implements AcademyService {
             }
 
             ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
-            saved.rotate(pair.getRefreshToken(), LocalDateTime.now().plusDays(28));
-            return new ResponseToken(pair.getAccessToken(), pair.getRefreshToken());
+            saved.rotate(pair.refreshToken(), LocalDateTime.now().plusDays(28));
+            return new ResponseToken(pair.accessToken(), pair.refreshToken());
         }
 
         ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
         AcademyRefreshToken tokenToSave = AcademyRefreshToken.builder()
                 .academyCode(academyCode)
-                .token(pair.getRefreshToken())
+                .token(pair.refreshToken())
                 .expiryDate(LocalDateTime.now().plusDays(28))
                 .build();
         academyRefreshTokenRepository.save(tokenToSave);
 
-        return new ResponseToken(pair.getAccessToken(), pair.getRefreshToken());
+        return new ResponseToken(pair.accessToken(), pair.refreshToken());
     }
 
     @Override
@@ -159,26 +157,24 @@ public class AcademyServiceImpl implements AcademyService {
 
     @Override
     public void resetPassword(ResetAcademyPasswordRequest request){
-        AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(request.getAcademyCode())
+        AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(request.academyCode())
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
-        if (!codeEntity.getCode().equals(request.getVerificationCode())) {
+        if (!codeEntity.getCode().equals(request.verificationCode())) {
             throw new CustomException(AcademyError.INVALID_VERIFICATION_CODE);
         }
         if (codeEntity.getExpiry().isBefore(LocalDateTime.now())) {
             throw new CustomException(AcademyError.EXPIRED_VERIFICATION_CODE);
         }
 
-        Academy academy = academyRepository.findByAcademyCode(request.getAcademyCode())
+        Academy academy = academyRepository.findByAcademyCode(request.academyCode())
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-        if (!academy.getAcademyName().equals(request.getAcademyName())) {
+        if (!academy.getAcademyName().equals(request.academyName())) {
             throw new CustomException(AcademyError.NOT_FOUND);
         }
-        if (!request.getNewPassword().equals(request.getCheckPassword())) {
-            throw new CustomException(AcademyError.PASSWORD_MISMATCH);
-        }
 
-        academy.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        // 비밀번호 일치 검증은 DTO(@PasswordMatches)에서 수행
+        academy.setPassword(passwordEncoder.encode(request.newPassword()));
         academyRepository.save(academy);
     }
 

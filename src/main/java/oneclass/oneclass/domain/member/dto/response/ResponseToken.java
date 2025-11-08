@@ -1,11 +1,6 @@
 package oneclass.oneclass.domain.member.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-@Data
-@AllArgsConstructor
-public class ResponseToken {
-    private String accessToken;
-    private String refreshToken;
-}
+public record ResponseToken(
+        String accessToken,
+        String refreshToken
+) { }

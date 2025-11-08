@@ -1,9 +1,9 @@
 package oneclass.oneclass.domain.counsel.service;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.counsel.dto.ChangeConsultationStatusRequest;
-import oneclass.oneclass.domain.counsel.dto.ConsultationDetailResponse;
-import oneclass.oneclass.domain.counsel.dto.ConsultationRequest;
+import oneclass.oneclass.domain.counsel.dto.request.ChangeConsultationStatusRequest;
+import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
+import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
 import oneclass.oneclass.domain.counsel.entity.ConsultationStatus;
 import oneclass.oneclass.domain.counsel.error.CounselError;
@@ -27,15 +27,13 @@ public class ConsultationService {
     @Transactional
     public Consultation createConsultation(ConsultationRequest request) {
         Consultation con = new Consultation();
-        con.setName(request.getName());//학생이름
-        con.setPhone(request.getPhone());//학생 전화번호
-        con.setParentPhone(request.getParentPhone());//학부모 전화번호
-        con.setDate(request.getDate());//희망하는 날짜
-        con.setType(request.getType());
-        con.setSubject(request.getSubject());
-        con.setDescription(request.getDescription());
-        con.setStatus(ConsultationStatus.REQUESTED);//상담 신청이 완료되었다 라는 것을 보여주기 위함(확정이 아님)
-        con.setCreateAt(LocalDateTime.now());
+        con.setName(request.name());//학생이름
+        con.setPhone(request.phone());//학생 전화번호
+        con.setParentPhone(request.parentPhone());//학부모 전화번호
+        con.setDate(request.date());//희망하는 날짜 ex) 2025-05-23 15:45
+        con.setType(request.type());
+        con.setSubject(request.subject());
+        con.setDescription(request.description());
         return consultationRepository.save(con);
     }
 
@@ -58,7 +56,7 @@ public class ConsultationService {
                 ? consultation.getStatus()
                 : ConsultationStatus.REQUESTED;
 
-        ConsultationStatus target = request.getStatus();
+        ConsultationStatus target = request.status();
 
         // 상태 입력 없이 보조 필드만 갱신
         if (target == null) {
@@ -87,18 +85,18 @@ public class ConsultationService {
 
     private Consultation resolveTarget(ChangeConsultationStatusRequest request) {
         // ID가 오면 ID 우선
-        if (request.getConsultationId() != null) {
-            return consultationRepository.findById(request.getConsultationId())
+        if (request.consultationId() != null) {
+            return consultationRepository.findById(request.consultationId())
                     .orElseThrow(() -> new CustomException(CounselError.NOT_FOUND));
         }
 
         // name+phone fallback (둘 중 하나라도 없으면 400)
-        if (request.getName() == null || request.getPhone() == null) {
+        if (request.name() == null || request.phone() == null) {
             throw new CustomException(CounselError.BAD_REQUEST);
         }
 
         // 한 번의 쿼리로 결과를 가져와서 개수에 따라 분기 처리
-        List<Consultation> matches = consultationRepository.findByNameAndPhone(request.getName(), request.getPhone());
+        List<Consultation> matches = consultationRepository.findByNameAndPhone(request.name(), request.phone());
 
         if (matches.isEmpty()) {
             throw new CustomException(CounselError.NOT_FOUND);
@@ -111,14 +109,14 @@ public class ConsultationService {
     }
 
     private void applyOptionalUpdates(Consultation consultation, ChangeConsultationStatusRequest request) {
-        if (request.getDate() != null) {
-            consultation.setDate(request.getDate());
+        if (request.date() != null) {
+            consultation.setDate(request.date());
         }
-        if (request.getSubject() != null) {
-            consultation.setSubject(request.getSubject());
+        if (request.subject() != null) {
+            consultation.setSubject(request.subject());
         }
-        if (request.getDescription() != null) {
-            consultation.setDescription(request.getDescription());
+        if (request.description() != null) {
+            consultation.setDescription(request.description());
         }
     }
 

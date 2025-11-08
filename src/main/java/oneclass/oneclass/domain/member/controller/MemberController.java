@@ -50,8 +50,8 @@ public class MemberController {
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
     @PostMapping("/login")
     public ResponseEntity<ResponseToken> login(@RequestBody @Valid LoginRequest req) {
-        String phone = normalizePhone(req.getPhone());
-        return ResponseEntity.ok(memberService.login(phone, req.getPassword()));
+        String phone = normalizePhone(req.phone());
+        return ResponseEntity.ok(memberService.login(phone, req.password()));
     }
 
     private String normalizePhone(String phone) {
@@ -131,10 +131,10 @@ public class MemberController {
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         memberService.resetPassword(
-                request.getPhone(),
-                request.getNewPassword(),
-                request.getCheckPassword(),
-                request.getVerificationCode()
+                request.phone(),
+                request.newPassword(),
+                request.checkPassword(),
+                request.verificationCode()
         );
         return ResponseEntity.noContent().build();
     }
@@ -153,8 +153,8 @@ public class MemberController {
     ) {
         TeacherStudentsResponse response = memberService.addStudentsToTeacher(
                 teacherPhone,
-                request.getStudentPhones(),
-                request.getPassword()
+                request.studentPhones(),
+                request.password()
         );
         return ResponseEntity.ok(response);
     }
@@ -167,7 +167,7 @@ public class MemberController {
             @RequestBody @Valid TeacherStudentsRequest request,
             Authentication authentication
     ) {
-        memberService.removeStudentsFromTeacher(teacherPhone, request.getStudentPhones());
+        memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones());
         return ResponseEntity.noContent().build();
     }
 
@@ -207,7 +207,7 @@ public class MemberController {
     @PostMapping("/parent/add-students")
     @PreAuthorize("hasAnyRole('PARENT')")
     public ResponseEntity<Void> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
-        memberService.addStudentsToParent(request.getPhone(), request.getPassword(), request.getStudentPhones());
+        memberService.addStudentsToParent(request.phone(), request.password(), request.studentPhones());
         return ResponseEntity.noContent().build();
     }
 

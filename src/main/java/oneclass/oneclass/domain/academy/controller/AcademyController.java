@@ -35,14 +35,14 @@ public class AcademyController {
     @Operation(summary = "로그인", description = "학원계정으로 로그인합니다.")
     @PostMapping("/login")
     public ResponseEntity<ResponseToken> login(@RequestBody @Valid AcademyLoginRequest request) {
-        ResponseToken token = academyService.login(request.getAcademyCode(), request.getAcademyName(), request.getPassword());
+        ResponseToken token = academyService.login(request.academyCode(), request.academyName(), request.password());
         return ResponseEntity.ok(token);
     }
 
     @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
     @PostMapping("/send-reset-password")
     public ResponseEntity<Void> sendResetPasswordEmail(@RequestBody @Valid ResetAcademyPasswordRequest request) {
-        academyService.sendResetPasswordEmail(request.getAcademyCode(), request.getAcademyName());
+        academyService.sendResetPasswordEmail(request.academyCode(), request.academyName());
         return ResponseEntity.ok().build();
     }
 
