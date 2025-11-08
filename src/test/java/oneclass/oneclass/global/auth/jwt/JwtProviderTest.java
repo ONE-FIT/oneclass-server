@@ -1,6 +1,6 @@
 package oneclass.oneclass.global.auth.jwt;
 
-import oneclass.oneclass.domain.member.dto.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,14 +1,16 @@
 package oneclass.oneclass.domain.member.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
-import oneclass.oneclass.domain.member.dto.ResponseToken;
-import oneclass.oneclass.domain.member.dto.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.MemberDto;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.request.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.entity.RefreshToken;
 import oneclass.oneclass.domain.member.entity.Role;
@@ -38,7 +40,6 @@ public class MemberServiceImpl implements MemberService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    //    private final EmailService emailService;
     private final VerificationCodeRepository verificationCodeRepository;
     private final AcademyRepository academyRepository;
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
@@ -55,8 +56,8 @@ public class MemberServiceImpl implements MemberService {
         }
 
         // username 중복(선택값이므로 있을 때만 검사)
-        if (request.getUsername() != null && !request.getUsername().isBlank()
-                && memberRepository.existsByUsername(request.getUsername())) {
+        if (request.getPhone() != null && !request.getPhone().isBlank()
+                && memberRepository.existsByPhone(request.getPhone())) {
             throw new CustomException(MemberError.CONFLICT, "이미 사용중인 아이디입니다.");
         }
 
@@ -134,20 +135,14 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(member);
     }
 
-    @Override
-    public String findUsername(String phone) {
-        Member member = memberRepository.findByPhone(phone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        return member.getUsername();
-    }
 
     @Override
-    public void resetPassword(String username, String newPassword, String checkPassword, String verificationCode) {
+    public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
         if (newPassword == null || !newPassword.equals(checkPassword)) {
             throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
-        if (username == null || username.isBlank()) {
-            throw new CustomException(MemberError.USERNAME_REQUIRED);
+        if (phone == null || phone.isBlank()) {
+            throw new CustomException(MemberError.USERNAME_REQUIRED); // 필요하면 PHONE_REQUIRED 새 에러 추가
         }
         if (verificationCode == null || verificationCode.isBlank()) {
             throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
@@ -155,11 +150,11 @@ public class MemberServiceImpl implements MemberService {
 
         String provided = normalizeCode(verificationCode);
 
-        var codeEntry = verificationCodeRepository.findById(username)
+        // 인증코드를 phone을 key로 저장/조회하도록 변경했어야 동작 (기존이 username 기반이면 DB 저장 로직도 함께 바꿔야 함)
+        var codeEntry = verificationCodeRepository.findById(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
         String saved = normalizeCode(codeEntry.getCode());
-
         if (!saved.equals(provided)) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE, "인증코드가 일치하지 않습니다.");
         }
@@ -167,9 +162,9 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.TOKEN_EXPIRED, "인증코드가 만료되었습니다.");
         }
 
-        verificationCodeRepository.deleteById(username);
+        verificationCodeRepository.deleteById(phone);
 
-        var member = memberRepository.findByUsername(username)
+        Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         member.setPassword(passwordEncoder.encode(newPassword));
@@ -197,7 +192,8 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.delete(member);
     }
 
-    private String cleanupToken(String token) {
+    @Override
+    public String cleanupToken(String token) {
         if (token == null) return null;
         String v = token.trim();
         if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
@@ -247,12 +243,11 @@ public class MemberServiceImpl implements MemberService {
         academyVerificationCodeRepository.delete(savedCode);
 
         Member member = Member.builder()
-                .username(request.getUsername())
+                .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .academy(academy)
                 .name(request.getName())
-                .phone(request.getPhone())
                 .build();
 
         memberRepository.save(member);
@@ -265,36 +260,42 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
         Member member = Member.builder()
-                .username(request.getUsername())
+                .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .academy(academy)
                 .name(request.getName())
-                .phone(request.getPhone())
                 .build();
 
         memberRepository.save(member);
     }
 
-    private void signupParent(SignupRequest request) {
-        List<String> studentUsernames = request.getStudentUsername();
-        if (studentUsernames == null || studentUsernames.isEmpty()) throw new CustomException(MemberError.BAD_REQUEST);
 
-        List<Member> children = new ArrayList<>();
-        for (String s : studentUsernames) {
-            Member child = memberRepository.findByUsername(s)
-                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-            children.add(child);
+    private void signupParent(SignupRequest request) {
+        // 자녀 phone 단건 조회 (단일 연결)
+        String studentPhone = request.getStudentPhone();
+        if (studentPhone == null || studentPhone.isBlank()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "자녀 전화번호가 필요합니다.");
         }
 
+        // 부모 생성 (연관관계는 나중에 연결)
         Member parent = Member.builder()
-                .username(request.getUsername())
+                .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .name(request.getName())
-                .phone(request.getPhone())
-                .parentStudents(children)
                 .build();
+
+        // 자녀 조회 (phone 기준, 단건)
+        Member child = memberRepository.findByPhone(studentPhone)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + studentPhone));
+
+        if (child.getRole() != Role.STUDENT) {
+            throw new CustomException(MemberError.BAD_REQUEST, "연결하려는 계정이 학생이 아닙니다: " + studentPhone);
+        }
+
+        // 양방향 연결
+        parent.addParentStudent(child);
 
         memberRepository.save(parent);
     }
@@ -345,21 +346,33 @@ public class MemberServiceImpl implements MemberService {
 
     // 부모-자식: 자녀 추가(부모님)
     @Override
-    public void addStudentsToParent(String username, String password, List<String> studentUsernames) {
-        Member parent = memberRepository.findByUsername(username)
+    public void addStudentsToParent(String parentPhone, String password, List<String> studentPhones) {
+        if (studentPhones == null || studentPhones.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+
+        // 부모 조회 (phone 기준)
+        Member parent = memberRepository.findByPhone(parentPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+
+        // 비밀번호 확인
         if (!passwordEncoder.matches(password, parent.getPassword())) {
             throw new CustomException(MemberError.INVALID_PASSWORD);
         }
-        if (studentUsernames == null || studentUsernames.isEmpty()) {
-            throw new CustomException(MemberError.BAD_REQUEST, "자녀 username 목록이 필요합니다.");
+
+        // 학생 일괄 조회 (phone 기준)
+        List<Member> children = memberRepository.findAllByPhoneIn(studentPhones);
+        Map<String, Member> byPhone = children.stream()
+                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
+                        (existing, replacement) -> existing));
+
+        for (String phone : studentPhones) {
+            Member child = byPhone.get(phone);
+            if (child == null) throw new CustomException(MemberError.NOT_FOUND);
+            if (child.getRole() != Role.STUDENT) throw new CustomException(MemberError.BAD_REQUEST);
+            parent.addParentStudent(child);
         }
 
-        for (String su : studentUsernames) {
-            Member child = memberRepository.findByUsername(su)
-                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + su));
-            parent.addParentStudent(child); // ManyToMany(username FK) 양방향 연결
-        }
         memberRepository.save(parent);
     }
 
@@ -374,82 +387,105 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.delete(parent);
     }
     @Override
-    public void addStudentsToTeacher(String teacherUsername, List<String> studentUsernames, String password) {
-        if (teacherUsername == null || teacherUsername.isBlank() || studentUsernames == null || studentUsernames.isEmpty()) {
+    public TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password) {
+        if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty())
             throw new CustomException(MemberError.BAD_REQUEST);
-        }
-        if (password == null || password.isBlank()) {
+        if (password == null || password.isBlank())
             throw new CustomException(MemberError.BAD_REQUEST);
-        }
 
-        // 1. teacher 객체를 먼저 가져온다!
-        Member teacher = memberRepository.findByUsername(teacherUsername)
+        Member teacher = memberRepository.findByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
-        // 2. 비밀번호 체크
-        if (!passwordEncoder.matches(password, teacher.getPassword())) {
+        if (!passwordEncoder.matches(password, teacher.getPassword()))
             throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
-        }
-
-        if (teacher.getRole() != Role.TEACHER) {
+        if (teacher.getRole() != Role.TEACHER)
             throw new CustomException(MemberError.BAD_REQUEST);
+
+        // N+1 방지: 일괄 조회
+        List<Member> students = memberRepository.findAllByPhoneIn(studentPhones);
+        Map<String, Member> byPhone = students.stream()
+                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
+                        (existing, replacement) -> existing));
+
+        for (String phone : studentPhones) {
+            Member student = byPhone.get(phone);
+            if (student == null)
+                throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + phone);
+            if (student.getRole() != Role.STUDENT)
+                throw new CustomException(MemberError.BAD_REQUEST, "학생이 아닌 계정입니다: " + phone);
+            teacher.addStudent(student);
         }
 
-        for (String s : studentUsernames) {
-            Member student = memberRepository.findByUsername(s)
-                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + s));
-            teacher.addStudent(student); // 양방향 연결
-        }
+        // teacher는 현재 영속성 컨텍스트에 있으므로 바로 save 또는 flush 가능
         memberRepository.save(teacher);
+
+        // 응답용 DTO 생성 (교사 + 현재 교사에게 연결된 모든 학생)
+        MemberDto teacherDto = new MemberDto(
+                teacher.getId(),
+                teacher.getUsername(),
+                teacher.getName(),
+                teacher.getPhone(),
+                teacher.getRole()
+        );
+
+        List<MemberDto> studentsDto = teacher.getTeachingStudents().stream()
+                .map(s -> new MemberDto(s.getId(), s.getUsername(), s.getName(), s.getPhone(), s.getRole()))
+                .sorted(Comparator.comparing(MemberDto::getName, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+
+        return new TeacherStudentsResponse(teacherDto, studentsDto);
     }
 
+
     @Override
-    public void removeStudentsFromTeacher(String teacherUsername, List<String> studentUsernames) {
-        if (teacherUsername == null || teacherUsername.isBlank() || studentUsernames == null || studentUsernames.isEmpty()) {
+    public void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones) {
+        if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty()) {
             throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
         }
 
-        Member teacher = memberRepository.findByUsername(teacherUsername)
+        Member teacher = memberRepository.findByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
 
         if (teacher.getRole() != Role.TEACHER) {
             throw new CustomException(MemberError.BAD_REQUEST, "해당 사용자는 선생님이 아닙니다.");
         }
 
-        for (String s : studentUsernames) {
-            Member student = memberRepository.findByUsername(s)
-                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + s));
+        // 학생 일괄 조회
+        List<Member> students = memberRepository.findAllByPhoneIn(studentPhones);
+        Map<String, Member> byPhone = students.stream()
+                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
+                        (existing, replacement) -> existing));
+
+        for (String phone : studentPhones) {
+            Member student = byPhone.get(phone);
+            if (student == null) throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + phone);
             teacher.removeStudent(student);
         }
         memberRepository.save(teacher);
     }
 
     @Override
-    public List<String> listStudentsOfTeacher(String requesterUsername, String teacherUsername) {
-        // teacher 조회(연관관계 포함)
-        Member teacher = memberRepository.findWithRelationsByUsername(teacherUsername)
+    public List<String> listStudentsOfTeacher(String requesterPhone, String teacherPhone) {
+        // teachingStudents까지 한 번에 로드
+        Member teacher = memberRepository.findWithTeachingStudentsByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
 
-        if (requesterUsername == null || requesterUsername.isBlank()) {
+        if (requesterPhone == null || requesterPhone.isBlank()) {
             throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다. 로그인 후 시도하세요.");
         }
-        Member requester = memberRepository.findWithRelationsByUsername(requesterUsername)
+        Member requester = memberRepository.findByPhone(requesterPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
 
-        Set<String> teacherStudents = teacher.getTeachingStudents().stream()
-                .map(Member::getUsername)
+        var teacherStudents = teacher.getTeachingStudents().stream()
+                .map(Member::getPhone)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        // 본인(교사) → 전체 반환
-        if (requester.getRole() == Role.TEACHER && requesterUsername.equals(teacherUsername)) {
+        if (requester.getRole() == Role.TEACHER && requesterPhone.equals(teacherPhone)) {
             return teacherStudents.stream().sorted().toList();
         }
-
-        // 부모 → 본인 자녀 ∩ 교사 담당 학생
         if (requester.getRole() == Role.PARENT) {
-            Set<String> parentChildren = requester.getParentStudents().stream()
-                    .map(Member::getUsername)
+            var parentChildren = requester.getParentStudents().stream()
+                    .map(Member::getPhone)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
             return parentChildren.stream()
@@ -457,48 +493,54 @@ public class MemberServiceImpl implements MemberService {
                     .sorted()
                     .toList();
         }
-
         throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
     }
 
+
     @Override
-    public List<String> listTeachersOfStudent(String requesterUsername, String studentUsername) {
-        Member student = memberRepository.findWithRelationsByUsername(studentUsername)
+    public List<String> listTeachersOfStudent(String requesterPhone, String studentPhone) {
+        Member student = memberRepository.findStudentWithTeachersAndParentsByPhoneFetchJoin(studentPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다."));
 
-        if (requesterUsername == null || requesterUsername.isBlank()) {
+        if (requesterPhone == null || requesterPhone.isBlank()) {
             throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다. 로그인 후 시도하세요.");
         }
-        Member requester = memberRepository.findWithRelationsByUsername(requesterUsername)
+
+        Member requester = memberRepository.findByPhone(requesterPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
 
-        Set<String> studentTeachers = student.getTeachers().stream()
-                .map(Member::getUsername)
+        // teachers 집합
+        Set<String> studentTeachersPhones = student.getTeachers().stream()
+                .map(Member::getPhone)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         switch (requester.getRole()) {
-            case STUDENT:
-                if (requesterUsername.equals(studentUsername)) {
-                    return studentTeachers.stream().sorted().toList();
+            case STUDENT -> {
+                if (!requesterPhone.equals(studentPhone)) {
+                    throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
                 }
-                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
-            case PARENT:
+                return studentTeachersPhones.stream().sorted().toList();
+            }
+            case PARENT -> {
+                // 부모-자녀 관계 확인 (이미 parents fetch됨)
                 boolean isParentOf = student.getParents().stream()
-                        .map(Member::getUsername)
+                        .map(Member::getPhone)
                         .filter(Objects::nonNull)
-                        .anyMatch(u -> u.equals(requesterUsername));
-                if (isParentOf) {
-                    return studentTeachers.stream().sorted().toList();
+                        .anyMatch(p -> p.equals(requesterPhone));
+                if (!isParentOf) {
+                    throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
                 }
-                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
-            case TEACHER:
-                if (studentTeachers.contains(requesterUsername)) {
-                    return studentTeachers.stream().sorted().toList();
+                return studentTeachersPhones.stream().sorted().toList();
+            }
+            case TEACHER -> {
+                // 요청자가 해당 학생의 선생님인지
+                if (!studentTeachersPhones.contains(requesterPhone)) {
+                    throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
                 }
-                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
-            default:
-                throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+                return studentTeachersPhones.stream().sorted().toList();
+            }
+            default -> throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
         }
     }
 

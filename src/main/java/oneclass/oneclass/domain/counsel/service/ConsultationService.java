@@ -1,5 +1,6 @@
 package oneclass.oneclass.domain.counsel.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.counsel.dto.ChangeConsultationStatusRequest;
 import oneclass.oneclass.domain.counsel.dto.ConsultationDetailResponse;
@@ -22,7 +23,8 @@ import java.util.Set;
 public class ConsultationService {
     private final ConsultationRepository consultationRepository;
 
-    //상담신청
+    // 상담신청 - 데이터 생성이므로 트랜잭션
+    @Transactional
     public Consultation createConsultation(ConsultationRequest request) {
         Consultation con = new Consultation();
         con.setName(request.getName());//학생이름
@@ -46,6 +48,8 @@ public class ConsultationService {
         ALLOWED.put(ConsultationStatus.COMPLETED, Set.of());
     }
 
+    // 상태 변경 및 부가 필드 업데이트 - 데이터 갱신이므로 트랜잭션
+    @Transactional
     public Consultation changeStatus(ChangeConsultationStatusRequest request) {
         Consultation consultation = resolveTarget(request);
 
@@ -106,7 +110,6 @@ public class ConsultationService {
         return matches.get(0);
     }
 
-
     private void applyOptionalUpdates(Consultation consultation, ChangeConsultationStatusRequest request) {
         if (request.getDate() != null) {
             consultation.setDate(request.getDate());
@@ -118,7 +121,6 @@ public class ConsultationService {
             consultation.setDescription(request.getDescription());
         }
     }
-
 
     public ConsultationDetailResponse getConsultationDetail(String name, String phone) {
         if (name == null || phone == null) {
@@ -137,7 +139,7 @@ public class ConsultationService {
         return ConsultationDetailResponse.from(matches.get(0));
     }
 
-    //전체조회
+    // 전체 조회
     public List<Consultation> getAllSchedule() {
         return consultationRepository.findAll();
     }

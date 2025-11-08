@@ -1,26 +1,27 @@
 package oneclass.oneclass.domain.member.service;
 
-import oneclass.oneclass.domain.member.dto.ResponseToken;
-import oneclass.oneclass.domain.member.dto.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.request.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 
 import java.util.List;
 
 public interface MemberService {
     void signup(SignupRequest request);
     ResponseToken login(String phone, String password);
-    String findUsername(String phone);
     void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃
     void logout(String phone, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
 
-    void sendSignupVerificationCode(String academyCode, String username);
-    void addStudentsToParent(String username, String password, List<String> studentUsername);
+    void sendSignupVerificationCode(String academyCode, String name);
+    void addStudentsToParent(String parentPhone, String password, List<String> studentPhone);
     void deleteParent(Long parentId);
-    void removeStudentsFromTeacher(String teacherUsername, List<String> studentUsernames);
-    void addStudentsToTeacher(String teacherUsername, List<String> studentUsernames, String password);
+    void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones);
+    TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password);
     void createUsername(String username);
     void deleteUser(String phone);
+    String cleanupToken(String token);
 
     //refreshToken 검증
     ResponseToken reissue(String refreshToken);
@@ -30,11 +31,11 @@ public interface MemberService {
      * 요청자(requesterUsername)의 권한을 검사한 뒤,
      * teacherUsername이 맡고 있는 학생(username 리스트)를 반환한다.
      */
-    java.util.List<String> listStudentsOfTeacher(String requesterUsername, String teacherUsername);
+    java.util.List<String> listStudentsOfTeacher(String requesterPhone, String teacherPhone);
 
     /**
      * 요청자(requesterUsername)의 권한을 검사한 뒤,
      * studentUsername의 담당 교사(username 리스트)를 반환한다.
      */
-    List<String> listTeachersOfStudent(String requesterUsername, String studentUsername);
+    List<String> listTeachersOfStudent(String requesterPhone, String studentPhone);
 }
