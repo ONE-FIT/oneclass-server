@@ -1,7 +1,6 @@
 package oneclass.oneclass.domain.sendon.sms.longmessage;
 
 import io.sendon.sms.request.LmsBuilder;
-import io.sendon.sms.request.MmsBuilder;
 import io.sendon.sms.request.Reservation;
 import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
