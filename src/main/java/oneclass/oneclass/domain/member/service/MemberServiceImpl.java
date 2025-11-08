@@ -1,16 +1,16 @@
 package oneclass.oneclass.domain.member.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
-import oneclass.oneclass.domain.member.dto.MemberDto;
-import oneclass.oneclass.domain.member.dto.ResponseToken;
-import oneclass.oneclass.domain.member.dto.SignupRequest;
-import oneclass.oneclass.domain.member.dto.TeacherStudentsResponse;
+import oneclass.oneclass.domain.member.dto.response.MemberDto;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.request.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.entity.RefreshToken;
 import oneclass.oneclass.domain.member.entity.Role;
@@ -40,7 +40,6 @@ public class MemberServiceImpl implements MemberService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    //    private final EmailService emailService;
     private final VerificationCodeRepository verificationCodeRepository;
     private final AcademyRepository academyRepository;
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
@@ -136,12 +135,6 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(member);
     }
 
-//    @Override
-//    public String findUsername(String phone) {
-//        Member member = memberRepository.findByPhone(phone)
-//                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-//        return member.getUsername();
-//    }
 
     @Override
     public void resetPassword(String username, String newPassword, String checkPassword, String verificationCode) {
@@ -199,7 +192,8 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.delete(member);
     }
 
-    private String cleanupToken(String token) {
+    @Override
+    public String cleanupToken(String token) {
         if (token == null) return null;
         String v = token.trim();
         if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();

@@ -1,15 +1,14 @@
 package oneclass.oneclass.domain.member.service;
 
-import oneclass.oneclass.domain.member.dto.ResponseToken;
-import oneclass.oneclass.domain.member.dto.SignupRequest;
-import oneclass.oneclass.domain.member.dto.TeacherStudentsResponse;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.request.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 
 import java.util.List;
 
 public interface MemberService {
     void signup(SignupRequest request);
     ResponseToken login(String phone, String password);
-//    String findUsername(String phone);
     void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃
@@ -22,6 +21,7 @@ public interface MemberService {
     TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password);
     void createUsername(String username);
     void deleteUser(String phone);
+    String cleanupToken(String token);
 
     //refreshToken 검증
     ResponseToken reissue(String refreshToken);
@@ -38,4 +38,5 @@ public interface MemberService {
      * studentUsername의 담당 교사(username 리스트)를 반환한다.
      */
     List<String> listTeachersOfStudent(String requesterPhone, String studentName);
+
 }

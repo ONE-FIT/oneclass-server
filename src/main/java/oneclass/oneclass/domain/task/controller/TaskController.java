@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/task")
 @RequiredArgsConstructor
-@CrossOrigin(origins ="*")
 public class TaskController {
     private final TaskService taskService;
 

@@ -51,7 +51,6 @@ public class SecurityConfig {
             "/swagger-ui/**",
 
             "/swagger-ui.html",
-            "/attendance/**",
             "/swagger-ui/index.html"
 
     };

@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.member.dto.*;
+import oneclass.oneclass.domain.member.dto.request.*;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
@@ -31,18 +33,18 @@ public class MemberController {
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
 
-
-
     @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
     @PostMapping("/signup-code")
-    public void sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
+    public ResponseEntity<Void> sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
         memberService.sendSignupVerificationCode(academyCode, name);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
-    public void signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<Void> signup(@RequestBody SignupRequest request) {
         memberService.signup(request);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
@@ -51,6 +53,7 @@ public class MemberController {
         String phone = normalizePhone(req.getPhone());
         return ResponseEntity.ok(memberService.login(phone, req.getPassword()));
     }
+
     private String normalizePhone(String phone) {
         if (phone == null) return null;
         // 숫자만 남김: 하이픈/공백 제거
@@ -71,58 +74,49 @@ public class MemberController {
         if (authentication == null) throw new CustomException(TokenError.UNAUTHORIZED);
         if (refreshToken == null || refreshToken.isBlank()) throw new CustomException(TokenError.UNAUTHORIZED);
 
-        // 1) 입력 토큰 정리
-        String rt = cleanupToken(refreshToken); // 컨트롤러에 동일 유틸이 없다면 서비스에 맡겨도 됨
+        // 1) 입력 토큰 정리 (Bearer 제거, 양끝 큰따옴표 제거)
+        String rt = memberService.cleanupToken(refreshToken);
 
         // 2) JWE(5 세그먼트)면 복호화 → JWS
         if (isLikelyJwe(rt)) {
-            rt = jwtProvider.decryptToken(rt);
+            rt = jwtProvider.decryptToken(rt); // rt는 항상 String
         }
 
-        // 3) refresh 토큰에서 phone(subject) 추출
-        // 만료(refresh)여도 폐기만 하면 된다면 validateToken은 생략하거나, EXPIRED 예외는 허용
+        // 3) refresh 토큰 검증 (만료면 DB 삭제만 하려면 EXPIRED 허용)
         try {
             jwtProvider.validateToken(rt);
         } catch (CustomException e) {
-            // 이미 만료된 refresh라도 DB에서 삭제는 진행하고 싶으면 허용
             if (!TokenError.TOKEN_EXPIRED.equals(e.getError())) throw e;
         }
-        String phoneFromRefresh = jwtProvider.getPhone(rt); // subject = phone
 
-        // 4) 인증 주체의 phone을 확보 (JwtFilter가 넣어준 request attribute 활용)
+        // 4) refresh 토큰의 subject(phone) 추출
+        String phoneFromRefresh = jwtProvider.getPhone(rt);
+
+        // 5) 인증 주체 phone 확보 (필터가 넣은 request attribute 우선)
         String phoneFromAuth = (String) request.getAttribute("auth.phone");
-
         if (phoneFromAuth == null || phoneFromAuth.isBlank()) {
             String principal = authentication.getName();
-            // 전화번호 형식이면 바로 사용
             if (principal != null && principal.matches("^\\d{10,}$")) {
-                phoneFromAuth = principal;
+                phoneFromAuth = principal; // principal이 phone인 경우
             } else {
-                // username인 경우 DB에서 조회
+                // principal이 username이면 phone 조회
                 Member member = memberRepository.findByUsername(principal)
                         .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
                 phoneFromAuth = member.getPhone();
             }
         }
 
-        // 5) 주체 일치 확인: 인증된 사용자와 refresh의 subject가 동일한지
+        // 6) 주체 일치 확인
         if (!phoneFromAuth.equals(phoneFromRefresh)) {
             throw new CustomException(TokenError.UNAUTHORIZED);
         }
 
-        // 6) 해당 refresh만 폐기
-        memberService.logout(phoneFromRefresh, rt);
+        // 7) 해당 refresh만 폐기
+        memberService.logout(phoneFromRefresh, rt); // 둘 다 String
 
         return ResponseEntity.noContent().build();
     }
 
-    private String cleanupToken(String token) {
-        if (token == null) return null;
-        String v = token.trim();
-        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
-        if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
-        return v;
-    }
     @Operation(summary = "계정탈퇴", description = "계정을 탈퇴합니다.")
     @DeleteMapping("/delete-user")
     public ResponseEntity<Void> deleteUser(
@@ -149,42 +143,24 @@ public class MemberController {
         return ResponseEntity.noContent().build();
     }
 
-
-//    @Operation(summary = "아이디 찾기", description = "이메일 또는 전화번호로 아이디를 조회합니다.")
-//    @GetMapping("/find-username")
-//    public String findUsername(@RequestParam String phone) {
-//        return memberService.findUsername(phone);
-//    }
     @Operation(summary = "닉네임 생성", description = "닉네임을 생성합니다.")
     @PostMapping("/create-username")
-    public void createUsername(@RequestParam String username) {
+    public ResponseEntity<Void> createUsername(@RequestParam String username) {
         memberService.createUsername(username);
+        return ResponseEntity.noContent().build();
     }
-
-//    @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
-//    @PostMapping("/send-reset-password-email")
-//    public void sendResetPasswordEmail(@RequestBody Map<String, String> request) {
-//        String phone = request.get("phone");
-//        memberService.sendResetPasswordEmail(phone);
-//    }
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
-    public void resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
         memberService.resetPassword(
                 request.getPhone(),
                 request.getNewPassword(),
                 request.getVerificationCode(),
                 request.getCheckPassword()
         );
+        return ResponseEntity.noContent().build();
     }
-
-//    private String cleanToken(String t) {
-//        String v = t.trim();
-//        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
-//        if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
-//        return v;
-//    }
 
     private boolean isLikelyJwe(String t) {
         return TokenUtils.isLikelyJwe(t); // 5 segments

@@ -1,11 +1,10 @@
-package oneclass.oneclass.domain.member.dto;
+package oneclass.oneclass.domain.member.dto.request;
 
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import oneclass.oneclass.domain.member.entity.Role;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Data

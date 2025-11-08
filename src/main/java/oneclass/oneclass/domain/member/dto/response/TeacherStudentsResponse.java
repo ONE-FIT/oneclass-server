@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.member.dto;
+package oneclass.oneclass.domain.member.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
