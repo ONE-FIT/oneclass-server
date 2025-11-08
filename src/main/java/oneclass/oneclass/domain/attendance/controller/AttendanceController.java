@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.service.AttendanceService;
 import oneclass.oneclass.global.auth.CustomUserDetails;
+import oneclass.oneclass.global.exception.CommonError;
+import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -56,7 +58,8 @@ public class AttendanceController {
         return ResponseEntity.ok(attendanceService.getCachedQr(lessonId));
     }
 
-    /** Admin-only endpoints */@PreAuthorize("hasRole('ADMIN')")
+    /** Admin-only endpoints */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/today/present/{lessonId}")
     @Operation(summary = "오늘 출석한 학생 목록 조회",
             description = "특정 수업에 대해 오늘 출석한 학생 목록을 반환합니다.")
@@ -92,7 +95,7 @@ public class AttendanceController {
         try {
             localDate = LocalDate.parse(date);
         } catch (java.time.format.DateTimeParseException e) {
-            throw new oneclass.oneclass.global.exception.CustomException(oneclass.oneclass.global.exception.CommonError.INVALID_INPUT_VALUE, "날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요.");
+            throw new CustomException(CommonError.INVALID_INPUT_VALUE, "날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요.");
         }
         List<AttendanceResponse> attendanceList =
                 attendanceService.getAttendanceByDate(lessonId, localDate);
