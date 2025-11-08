@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.lesson.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.dto.request.CreateLessonRequest;
 import oneclass.oneclass.domain.lesson.dto.request.UpdateLessonRequest;
@@ -22,7 +23,7 @@ public class LessonController {
     @PostMapping("/create")
     @Operation(summary = "생성",
             description = "강의를 만듭니다.")
-    public LessonResponse createLesson(@RequestBody CreateLessonRequest request) {
+    public LessonResponse createLesson(@RequestBody @Valid CreateLessonRequest request) {
         return lessonService.createLesson(request);
     }
 
@@ -43,7 +44,7 @@ public class LessonController {
     @PatchMapping()
     @Operation(summary = "수정",
             description = "강의를 수정합니다.")
-    public LessonResponse updateLesson(@RequestBody UpdateLessonRequest request) {
+    public LessonResponse updateLesson(@RequestBody @Valid UpdateLessonRequest request) {
         return lessonService.updateLesson(request);
     }
 
