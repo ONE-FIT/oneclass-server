@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.attendance.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.attendance.dto.response.AttendanceResponse;
 import oneclass.oneclass.domain.attendance.entity.Attendance;
 import oneclass.oneclass.domain.attendance.entity.AttendanceNonce;
@@ -13,55 +14,61 @@ import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
+
 public class AttendanceService {
 
+    // ✅ QR 캐시: lessonId -> QR 이미지(byte[]) 저장
+    private final Map<Long, byte[]> qrCache = new ConcurrentHashMap<>();
     private final AttendanceRepository attendanceRepository;
     private final MemberRepository memberRepository;
     private final AttendanceNonceRepository nonceRepository;
 
     // ✅ 오늘 특정 상태의 출석 정보 조회
-    public List<AttendanceResponse> getTodayMembersByStatus(AttendanceStatus status) {
+    public List<AttendanceResponse> getTodayMembersByStatus(Long lessonId, AttendanceStatus status) {
         final LocalDate today = LocalDate.now();
         if (status == AttendanceStatus.ABSENT) {
-            return getTodayAbsentMembers(today); // 결석은 별도 로직
+            return getTodayAbsentMembers(lessonId, today);
         }
-        return attendanceRepository.findByDateAndAttendanceStatus(today, status)
+        return attendanceRepository.findByLessonIdAndDateAndAttendanceStatus(lessonId, today, status)
                 .stream()
                 .map(this::attendanceToResponse)
                 .toList();
     }
 
     // ✅ 오늘 출석한 사람들
-    public List<AttendanceResponse> getTodayPresentMembers() {
-        return getTodayMembersByStatus(AttendanceStatus.PRESENT);
+    public List<AttendanceResponse> getTodayPresentMembers(Long lessonId) {
+        return getTodayMembersByStatus(lessonId, AttendanceStatus.PRESENT);
     }
 
     // ✅ 오늘 결석한 사람들
-    public List<AttendanceResponse> getTodayAbsentMembers(LocalDate date) {
-        List<Member> absentMembers = memberRepository.findAbsentMembers(date);
-
+    public List<AttendanceResponse> getTodayAbsentMembers(Long lessonId, LocalDate date) {
+        List<Member> absentMembers = memberRepository.findAbsentMembersByLessonAndDate(lessonId, date);
         return absentMembers.stream()
-                .map(m -> new AttendanceResponse(m.getName(), AttendanceStatus.ABSENT, date))
+                .map(member -> new AttendanceResponse(member.getName(), AttendanceStatus.ABSENT, date))
                 .toList();
     }
-
     // ✅ 오늘 지각한 사람들
-    public List<AttendanceResponse> getTodayLateMembers() {
-        return getTodayMembersByStatus(AttendanceStatus.LATE);
+    public List<AttendanceResponse> getTodayLateMembers(Long lessonId) {
+        return getTodayMembersByStatus(lessonId, AttendanceStatus.LATE);
     }
 
     // ✅ 오늘 공결한 사람들
-    public List<AttendanceResponse> getTodayExcusedMembers() {
-        return getTodayMembersByStatus(AttendanceStatus.EXCUSED);
+    public List<AttendanceResponse> getTodayExcusedMembers(Long lessonId) {
+        return getTodayMembersByStatus(lessonId, AttendanceStatus.EXCUSED);
     }
 
     // ✅ 특정 학생 출석 기록
@@ -74,10 +81,17 @@ public class AttendanceService {
 
     // ✅ 특정 날짜 출석 기록
     public List<AttendanceResponse> getAttendanceByDate(LocalDate date) {
-        return attendanceRepository.findByDate(date)
-                .stream()
+        List<Attendance> attendanceList = attendanceRepository.findByDate(date);
+        return attendanceList.stream()
                 .map(this::attendanceToResponse)
                 .toList();
+    }
+
+    public List<AttendanceResponse> getAllAttendance(Long lessonId) {
+        List<Attendance> attendanceList = attendanceRepository.findAllByLessonId(lessonId);
+        return attendanceList.stream()
+                .map(AttendanceResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
     // ✅ 엔티티 → DTO 변환 메서드
@@ -97,26 +111,31 @@ public class AttendanceService {
      * @param validMinutes QR 유효 시간 (분 단위)
      */
     public byte[] generateAttendanceQrPng(Long lessonId, int validMinutes) {
-        String nonce = UUID.randomUUID().toString();
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expireAt = now.plusMinutes(validMinutes);
 
-        AttendanceNonce attendanceNonce = AttendanceNonce.builder()
-                .lessonId(lessonId)
-                .nonce(nonce)
-                .createdAt(now)
-                .expireAt(expireAt)
-                .used(false)
-                .build();
+        AttendanceNonce current = nonceRepository.findTopByLessonIdAndUsedFalseOrderByCreatedAtDesc(lessonId)
+                .orElseGet(() -> AttendanceNonce.builder()
+                        .lessonId(lessonId)
+                        .used(false)
+                        .build());
+        byte[] qrCodeImage = updateNonceAndGenerateQr(current, validMinutes, now);
+        log.info("Generated & cached QR for lessonId {} at {}", lessonId, now);
+        return qrCodeImage;
+    }
 
-        nonceRepository.save(attendanceNonce);
+    private byte[] updateNonceAndGenerateQr(AttendanceNonce nonce, int validMinutes, LocalDateTime now) {
+        nonce.setNonce(UUID.randomUUID().toString());
+        nonce.setCreatedAt(now);
+        nonce.setExpireAt(now.plusMinutes(validMinutes));
+        nonceRepository.save(nonce);
 
-        String payload = String.format(
-                "{\"type\":\"attendance\",\"lessonId\":%d,\"nonce\":\"%s\"}",
-                lessonId, nonce
+        byte[] qrCodeImage = createQrImage(
+                String.format("{\"type\":\"attendance\",\"lessonId\":%d,\"nonce\":\"%s\"}",
+                        nonce.getLessonId(), nonce.getNonce()),
+                350, 350
         );
-
-        return createQrImage(payload, 350, 350);
+        qrCache.put(nonce.getLessonId(), qrCodeImage);
+        return qrCodeImage;
     }
 
     /**
@@ -180,5 +199,60 @@ public class AttendanceService {
 
         attendanceRepository.save(attendance);
         return "Attendance recorded successfully";
+    }
+    @Transactional
+    @Scheduled(fixedRate = 60000)
+    public void regenerateQrCodes() {
+        // Rotate the current active (unused & unexpired) nonce for each lesson instead of inserting a new row
+        LocalDateTime now = LocalDateTime.now();
+        int validMinutes = 1; // QR code validity in minutes (update every minute)
+
+        Map<Long, AttendanceNonce> latestNoncesByLessonId = nonceRepository.findActiveNonces(now).stream()
+                .collect(Collectors.toMap(
+                        AttendanceNonce::getLessonId,
+                        java.util.function.Function.identity(),
+                        (n1, n2) -> n1.getCreatedAt().isAfter(n2.getCreatedAt()) ? n1 : n2
+                ));
+
+        latestNoncesByLessonId.values().forEach(current -> {
+            // rotate the nonce (replace value and extend expiry)
+            current.setNonce(UUID.randomUUID().toString());
+            current.setCreatedAt(now);
+            current.setExpireAt(now.plusMinutes(validMinutes));
+
+            // QR 이미지 재생성 및 캐시 업데이트
+            byte[] qrCodeImage = createQrImage(
+                    String.format("{\"type\":\"attendance\",\"lessonId\":%d,\"nonce\":\"%s\"}",
+                            current.getLessonId(), current.getNonce()),
+                    350, 350
+            );
+            qrCache.put(current.getLessonId(), qrCodeImage);
+            log.info("Rotated QR nonce for lessonId {} at {}", current.getLessonId(), now);
+        });
+        nonceRepository.saveAll(latestNoncesByLessonId.values());
+    }
+    // ✅ 최신 QR을 반환하는 메서드
+    public byte[] getCachedQr(Long lessonId) {
+        byte[] qrImage = qrCache.get(lessonId);
+        if (qrImage == null) {
+            // QR 코드를 찾을 수 없다는 의미로 404를 반환하기 위해 예외를 던집니다.
+            // 추후 `QR_CODE_NOT_FOUND`와 같이 더 적절한 Error Enum을 추가하는 것을 고려해볼 수 있습니다.
+            throw new CustomException(AttendanceError.NOT_FOUND);
+        }
+        return qrImage;
+    }
+
+    @Transactional
+    @Scheduled(cron = "0 0 4 * * ?") // 매일 새벽 4시에 실행
+    public void cleanupNonces() {
+        log.info("Cleaning up used and expired nonces.");
+        nonceRepository.deleteExpiredOrUsed(LocalDateTime.now());
+    }
+
+    public List<AttendanceResponse> getAttendanceByDate(Long lessonId, LocalDate date) {
+        List<Attendance> attendanceList = attendanceRepository.findByLessonIdAndDate(lessonId, date);
+        return attendanceList.stream()
+                .map(this::attendanceToResponse)
+                .toList();
     }
 }

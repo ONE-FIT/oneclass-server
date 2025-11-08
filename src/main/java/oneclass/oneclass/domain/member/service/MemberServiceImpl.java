@@ -1,5 +1,6 @@
 package oneclass.oneclass.domain.member.service;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.entity.Academy;
@@ -7,9 +8,9 @@ import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
+import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.MemberDto;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
-import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.entity.RefreshToken;
@@ -50,7 +51,7 @@ public class MemberServiceImpl implements MemberService {
         Role selectRole = request.role();
         if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
-        // username 중복(선택값이므로 있을 때만 검사)
+        // phone 중복 검사
         if (request.phone() != null && !request.phone().isBlank()
                 && memberRepository.existsByPhone(request.phone())) {
             throw new CustomException(MemberError.CONFLICT, "이미 사용중인 아이디입니다.");
@@ -66,7 +67,13 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
-    // 전화번호 로그인(토큰 발급/회전)
+    // 인터페이스에 선언된 메서드가 있다면 구현(미사용이면 인터페이스에서 제거해도 됨)
+    @Override
+    public void sendResetPasswordCode(Long memberId) {
+        // TODO: 필요 시 구현. 우선 컴파일을 위해 NotImplemented 예외 처리.
+        throw new UnsupportedOperationException("sendResetPasswordCode(Long) is not implemented yet.");
+    }
+
     @Override
     public ResponseToken login(String phone, String password) {
         Member member = memberRepository.findByPhone(phone)
@@ -108,13 +115,11 @@ public class MemberServiceImpl implements MemberService {
         return new ResponseToken(accessToken, refreshTokenString);
     }
 
-    // username 만들기(선택)
     @Override
     public void createUsername(String username) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        String principal = auth.getName(); // username 또는 phone(필터 정책)
+        String principal = auth.getName();
 
-        // principal로 먼저 username 조회, 실패 시 phone 조회
         Member member = memberRepository.findByUsername(principal)
                 .or(() -> memberRepository.findByPhone(principal))
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
@@ -129,12 +134,13 @@ public class MemberServiceImpl implements MemberService {
         member.setUsername(username);
         memberRepository.save(member);
     }
-
     @Override
     public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
-        // 비밀번호/확인 검증은 DTO(@PasswordMatches)에서 처리됨
+        if (newPassword == null || !newPassword.equals(checkPassword)) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+        }
         if (phone == null || phone.isBlank()) {
-            throw new CustomException(MemberError.USERNAME_REQUIRED); // 필요시 PHONE_REQUIRED로 교체
+            throw new CustomException(MemberError.USERNAME_REQUIRED); // 필요하면 PHONE_REQUIRED 새 에러 추가
         }
         if (verificationCode == null || verificationCode.isBlank()) {
             throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
@@ -142,7 +148,7 @@ public class MemberServiceImpl implements MemberService {
 
         String provided = normalizeCode(verificationCode);
 
-        // 인증코드가 phone을 key로 저장된 상태여야 함
+        // 인증코드를 phone을 key로 저장/조회하도록 변경했어야 동작 (기존이 username 기반이면 DB 저장 로직도 함께 바꿔야 함)
         var codeEntry = verificationCodeRepository.findById(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
@@ -262,6 +268,7 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(member);
     }
 
+
     private void signupParent(SignupRequest request) {
         // 자녀 phone 단건 조회 (단일 연결)
         String studentPhone = request.studentPhone();
@@ -303,7 +310,6 @@ public class MemberServiceImpl implements MemberService {
         for (int i = 0; i < t.length(); i++) if (t.charAt(i) == '.') dots++;
         return dots == 4;
     }
-
     //회원가입 코드(선생님)
     @Override
     public void sendSignupVerificationCode(String academyCode, String name) {
@@ -378,7 +384,6 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(parent);
         memberRepository.delete(parent);
     }
-
     @Override
     public TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password) {
         if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty())
@@ -428,6 +433,7 @@ public class MemberServiceImpl implements MemberService {
         return new TeacherStudentsResponse(teacherDto, studentsDto);
     }
 
+
     @Override
     public void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones) {
         if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty()) {
@@ -458,7 +464,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public List<String> listStudentsOfTeacher(String requesterPhone, String teacherPhone) {
         // teachingStudents까지 한 번에 로드
-        Member teacher = memberRepository.findWithTeachingStudentsByPhone(teacherPhone)
+        Member teacher = (Member) memberRepository.findWithTeachingStudentsByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
 
         if (requesterPhone == null || requesterPhone.isBlank()) {
@@ -487,6 +493,7 @@ public class MemberServiceImpl implements MemberService {
         }
         throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
     }
+
 
     @Override
     public List<String> listTeachersOfStudent(String requesterPhone, String studentPhone) {
@@ -534,4 +541,7 @@ public class MemberServiceImpl implements MemberService {
             default -> throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
         }
     }
+
+
+
 }

@@ -4,9 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.dto.request.AcademyLoginRequest;
-import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
 import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
+import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
 import oneclass.oneclass.domain.academy.service.AcademyService;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.error.TokenError;
@@ -34,21 +34,21 @@ public class AcademyController {
 
     @Operation(summary = "로그인", description = "학원계정으로 로그인합니다.")
     @PostMapping("/login")
-    public ResponseEntity<ResponseToken> login(@RequestBody AcademyLoginRequest request) {
+    public ResponseEntity<ResponseToken> login(@RequestBody @Valid AcademyLoginRequest request) {
         ResponseToken token = academyService.login(request.academyCode(), request.academyName(), request.password());
         return ResponseEntity.ok(token);
     }
 
     @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
     @PostMapping("/send-reset-password")
-    public ResponseEntity<Void> sendResetPasswordEmail(@RequestBody ResetAcademyPasswordRequest request) {
+    public ResponseEntity<Void> sendResetPasswordEmail(@RequestBody @Valid ResetAcademyPasswordRequest request) {
         academyService.sendResetPasswordEmail(request.academyCode(), request.academyName());
         return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@RequestBody ResetAcademyPasswordRequest request) {
+    public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetAcademyPasswordRequest request) {
         academyService.resetPassword(request);
         return ResponseEntity.ok().build();
     }

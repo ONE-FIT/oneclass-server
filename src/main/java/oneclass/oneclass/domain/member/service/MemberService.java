@@ -1,7 +1,7 @@
 package oneclass.oneclass.domain.member.service;
 
-import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 
 import java.util.List;
@@ -9,6 +9,7 @@ import java.util.List;
 public interface MemberService {
     void signup(SignupRequest request);
     ResponseToken login(String phone, String password);
+    void sendResetPasswordCode(Long userId);
     void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃

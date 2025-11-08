@@ -23,4 +23,5 @@ public class Attendance {
 
     @Enumerated(EnumType.STRING)
     private AttendanceStatus attendanceStatus;
+    private Long lessonId;
 }

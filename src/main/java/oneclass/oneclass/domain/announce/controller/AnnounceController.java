@@ -1,5 +1,6 @@
 package oneclass.oneclass.domain.announce.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.announce.dto.request.CreateAnnounceRequest;
 import oneclass.oneclass.domain.announce.dto.request.UpdateAnnounceRequest;
@@ -16,7 +17,7 @@ public class AnnounceController {
     private final AnnounceService announceService;
 
     @PostMapping("/create")
-    public AnnounceResponse createAnnounce(@RequestBody CreateAnnounceRequest request) {
+    public AnnounceResponse createAnnounce(@RequestBody @Valid CreateAnnounceRequest request) {
         return announceService.createAnnounce(request);
     }
 
@@ -31,7 +32,7 @@ public class AnnounceController {
     }
 
     @PatchMapping()
-    public AnnounceResponse updateAnnounce(@RequestBody UpdateAnnounceRequest request) {
+    public AnnounceResponse updateAnnounce(@RequestBody @Valid UpdateAnnounceRequest request) {
         return announceService.updateAnnounce(request);
     }
 

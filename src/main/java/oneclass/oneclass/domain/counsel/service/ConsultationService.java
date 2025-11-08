@@ -1,6 +1,5 @@
 package oneclass.oneclass.domain.counsel.service;
 
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.counsel.dto.request.ChangeConsultationStatusRequest;
 import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
@@ -11,6 +10,7 @@ import oneclass.oneclass.domain.counsel.error.CounselError;
 import oneclass.oneclass.domain.counsel.repository.ConsultationRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.EnumMap;
