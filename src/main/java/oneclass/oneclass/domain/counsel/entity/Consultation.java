@@ -34,4 +34,15 @@ public class Consultation {
         if (createAt == null) createAt = LocalDateTime.now();
         if (status == null) status = ConsultationStatus.REQUESTED;
     }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Consultation that)) return false;
+        return id != null && java.util.Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(id);
+    }
 }

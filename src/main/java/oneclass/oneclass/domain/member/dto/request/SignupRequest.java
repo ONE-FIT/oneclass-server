@@ -5,7 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import oneclass.oneclass.domain.member.entity.Role;
+import oneclass.oneclass.global.validation.PasswordMatches;
 
+@PasswordMatches(password = "password", confirm = "checkPassword")
 public record SignupRequest(
         @NotBlank @Size(min = 8, max = 64) String password,
         @NotBlank @Size(min = 8, max = 64) String checkPassword,

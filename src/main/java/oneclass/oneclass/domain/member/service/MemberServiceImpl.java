@@ -50,10 +50,6 @@ public class MemberServiceImpl implements MemberService {
         Role selectRole = request.role();
         if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
-        if (!request.password().equals(request.checkPassword())) {
-            throw new CustomException(MemberError.BAD_REQUEST, "비밀번호 확인이 일치하지 않습니다.");
-        }
-
         // username 중복(선택값이므로 있을 때만 검사)
         if (request.phone() != null && !request.phone().isBlank()
                 && memberRepository.existsByPhone(request.phone())) {
@@ -134,14 +130,11 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(member);
     }
 
-
     @Override
     public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
-        if (newPassword == null || !newPassword.equals(checkPassword)) {
-            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
-        }
+        // 비밀번호/확인 검증은 DTO(@PasswordMatches)에서 처리됨
         if (phone == null || phone.isBlank()) {
-            throw new CustomException(MemberError.USERNAME_REQUIRED); // 필요하면 PHONE_REQUIRED 새 에러 추가
+            throw new CustomException(MemberError.USERNAME_REQUIRED); // 필요시 PHONE_REQUIRED로 교체
         }
         if (verificationCode == null || verificationCode.isBlank()) {
             throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
@@ -149,7 +142,7 @@ public class MemberServiceImpl implements MemberService {
 
         String provided = normalizeCode(verificationCode);
 
-        // 인증코드를 phone을 key로 저장/조회하도록 변경했어야 동작 (기존이 username 기반이면 DB 저장 로직도 함께 바꿔야 함)
+        // 인증코드가 phone을 key로 저장된 상태여야 함
         var codeEntry = verificationCodeRepository.findById(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
@@ -269,7 +262,6 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(member);
     }
 
-
     private void signupParent(SignupRequest request) {
         // 자녀 phone 단건 조회 (단일 연결)
         String studentPhone = request.studentPhone();
@@ -311,6 +303,7 @@ public class MemberServiceImpl implements MemberService {
         for (int i = 0; i < t.length(); i++) if (t.charAt(i) == '.') dots++;
         return dots == 4;
     }
+
     //회원가입 코드(선생님)
     @Override
     public void sendSignupVerificationCode(String academyCode, String name) {
@@ -385,6 +378,7 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(parent);
         memberRepository.delete(parent);
     }
+
     @Override
     public TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password) {
         if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty())
@@ -433,7 +427,6 @@ public class MemberServiceImpl implements MemberService {
 
         return new TeacherStudentsResponse(teacherDto, studentsDto);
     }
-
 
     @Override
     public void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones) {
@@ -495,7 +488,6 @@ public class MemberServiceImpl implements MemberService {
         throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
     }
 
-
     @Override
     public List<String> listTeachersOfStudent(String requesterPhone, String studentPhone) {
         Member student = memberRepository.findStudentWithTeachersAndParentsByPhoneFetchJoin(studentPhone)
@@ -542,7 +534,4 @@ public class MemberServiceImpl implements MemberService {
             default -> throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
         }
     }
-
-
-
 }
