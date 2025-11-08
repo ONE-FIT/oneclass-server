@@ -14,12 +14,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
-    Optional<Member> findByName(String name);
     Optional<Member> findByUsername(String username);
     Optional<Member> findByPhone(String phone);
 
-    @EntityGraph(attributePaths = {"teachers", "teachingStudents", "parents", "parentStudents"})
-    Optional<Member> findWithRelationsByUsername(String username);
+
 
     @Query("select m.phone from Member m")
     Page<String> findAllPhones(Pageable pageable);
@@ -36,6 +34,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findAbsentMembers(LocalDate date);
 
 
+    boolean existsByPhone(String phone);
     boolean existsByUsername(String username);
 
     @Query("SELECT m.phone FROM Member m WHERE m.id IN :studentIds")
@@ -44,7 +43,18 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // 배치 조회
     List<Member> findAllByPhoneIn(Collection<String> phones);
-    List<Member> findAllByUsernameIn(Collection<String> usernames);
+
+    @EntityGraph(attributePaths = {"teachingStudents"})
+    Optional<Member> findWithTeachingStudentsByPhone(String phone);
+
+    @EntityGraph(attributePaths = {"teachers", "parents"})
+    Optional<Member> findWithTeachersAndParentsByPhone(String phone);
+
+    @Query("select distinct m from Member m " +
+            "left join fetch m.teachers " +
+            "left join fetch m.parents " +
+            "where m.phone = :phone")
+    Optional<Member> findStudentWithTeachersAndParentsByPhoneFetchJoin(String phone);
 }
 
 
