@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
 
     // DTO 검증 실패 시
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -37,18 +37,18 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(customException.getStatus())
-                .body(ErrorResponse.of(customException));
+                .body(ApiResponse.error(customException));
     }
 
     // Enum 타입 불일치 등 @RequestParam / @PathVariable 타입 오류 처리
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         if (ex.getRequiredType() == AttendanceStatus.class) {
             CustomException customException =
                     new CustomException(AttendanceError.INVALID_STATUS, ex.getValue() + "는 올바른 출석 상태가 아닙니다.");
             return ResponseEntity
                     .status(customException.getStatus())
-                    .body(ErrorResponse.of(customException));
+                    .body(ApiResponse.error(customException));
         }
 
         // 다른 타입 불일치라면 일반 BAD_REQUEST 처리
@@ -58,19 +58,19 @@ public class GlobalExceptionHandler {
                 "잘못된 요청 파라미터: " + ex.getValue()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(errorResponse);
+                .body(ApiResponse.error(errorResponse));
     }
 
     // 그 외 모든 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        ErrorResponse error = new ErrorResponse(
+        ErrorResponse errorResponse = new ErrorResponse(
                 "INTERNAL_SERVER_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "An unexpected error occurred"
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(error));
+                .body(ApiResponse.error(errorResponse));
     }
 }
