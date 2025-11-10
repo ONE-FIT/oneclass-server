@@ -2,6 +2,7 @@ package oneclass.oneclass.global.exception;
 
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 import oneclass.oneclass.domain.attendance.error.AttendanceError;
+import oneclass.oneclass.global.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -17,9 +18,9 @@ public class GlobalExceptionHandler {
 
     // CustomException 처리
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ErrorResponse> handleCustomException(CustomException e) {
+    public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
         return ResponseEntity.status(e.getStatus())
-                .body(ErrorResponse.of(e));
+                .body(ApiResponse.error(e));
     }
 
     // DTO 검증 실패 시
@@ -62,13 +63,14 @@ public class GlobalExceptionHandler {
 
     // 그 외 모든 예외 처리
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                e.getClass().getSimpleName(),
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+        ErrorResponse error = new ErrorResponse(
+                "INTERNAL_SERVER_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "예상치 못한 에러: " + e.getMessage()
+                "An unexpected error occurred"
         );
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(errorResponse);
+                .body(ApiResponse.error(error));
     }
 }
