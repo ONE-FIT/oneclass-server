@@ -21,7 +21,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -39,39 +38,37 @@ public class AttendanceService {
     private final AttendanceNonceRepository nonceRepository;
 
     // ✅ 오늘 특정 상태의 출석 정보 조회
-    public List<AttendanceResponse> getTodayMembersByStatus(AttendanceStatus status) {
+    public List<AttendanceResponse> getTodayMembersByStatus(Long lessonId, AttendanceStatus status) {
         final LocalDate today = LocalDate.now();
         if (status == AttendanceStatus.ABSENT) {
-            return getTodayAbsentMembers(today); // 결석은 별도 로직
+            return getTodayAbsentMembers(lessonId, today);
         }
-        return attendanceRepository.findByDateAndAttendanceStatus(today, status)
+        return attendanceRepository.findByLessonIdAndDateAndAttendanceStatus(lessonId, today, status)
                 .stream()
                 .map(this::attendanceToResponse)
                 .toList();
     }
 
     // ✅ 오늘 출석한 사람들
-    public List<AttendanceResponse> getTodayPresentMembers() {
-        return getTodayMembersByStatus(AttendanceStatus.PRESENT);
+    public List<AttendanceResponse> getTodayPresentMembers(Long lessonId) {
+        return getTodayMembersByStatus(lessonId, AttendanceStatus.PRESENT);
     }
 
     // ✅ 오늘 결석한 사람들
-    public List<AttendanceResponse> getTodayAbsentMembers(LocalDate date) {
-        List<Member> absentMembers = memberRepository.findAbsentMembers(date);
-
+    public List<AttendanceResponse> getTodayAbsentMembers(Long lessonId, LocalDate date) {
+        List<Member> absentMembers = memberRepository.findAbsentMembersByLessonAndDate(lessonId, date);
         return absentMembers.stream()
-                .map(m -> new AttendanceResponse(m.getName(), AttendanceStatus.ABSENT, date))
+                .map(member -> new AttendanceResponse(member.getName(), AttendanceStatus.ABSENT, date))
                 .toList();
     }
-
     // ✅ 오늘 지각한 사람들
-    public List<AttendanceResponse> getTodayLateMembers() {
-        return getTodayMembersByStatus(AttendanceStatus.LATE);
+    public List<AttendanceResponse> getTodayLateMembers(Long lessonId) {
+        return getTodayMembersByStatus(lessonId, AttendanceStatus.LATE);
     }
 
     // ✅ 오늘 공결한 사람들
-    public List<AttendanceResponse> getTodayExcusedMembers() {
-        return getTodayMembersByStatus(AttendanceStatus.EXCUSED);
+    public List<AttendanceResponse> getTodayExcusedMembers(Long lessonId) {
+        return getTodayMembersByStatus(lessonId, AttendanceStatus.EXCUSED);
     }
 
     // ✅ 특정 학생 출석 기록
@@ -84,10 +81,17 @@ public class AttendanceService {
 
     // ✅ 특정 날짜 출석 기록
     public List<AttendanceResponse> getAttendanceByDate(LocalDate date) {
-        return attendanceRepository.findByDate(date)
-                .stream()
+        List<Attendance> attendanceList = attendanceRepository.findByDate(date);
+        return attendanceList.stream()
                 .map(this::attendanceToResponse)
                 .toList();
+    }
+
+    public List<AttendanceResponse> getAllAttendance(Long lessonId) {
+        List<Attendance> attendanceList = attendanceRepository.findAllByLessonId(lessonId);
+        return attendanceList.stream()
+                .map(AttendanceResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
     // ✅ 엔티티 → DTO 변환 메서드
@@ -243,5 +247,12 @@ public class AttendanceService {
     public void cleanupNonces() {
         log.info("Cleaning up used and expired nonces.");
         nonceRepository.deleteExpiredOrUsed(LocalDateTime.now());
+    }
+
+    public List<AttendanceResponse> getAttendanceByDate(Long lessonId, LocalDate date) {
+        List<Attendance> attendanceList = attendanceRepository.findByLessonIdAndDate(lessonId, date);
+        return attendanceList.stream()
+                .map(this::attendanceToResponse)
+                .toList();
     }
 }

@@ -7,19 +7,17 @@ import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import oneclass.oneclass.domain.sendon.ExecutableWithMessage;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 
 @Deprecated
 @RequiredArgsConstructor
-public class SmsCancelLongMessageScenario extends BaseScenario implements ExecutableWithMessage {
+public class SmsCancelLongMessageScenario extends BaseScenario {
 
     private final MemberRepository memberRepository;
 
     @Deprecated
-    @Override
     public void execute(String message) {
         OffsetDateTime reservationTime = OffsetDateTime.now().plusMinutes(60);
         Reservation reservation = new Reservation(reservationTime.toString());

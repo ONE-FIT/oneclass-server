@@ -1,5 +1,6 @@
 package oneclass.oneclass.domain.member.service;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.entity.Academy;
@@ -7,9 +8,9 @@ import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
+import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.MemberDto;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
-import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.entity.RefreshToken;
@@ -47,21 +48,16 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void signup(SignupRequest request) {
-        Role selectRole = request.getRole();
+        Role selectRole = request.role();
         if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
-        if (request.getPassword() == null || request.getCheckPassword() == null
-                || !request.getPassword().equals(request.getCheckPassword())) {
-            throw new CustomException(MemberError.BAD_REQUEST, "비밀번호 확인이 일치하지 않습니다.");
-        }
-
-        // username 중복(선택값이므로 있을 때만 검사)
-        if (request.getPhone() != null && !request.getPhone().isBlank()
-                && memberRepository.existsByPhone(request.getPhone())) {
+        // phone 중복 검사
+        if (request.phone() != null && !request.phone().isBlank()
+                && memberRepository.existsByPhone(request.phone())) {
             throw new CustomException(MemberError.CONFLICT, "이미 사용중인 아이디입니다.");
         }
 
-        validatePhoneDuplication(request.getPhone());
+        validatePhoneDuplication(request.phone());
 
         switch (selectRole) {
             case TEACHER -> signupTeacher(request);
@@ -71,7 +67,7 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
-    // 전화번호 로그인(토큰 발급/회전)
+
     @Override
     public ResponseToken login(String phone, String password) {
         Member member = memberRepository.findByPhone(phone)
@@ -93,33 +89,31 @@ public class MemberServiceImpl implements MemberService {
                 refreshTokenString = refresh.getToken();
             } else {
                 ResponseToken pair = jwtProvider.generateTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
-                refresh.rotate(pair.getRefreshToken(), LocalDateTime.now().plusDays(28));
-                accessToken = pair.getAccessToken();
-                refreshTokenString = pair.getRefreshToken();
+                refresh.rotate(pair.refreshToken(), LocalDateTime.now().plusDays(28));
+                accessToken = pair.accessToken();
+                refreshTokenString = pair.refreshToken();
             }
         } else {
             ResponseToken pair = jwtProvider.generateTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
             RefreshToken newRt = RefreshToken.builder()
                     .phone(phone)
-                    .token(pair.getRefreshToken())
+                    .token(pair.refreshToken())
                     .expiryDate(LocalDateTime.now().plusDays(28))
                     .build();
             refreshTokenRepository.save(newRt);
 
-            accessToken = pair.getAccessToken();
-            refreshTokenString = pair.getRefreshToken();
+            accessToken = pair.accessToken();
+            refreshTokenString = pair.refreshToken();
         }
 
         return new ResponseToken(accessToken, refreshTokenString);
     }
 
-    // username 만들기(선택)
     @Override
     public void createUsername(String username) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        String principal = auth.getName(); // username 또는 phone(필터 정책)
+        String principal = auth.getName();
 
-        // principal로 먼저 username 조회, 실패 시 phone 조회
         Member member = memberRepository.findByUsername(principal)
                 .or(() -> memberRepository.findByPhone(principal))
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
@@ -134,8 +128,6 @@ public class MemberServiceImpl implements MemberService {
         member.setUsername(username);
         memberRepository.save(member);
     }
-
-
     @Override
     public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
         if (newPassword == null || !newPassword.equals(checkPassword)) {
@@ -228,8 +220,8 @@ public class MemberServiceImpl implements MemberService {
     }
 
     private void signupTeacher(SignupRequest request) {
-        String academyCode = request.getAcademyCode();
-        String userInputCode = request.getVerificationCode();
+        String academyCode = request.academyCode();
+        String userInputCode = request.verificationCode();
 
         if (academyCode == null || academyCode.trim().isEmpty()) throw new CustomException(MemberError.BAD_REQUEST);
         Academy academy = academyRepository.findByAcademyCode(academyCode)
@@ -243,28 +235,28 @@ public class MemberServiceImpl implements MemberService {
         academyVerificationCodeRepository.delete(savedCode);
 
         Member member = Member.builder()
-                .phone(request.getPhone())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
+                .phone(request.phone())
+                .password(passwordEncoder.encode(request.password()))
+                .role(request.role())
                 .academy(academy)
-                .name(request.getName())
+                .name(request.name())
                 .build();
 
         memberRepository.save(member);
     }
 
     private void signupStudent(SignupRequest request) {
-        String academyCode = request.getAcademyCode();
+        String academyCode = request.academyCode();
         if (academyCode == null || academyCode.trim().isEmpty()) throw new CustomException(MemberError.BAD_REQUEST);
         Academy academy = academyRepository.findByAcademyCode(academyCode)
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
         Member member = Member.builder()
-                .phone(request.getPhone())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
+                .phone(request.phone())
+                .password(passwordEncoder.encode(request.password()))
+                .role(request.role())
                 .academy(academy)
-                .name(request.getName())
+                .name(request.name())
                 .build();
 
         memberRepository.save(member);
@@ -273,17 +265,17 @@ public class MemberServiceImpl implements MemberService {
 
     private void signupParent(SignupRequest request) {
         // 자녀 phone 단건 조회 (단일 연결)
-        String studentPhone = request.getStudentPhone();
+        String studentPhone = request.studentPhone();
         if (studentPhone == null || studentPhone.isBlank()) {
             throw new CustomException(MemberError.BAD_REQUEST, "자녀 전화번호가 필요합니다.");
         }
 
         // 부모 생성 (연관관계는 나중에 연결)
         Member parent = Member.builder()
-                .phone(request.getPhone())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
-                .name(request.getName())
+                .phone(request.phone())
+                .password(passwordEncoder.encode(request.password()))
+                .role(request.role())
+                .name(request.name())
                 .build();
 
         // 자녀 조회 (phone 기준, 단건)
@@ -430,7 +422,7 @@ public class MemberServiceImpl implements MemberService {
 
         List<MemberDto> studentsDto = teacher.getTeachingStudents().stream()
                 .map(s -> new MemberDto(s.getId(), s.getUsername(), s.getName(), s.getPhone(), s.getRole()))
-                .sorted(Comparator.comparing(MemberDto::getName, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+                .sorted(Comparator.comparing(MemberDto::name, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
 
         return new TeacherStudentsResponse(teacherDto, studentsDto);
     }
