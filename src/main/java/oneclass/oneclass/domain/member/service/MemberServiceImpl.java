@@ -67,12 +67,6 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
-    // 인터페이스에 선언된 메서드가 있다면 구현(미사용이면 인터페이스에서 제거해도 됨)
-    @Override
-    public void sendResetPasswordCode(Long memberId) {
-        // TODO: 필요 시 구현. 우선 컴파일을 위해 NotImplemented 예외 처리.
-        throw new UnsupportedOperationException("sendResetPasswordCode(Long) is not implemented yet.");
-    }
 
     @Override
     public ResponseToken login(String phone, String password) {
