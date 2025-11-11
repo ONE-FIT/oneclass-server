@@ -16,6 +16,8 @@ public class Consultation {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String title;
+
     private String name;
     private String phone;
     private String parentPhone;
@@ -33,14 +35,10 @@ public class Consultation {
 
     private LocalDateTime createAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private ConsultationStatus status;
 
     @PrePersist
     void onCreate() {
         if (createAt == null) createAt = LocalDateTime.now();
-        if (status == null) status = ConsultationStatus.REQUESTED;
     }
     @Override
     public boolean equals(Object o) {

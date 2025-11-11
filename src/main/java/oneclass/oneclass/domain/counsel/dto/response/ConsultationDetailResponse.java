@@ -8,8 +8,7 @@ public record ConsultationDetailResponse(
         String phone,
         String type,
         String subject,
-        String description,
-        ConsultationStatus status
+        String description
 ) {
     public static ConsultationDetailResponse from(Consultation consultation) {
         return new ConsultationDetailResponse(
@@ -17,8 +16,7 @@ public record ConsultationDetailResponse(
                 consultation.getPhone(),
                 consultation.getType(),
                 consultation.getSubject(),
-                consultation.getDescription(),
-                consultation.getStatus()
+                consultation.getDescription()
         );
     }
 }

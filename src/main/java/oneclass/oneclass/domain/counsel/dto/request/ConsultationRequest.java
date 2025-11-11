@@ -15,5 +15,6 @@ public record ConsultationRequest(
         String subject,
         String description,
         int age,
-        String gender
+        String gender,
+        String title
 ) { }
