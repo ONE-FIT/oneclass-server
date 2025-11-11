@@ -40,8 +40,9 @@ public class LessonController {
     @GetMapping("/title/{title}")
     @Operation(summary = "검색",
             description = "강의를 title로 검색합니다.")
-    public ResponseEntity<ApiResponse<LessonResponse>> findLessonByTitle(@PathVariable String title) {
-        LessonResponse response = lessonService.findLessonByTitle(title);
+
+    public ResponseEntity<List<ApiResponse<LessonResponse>>> findLessonByTitle(@PathVariable String title) {
+        List<LessonResponse> response = lessonService.findLessonByTitle(title);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

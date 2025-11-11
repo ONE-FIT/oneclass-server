@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.task.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.lesson.dto.response.LessonResponse;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
@@ -105,10 +106,11 @@ public class TaskService {
         return TaskResponse.of(task);
     }
 
-    public TaskResponse findTaskByTitle(String title) {
-        Task task = taskRepository.findByTitle(title)
-                .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
-        return TaskResponse.of(task);
+    public List<TaskResponse> findTaskByTitle(String title) {
+        return taskRepository.findByTitle(title)
+                .stream()
+                .map(TaskResponse::of)
+                .toList();
     }
 
     public TaskResponse updateTask(UpdateTaskRequest request) {

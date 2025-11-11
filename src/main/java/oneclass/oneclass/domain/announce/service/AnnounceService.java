@@ -48,10 +48,11 @@ public class AnnounceService {
         return AnnounceResponse.of(announce);
     }
 
-    public AnnounceResponse findAnnounceByTitle(String title) {
-        Announce announce = announceRepository.findByTitle(title)
-                .orElseThrow(() -> new CustomException(AnnounceError.NOT_FOUND));
-        return AnnounceResponse.of(announce);
+    public List<AnnounceResponse> findAnnouncesByTitle(String title) {
+        return announceRepository.findByTitle(title)
+                .stream()
+                .map(AnnounceResponse::of)
+                .toList();
     }
 
     @Transactional

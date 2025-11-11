@@ -36,10 +36,11 @@ public class AnnounceController {
     }
 
     @Operation(summary = "검색",
-            description = "공지를 제목로 찾습니다")
+            description = "제목으로 공지를 검색합니다 (동일 제목 여러 개 가능)")
     @GetMapping("/title/{title}")
-    public ResponseEntity<ApiResponse<AnnounceResponse>> findAnnounceByTitle(@PathVariable String title) {
-        AnnounceResponse response = announceService.findAnnounceByTitle(title);
+
+    public ResponseEntity<ApiResponse<List<AnnounceResponse>>> findAnnounceByTitle(@PathVariable String title) {
+        List<AnnounceResponse> response = announceService.findAnnounceByTitle(title);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
