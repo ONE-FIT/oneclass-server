@@ -37,7 +37,7 @@ public class LessonController {
     @GetMapping("/title/{title}")
     @Operation(summary = "검색",
             description = "강의를 title로 검색합니다.")
-    public LessonResponse findLessonByTitle(@PathVariable String title) {
+    public List<LessonResponse> findLessonByTitle(@PathVariable String title) {
         return lessonService.findLessonByTitle(title);
     }
 

@@ -32,10 +32,10 @@ public class AnnounceController {
     }
 
     @Operation(summary = "검색",
-            description = "공지를 제목로 찾습니다")
+            description = "제목으로 공지를 검색합니다 (동일 제목 여러 개 가능)")
     @GetMapping("/title/{title}")
-    public AnnounceResponse findAnnounceByTitle(@PathVariable String title) {
-        return announceService.findAnnounceByTitle(title);
+    public List<AnnounceResponse> findAnnounceByTitle(@PathVariable String title) {
+        return announceService.findAnnouncesByTitle(title);
     }
 
     @Operation(summary = "공지 수정",

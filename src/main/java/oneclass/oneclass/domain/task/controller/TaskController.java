@@ -48,7 +48,7 @@ public class TaskController {
     @GetMapping("/title/{title}")
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER','STUDENT')")
     @Operation(summary = "제목으로 과제 검색", description = "과제를 제목으로 검색합니다.")
-    public TaskResponse findTaskByTitle(@PathVariable String title) {
+    public List<TaskResponse> findTaskByTitle(@PathVariable String title) {
         return taskService.findTaskByTitle(title);
     }
 
