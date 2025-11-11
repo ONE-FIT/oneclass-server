@@ -9,7 +9,6 @@ spring:
       - optional:file:.env.${spring.profiles.active:dev}[.properties]
 
 server:
-  port: 8080
   servlet:
     context-path: /
 
