@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 public class VerificationCode {
     @Id
-    private String usernameOrEmail;
+    private String phone;
     private String code;
     private LocalDateTime expiry;
 }

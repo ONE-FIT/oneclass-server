@@ -22,16 +22,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * JwtFilter
- * - Authorization: Bearer <token> 을 읽어 인증 컨텍스트를 채웁니다.
- * - JWE(5 세그먼트) 토큰이면 JwtProvider.decryptToken(...)으로 복호화 후 검증합니다.
- * - role/roles 클레임을 기반으로 GrantedAuthority를 구성합니다.
- * 주의:
- * - principal은 username(String)으로 설정합니다.
- *   컨트롤러에서는 Authentication.getName() 으로 username을 읽어 쓰세요.
- *   (만약 @AuthenticationPrincipal CustomUserDetails 가 필요하면 아래 주석 참조)
- */
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
@@ -44,7 +34,6 @@ public class JwtFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
 
-        // Preflight
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             chain.doFilter(request, response);
             return;
@@ -57,29 +46,48 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         try {
-            // JWE(암호화) 토큰이면 먼저 복호화해서 JWS로 변환
             String candidate = isLikelyJwe(token) ? jwtProvider.decryptToken(token) : token;
 
-            // 유효성 검증 (만료/서명 등)
             jwtProvider.validateToken(candidate);
 
-            // 이미 인증돼 있지 않다면 컨텍스트 설정
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 Claims claims = jwtProvider.getAllClaims(candidate);
-                String username = claims.getSubject();
+
+                // subject는 phone
+                String phone = claims.getSubject();
+
+                // 선택적 username/name 클레임
+                String username = null;
+                Object uo = claims.get(JwtProvider.USERNAME_CLAIM_KEY);
+                if (uo != null) {
+                    String s = uo.toString();
+                    if (!s.isBlank()) username = s;
+                }
+                String name = null;
+                Object no = claims.get(JwtProvider.NAME_CLAIM_KEY);
+                if (no != null) {
+                    String s = no.toString();
+                    if (!s.isBlank()) name = s;
+                }
+
+                // principal: username이 있으면 username, 없으면 phone
+                String principalName = (username != null && !username.isBlank()) ? username : phone;
+
                 Collection<? extends GrantedAuthority> authorities = toAuthorities(claims);
 
-                // 기본: principal을 username(String)으로 설정
                 UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+                        new UsernamePasswordAuthenticationToken(principalName, null, authorities);
 
+                // 필요하다면 phone/username/name을 리퀘스트 어트리뷰트로 내려서 컨트롤러/서비스에서 사용 가능하게 함
+                request.setAttribute("auth.phone", phone);
+                if (username != null) request.setAttribute("auth.username", username);
+                if (name != null) request.setAttribute("auth.name", name);
 
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
         } catch (Exception e) {
-            // 토큰이 잘못되었거나 만료된 경우: 컨텍스트를 건드리지 않고 다음 필터로 넘김
             log.debug("JWT invalid or parsing failed: {}", e.getMessage());
         }
 
@@ -91,7 +99,6 @@ public class JwtFilter extends OncePerRequestFilter {
         return (b != null && b.startsWith("Bearer ")) ? b.substring(7).trim() : null;
     }
 
-    // JWE compact serialization은 5개의 세그먼트를 가짐
     private boolean isLikelyJwe(String t) {
         if (t == null) return false;
         int dot = 0;
@@ -102,16 +109,12 @@ public class JwtFilter extends OncePerRequestFilter {
     private Collection<? extends GrantedAuthority> toAuthorities(Claims claims) {
         List<GrantedAuthority> list = new ArrayList<>();
 
-        // 1) 단일 역할: "role": "ADMIN" | "ROLE_ADMIN"
-        Object roleObj = claims.get("role");
+        Object roleObj = claims.get(JwtProvider.ROLE_CLAIM_KEY);
         if (roleObj instanceof String rs && !rs.isBlank()) {
             list.add(new SimpleGrantedAuthority(normalizeRole(rs)));
         }
 
-        // 2) 다중 역할:
-        //    "roles": ["ADMIN","TEACHER"] or ["ROLE_ADMIN"]
-        //    "roles": "ADMIN,TEACHER"
-        Object rolesObj = claims.get("roles");
+        Object rolesObj = claims.get(JwtProvider.ROLES_CLAIM_KEY);
         if (rolesObj instanceof Collection<?> col) {
             for (Object o : col) {
                 if (o != null) list.add(new SimpleGrantedAuthority(normalizeRole(o.toString())));
@@ -123,12 +126,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     .forEach(r -> list.add(new SimpleGrantedAuthority(normalizeRole(r))));
         }
 
-        if (list.isEmpty()) {
-            // 정책상 기본 권한
-            list.add(new SimpleGrantedAuthority("ROLE_USER"));
-        }
-
-        // 중복 제거
+        if (list.isEmpty()) list.add(new SimpleGrantedAuthority("ROLE_USER"));
         return list.stream().distinct().collect(Collectors.toList());
     }
 

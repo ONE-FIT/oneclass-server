@@ -2,11 +2,14 @@ package oneclass.oneclass.domain.counsel.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
 public class Consultation {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,5 +33,16 @@ public class Consultation {
     void onCreate() {
         if (createAt == null) createAt = LocalDateTime.now();
         if (status == null) status = ConsultationStatus.REQUESTED;
+    }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Consultation that)) return false;
+        return id != null && java.util.Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(id);
     }
 }
