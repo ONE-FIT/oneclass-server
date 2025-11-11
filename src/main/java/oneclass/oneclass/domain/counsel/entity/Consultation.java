@@ -23,7 +23,7 @@ public class Consultation {
     private String subject;
     private String description;
 
-    private String age;
+    private int age;
     private String gender;
 
     @Enumerated(EnumType.STRING)

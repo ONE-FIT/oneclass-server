@@ -14,6 +14,6 @@ public record ConsultationRequest(
         @NotBlank String type,
         String subject,
         String description,
-        String age,
+        int age,
         String gender
 ) { }
