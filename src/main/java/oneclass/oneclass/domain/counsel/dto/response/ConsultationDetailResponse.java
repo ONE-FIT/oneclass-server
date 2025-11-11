@@ -1,7 +1,6 @@
 package oneclass.oneclass.domain.counsel.dto.response;
 
 import oneclass.oneclass.domain.counsel.entity.Consultation;
-import oneclass.oneclass.domain.counsel.entity.ConsultationStatus;
 
 public record ConsultationDetailResponse(
         String name,

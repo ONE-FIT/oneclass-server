@@ -5,18 +5,13 @@ import oneclass.oneclass.domain.counsel.dto.request.ChangeConsultationStatusRequ
 import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
 import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
-import oneclass.oneclass.domain.counsel.entity.ConsultationStatus;
 import oneclass.oneclass.domain.counsel.error.CounselError;
 import oneclass.oneclass.domain.counsel.repository.ConsultationRepository;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor

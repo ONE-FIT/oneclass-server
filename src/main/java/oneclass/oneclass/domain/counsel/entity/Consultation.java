@@ -3,6 +3,7 @@ package oneclass.oneclass.domain.counsel.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +17,7 @@ public class Consultation {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "제목을 입력해주세요.")
     private String title;
 
     private String name;
@@ -30,8 +32,9 @@ public class Consultation {
     @Min(value = 0, message = "나이는 0 이상이어야 합니다.")
     private int age;
 
-    @NotBlank(message = "성별을 입력해주세요.")
-    private String gender;
+    @Enumerated(EnumType.STRING)
+    @NotNull
+    private Gender gender;
 
     private LocalDateTime createAt;
 

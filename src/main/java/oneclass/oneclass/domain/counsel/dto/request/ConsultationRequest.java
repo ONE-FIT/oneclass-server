@@ -3,6 +3,7 @@ package oneclass.oneclass.domain.counsel.dto.request;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import oneclass.oneclass.domain.counsel.entity.Gender;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +16,6 @@ public record ConsultationRequest(
         String subject,
         String description,
         int age,
-        String gender,
+        Gender gender,
         String title
 ) { }
