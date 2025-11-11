@@ -32,7 +32,7 @@ spring:
 
   # ✅ HTTPS 적용
 server:
-  port: 443
+  port: ${EC2_PORT}
   ssl:
     key-store: /home/ubuntu/keystore.p12
     key-store-password: ${SSL_PASSWORD}
