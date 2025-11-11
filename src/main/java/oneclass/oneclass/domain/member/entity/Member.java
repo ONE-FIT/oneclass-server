@@ -3,6 +3,8 @@ package oneclass.oneclass.domain.member.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
 
@@ -30,7 +32,8 @@ public class Member {
     @Column(nullable = false)
     private String name;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 11)
+    @Pattern(regexp = "^\\d{10,11}$")
     private String phone;
 
     @Enumerated(EnumType.STRING)

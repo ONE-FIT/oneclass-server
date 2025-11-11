@@ -32,7 +32,7 @@ public class ConsultationController {
     @Operation(summary = "상담 날짜 확정", description = "상담 날짜를 확정합니다.")
     @PostMapping("/change-status")
     public ResponseEntity<ApiResponse<Consultation>> changeStatus(@RequestBody @Valid ChangeConsultationStatusRequest request) {
-        Consultation consultation = consultationService.changeStatus(request);
+        Consultation consultation = consultationService.updateConsultation(request);
         return ResponseEntity.ok(ApiResponse.success(consultation));
     }
 

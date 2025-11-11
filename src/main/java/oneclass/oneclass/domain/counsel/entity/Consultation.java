@@ -1,6 +1,9 @@
 package oneclass.oneclass.domain.counsel.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +17,10 @@ public class Consultation {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "제목을 입력해주세요.")
+    @Column(nullable = false)
+    private String title;
+
     private String name;
     private String phone;
     private String parentPhone;
@@ -23,16 +30,19 @@ public class Consultation {
     private String subject;
     private String description;
 
-    private LocalDateTime createAt;
+    @Min(value = 0, message = "나이는 0 이상이어야 합니다.")
+    private int age;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private ConsultationStatus status;
+    @NotNull(message = "성별을 입력해주세요.")
+    private Gender gender;
+
+    private LocalDateTime createAt;
+
 
     @PrePersist
     void onCreate() {
         if (createAt == null) createAt = LocalDateTime.now();
-        if (status == null) status = ConsultationStatus.REQUESTED;
     }
     @Override
     public boolean equals(Object o) {

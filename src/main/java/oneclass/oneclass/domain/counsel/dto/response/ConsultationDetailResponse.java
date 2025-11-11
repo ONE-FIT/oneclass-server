@@ -1,7 +1,7 @@
 package oneclass.oneclass.domain.counsel.dto.response;
 
 import oneclass.oneclass.domain.counsel.entity.Consultation;
-import oneclass.oneclass.domain.counsel.entity.ConsultationStatus;
+import oneclass.oneclass.domain.counsel.entity.Gender;
 
 public record ConsultationDetailResponse(
         String name,
@@ -9,7 +9,8 @@ public record ConsultationDetailResponse(
         String type,
         String subject,
         String description,
-        ConsultationStatus status
+        int age,
+        Gender gender
 ) {
     public static ConsultationDetailResponse from(Consultation consultation) {
         return new ConsultationDetailResponse(
@@ -18,7 +19,8 @@ public record ConsultationDetailResponse(
                 consultation.getType(),
                 consultation.getSubject(),
                 consultation.getDescription(),
-                consultation.getStatus()
+                consultation.getAge(),
+                consultation.getGender()
         );
     }
 }
