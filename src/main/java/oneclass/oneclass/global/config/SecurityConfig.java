@@ -52,7 +52,6 @@ public class SecurityConfig {
 
             "/swagger-ui.html",
             "/swagger-ui/index.html",
-            "sms-test"
     };
 
     @Bean
