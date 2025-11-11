@@ -27,7 +27,6 @@ public class Consultation {
     private String gender;
 
     @Enumerated(EnumType.STRING)
-
     private LocalDateTime createAt;
 
     @Enumerated(EnumType.STRING)
