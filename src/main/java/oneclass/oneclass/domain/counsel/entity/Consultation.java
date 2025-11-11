@@ -1,6 +1,8 @@
 package oneclass.oneclass.domain.counsel.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,10 +25,12 @@ public class Consultation {
     private String subject;
     private String description;
 
+    @Min(value = 0, message = "나이는 0 이상이어야 합니다.")
     private int age;
+
+    @NotBlank(message = "성별을 입력해주세요.")
     private String gender;
 
-    @Enumerated(EnumType.STRING)
     private LocalDateTime createAt;
 
     @Enumerated(EnumType.STRING)
