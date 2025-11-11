@@ -1,0 +1,132 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << 'ENV_EOF'
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}
+          SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          SMS_MOBILE_FROM=${{ secrets.SMS_MOBILE_FROM }}
+          USER_ID=${{ secrets.USER_ID }}
+          USER_APIKEY=${{ secrets.USER_APIKEY }}
+          ENV_EOF
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Make .ssh directory
+        run: mkdir -p ~/.ssh
+
+      - name: Add EC2 to known_hosts
+        run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy JAR to EC2
+        run: scp -i key.pem build/libs/oneclass-0.0.1-SNAPSHOT.jar ubuntu@${{ secrets.EC2_HOST }}:~/
+
+      - name: Copy .env file to EC2
+        run: scp -i key.pem .env ubuntu@${{ secrets.EC2_HOST }}:~/
+
+      - name: Create deployment script
+        run: |
+          cat > deploy.sh << 'SCRIPT_END'
+          #!/bin/bash
+
+          echo "=== Starting deployment ==="
+
+          # Stop ALL java processes (더 확실한 방법)
+          echo "Stopping existing application..."
+          pkill -9 java || true
+          sleep 3
+
+          # 혹시 남아있는 프로세스 확인 및 제거
+          if pgrep -f "oneclass.*\.jar" > /dev/null; then
+            echo "Force killing remaining processes..."
+            pkill -9 -f "oneclass.*\.jar"
+            sleep 2
+          fi
+
+          # 프로세스가 완전히 종료되었는지 확인
+          if pgrep java > /dev/null; then
+            echo "⚠️ Warning: Java process still running!"
+            ps aux | grep java
+          else
+            echo "✅ All Java processes stopped"
+          fi
+
+          # Start application in background
+          echo "Starting new application..."
+          cd /home/ubuntu
+          nohup java -jar /home/ubuntu/oneclass-0.0.1-SNAPSHOT.jar > /home/ubuntu/app.log 2>&1 &
+
+          sleep 2
+
+          # 새 프로세스 확인
+          if pgrep -f "oneclass.*\.jar" > /dev/null; then
+            echo "✅ Application started successfully"
+            ps aux | grep java | grep -v grep
+          else
+            echo "❌ Failed to start application"
+            tail -n 20 /home/ubuntu/app.log
+          fi
+
+          echo "=== Deployment script completed ==="
+          SCRIPT_END
+
+          chmod +x deploy.sh
+
+      - name: Copy deployment script to EC2
+        run: scp -i key.pem deploy.sh ubuntu@${{ secrets.EC2_HOST }}:~/
+
+      - name: Execute deployment on EC2
+        run: ssh -i key.pem ubuntu@${{ secrets.EC2_HOST }} 'bash ~/deploy.sh'
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting 10 seconds for application to fully start..."
+          sleep 10
+          ssh -i key.pem ubuntu@${{ secrets.EC2_HOST }} '
+            echo "=== Java Process Status ==="
+            if ps aux | grep "[j]ava -jar ~/oneclass-0.0.1-SNAPSHOT.jar" > /dev/null; then
+              echo "✅ Application is running!"
+              ps aux | grep "[j]ava -jar ~/oneclass-0.0.1-SNAPSHOT.jar"
+            else
+              echo "⚠️ Warning: Java process not found"
+            fi
+            echo ""
+            echo "=== Last 50 lines of application log ==="
+            tail -n 50 ~/app.log 2>/dev/null || echo "⚠️ Log file not found"
+          '
+
+      - name: Deployment completed
+        run: echo "✅ Deployment to EC2 completed successfully!"

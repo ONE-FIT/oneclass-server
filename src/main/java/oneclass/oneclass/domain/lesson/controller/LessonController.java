@@ -2,11 +2,13 @@ package oneclass.oneclass.domain.lesson.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.dto.request.CreateLessonRequest;
 import oneclass.oneclass.domain.lesson.dto.request.UpdateLessonRequest;
 import oneclass.oneclass.domain.lesson.dto.response.LessonResponse;
 import oneclass.oneclass.domain.lesson.service.LessonService;
+import oneclass.oneclass.global.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +17,6 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/lesson")
-@CrossOrigin("*")
 @Tag(name = "Lesson API", description = "레슨 관련 API")
 public class LessonController {
     private final LessonService lessonService;
@@ -23,52 +24,59 @@ public class LessonController {
     @PostMapping("/create")
     @Operation(summary = "생성",
             description = "강의를 만듭니다.")
-    public LessonResponse createLesson(@RequestBody CreateLessonRequest request) {
-        return lessonService.createLesson(request);
+    public ResponseEntity<ApiResponse<LessonResponse>> createLesson(@RequestBody @Valid CreateLessonRequest request) {
+        LessonResponse response = lessonService.createLesson(request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/id/{lessonId}")
     @Operation(summary = "검색",
             description = "강의를 id로 찾습니다")
-    public LessonResponse findLessonById(@PathVariable Long lessonId) {
-        return lessonService.findLessonById(lessonId);
+    public ResponseEntity<ApiResponse<LessonResponse>> findLessonById(@PathVariable Long lessonId) {
+        LessonResponse response = lessonService.findLessonById(lessonId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/title/{title}")
     @Operation(summary = "검색",
             description = "강의를 title로 검색합니다.")
-    public List<LessonResponse> findLessonByTitle(@PathVariable String title) {
-        return lessonService.findLessonByTitle(title);
+
+    public ResponseEntity<List<ApiResponse<LessonResponse>>> findLessonByTitle(@PathVariable String title) {
+        List<LessonResponse> response = lessonService.findLessonByTitle(title);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PatchMapping()
     @Operation(summary = "수정",
             description = "강의를 수정합니다.")
-    public LessonResponse updateLesson(@RequestBody UpdateLessonRequest request) {
-        return lessonService.updateLesson(request);
+    public ResponseEntity<ApiResponse<LessonResponse>> updateLesson(@RequestBody @Valid UpdateLessonRequest request) {
+        LessonResponse response = lessonService.updateLesson(request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @DeleteMapping("/{lessonId}")
     @Operation(summary = "강의 삭제",
             description = "강의를 삭제합니다.")
-    public void deleteLesson(@PathVariable Long lessonId) {
+    public ResponseEntity<ApiResponse<Void>> deleteLesson(@PathVariable Long lessonId) {
         lessonService.deleteLesson(lessonId);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @GetMapping("/all")
     @Operation(summary = "검색",
             description = "모든 강의를 검색합니다.")
-    public List<LessonResponse> findAllLessons() {
-        return lessonService.findAll();
+    public ResponseEntity<ApiResponse<List<LessonResponse>>> findAllLessons() {
+        List<LessonResponse> responses = lessonService.findAll();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     @PostMapping("/{lessonId}/students/{id}")
     @Operation(summary = "강의에 학생 추가",
             description = "강의에 학생을 추가합니다.")
-    public ResponseEntity<String> addStudentToLesson(
+    public ResponseEntity<ApiResponse<String>> addStudentToLesson(
             @PathVariable Long lessonId,
             @PathVariable Long id) {
         lessonService.addStudentToLesson(lessonId, id);
-        return ResponseEntity.ok("학생이 수업에 등록되었습니다.");
+        return ResponseEntity.ok(ApiResponse.success("학생이 수업에 등록되었습니다."));
     }
 }
