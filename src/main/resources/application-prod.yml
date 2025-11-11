@@ -34,7 +34,7 @@ spring:
 server:
   port: 443
   ssl:
-    key-store: /etc/letsencrypt/live/onefit.xeneric.kr/keystore.p12
+    key-store: /home/ubuntu/keystore.p12
     key-store-password: ${SSL_PASSWORD}
     keyStoreType: PKCS12
     keyAlias: tomcat
