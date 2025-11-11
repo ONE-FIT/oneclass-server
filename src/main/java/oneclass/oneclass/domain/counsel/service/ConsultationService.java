@@ -12,7 +12,6 @@ import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +33,8 @@ public class ConsultationService {
         con.setType(request.type());
         con.setSubject(request.subject());
         con.setDescription(request.description());
+        con.setAge(request.age());
+        con.setGender(request.gender());
         return consultationRepository.save(con);
     }
 

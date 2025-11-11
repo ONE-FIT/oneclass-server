@@ -23,6 +23,11 @@ public class Consultation {
     private String subject;
     private String description;
 
+    private String age;
+    private String gender;
+
+    @Enumerated(EnumType.STRING)
+
     private LocalDateTime createAt;
 
     @Enumerated(EnumType.STRING)
