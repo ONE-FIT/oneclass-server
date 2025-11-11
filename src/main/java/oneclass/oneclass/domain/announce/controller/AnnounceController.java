@@ -25,35 +25,35 @@ public class AnnounceController {
     }
 
     @Operation(summary = "검색",
-            description = "강의를 id로 찾습니다")
+            description = "공지를 id로 찾습니다")
     @GetMapping("/id/{id}")
     public AnnounceResponse findAnnounceById(@PathVariable Long id) {
         return announceService.findAnnounceById(id);
     }
 
     @Operation(summary = "검색",
-            description = "강의를 제목로 찾습니다")
+            description = "공지를 제목로 찾습니다")
     @GetMapping("/title/{title}")
     public AnnounceResponse findAnnounceByTitle(@PathVariable String title) {
         return announceService.findAnnounceByTitle(title);
     }
 
-    @Operation(summary = "강의 수정",
-            description = "강의를 수정합니다")
+    @Operation(summary = "공지 수정",
+            description = "공지를 수정합니다")
     @PatchMapping()
     public AnnounceResponse updateAnnounce(@RequestBody UpdateAnnounceRequest request) {
         return announceService.updateAnnounce(request);
     }
 
-    @Operation(summary = "강의 삭제",
-            description = "강의를 삭제합니다")
+    @Operation(summary = "공지 삭제",
+            description = "공지를 삭제합니다")
     @DeleteMapping("/{id}")
     public void deleteAnnounce(@PathVariable Long id) {
         announceService.deleteAnnounce(id);
     }
 
     @Operation(summary = "검색",
-            description = "강의를 모두 찾습니다")
+            description = "공지를 모두 찾습니다")
     @GetMapping("/all")
     public List<AnnounceResponse> findAll() {
         return announceService.findAll();
