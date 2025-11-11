@@ -4,7 +4,6 @@ spring:
       on-profile: prod
 
   datasource:
-    # 운영 변수명도 dev와 동일 키로 맞추는 것을 권장합니다.
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
@@ -31,11 +30,20 @@ spring:
           starttls.enable: true
           ssl.trust: smtp.gmail.com
 
+  # ✅ HTTPS 적용
+server:
+  port: 443
+  ssl:
+    key-store: /etc/letsencrypt/live/onefit.xeneric.kr/keystore.p12
+    key-store-password: ${SSL_PASSWORD}
+    keyStoreType: PKCS12
+    keyAlias: tomcat
+
+
 logging:
   level:
     org.hibernate.SQL: WARN
     org.springframework.security: WARN
 
 jwt:
-  # 운영에서는 반드시 환경변수 제공(미제공 시 실패하도록 fallback 제거)
   secret: ${JWT_SECRET}
