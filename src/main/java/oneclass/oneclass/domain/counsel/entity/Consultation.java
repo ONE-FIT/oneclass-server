@@ -18,6 +18,7 @@ public class Consultation {
     private Long id;
 
     @NotBlank(message = "제목을 입력해주세요.")
+    @Column(nullable = false)
     private String title;
 
     private String name;
@@ -33,7 +34,7 @@ public class Consultation {
     private int age;
 
     @Enumerated(EnumType.STRING)
-    @NotNull
+    @NotNull(message = "성별을 입력해주세요.")
     private Gender gender;
 
     private LocalDateTime createAt;

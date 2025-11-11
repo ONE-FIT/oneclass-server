@@ -8,5 +8,4 @@ import java.util.List;
 
 public interface ConsultationRepository extends JpaRepository<Consultation, Long> {
     List<Consultation> findByNameAndPhone(String name, String phone);
-    List<Consultation> findByStatus(Gender status);
 }

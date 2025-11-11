@@ -24,7 +24,7 @@ public class ConsultationService {
         Consultation con = new Consultation();
         con.setTitle(request.title());
         con.setName(request.name());//학생이름
-        con.setParentPhone(request.parentPhone());//학부모 전화번호
+        con.setPhone(request.phone());//학부모 전화번호
         con.setDate(request.date());//희망하는 날짜 ex) 2025-05-23 15:45
         con.setType(request.type());
         con.setSubject(request.subject());
@@ -37,7 +37,7 @@ public class ConsultationService {
 
 
     @Transactional
-    public Consultation changeStatus(ChangeConsultationStatusRequest request) {
+    public Consultation updateConsultation(ChangeConsultationStatusRequest request) {
         Consultation consultation = resolveTarget(request);
         applyOptionalUpdates(consultation, request);
         return consultationRepository.save(consultation);
