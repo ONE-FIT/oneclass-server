@@ -31,6 +31,9 @@ spring:
           starttls.enable: true
           ssl.trust: smtp.gmail.com
 
+server:
+  port: 8080
+
 logging:
   level:
     org.hibernate.SQL: DEBUG

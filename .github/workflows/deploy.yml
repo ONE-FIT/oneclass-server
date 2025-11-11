@@ -36,6 +36,7 @@ jobs:
           USER_ID=${{ secrets.USER_ID }}
           USER_APIKEY=${{ secrets.USER_APIKEY }}
           SSL_PASSWORD=${{ secrets.SSL_PASSWORD }}
+          EC2_PORT=${{ secrets.EC2_PORT }}
           ENV_EOF
 
       - name: Build with Gradle
@@ -65,6 +66,11 @@ jobs:
           set -e
 
           echo "=== Starting deployment ==="
+
+          # 0️⃣ Load environment variables from .env
+          if [ -f "/home/ubuntu/.env" ]; then
+            export $(grep -v '^#' /home/ubuntu/.env | xargs)
+          fi
 
           DOMAIN="onefit.xeneric.kr"
           EMAIL="${{ secrets.LETSENCRYPT_EMAIL }}"
@@ -99,8 +105,8 @@ jobs:
 
           sudo chown ubuntu:ubuntu $KEYSTORE_PATH
 
-          # 5️⃣ Start Spring Boot on 443
-          echo "=== Launching Spring Boot on 443 ==="
+          # 5️⃣ Start Spring Boot on HTTPS port
+          echo "=== Launching Spring Boot on port $EC2_PORT ==="
           nohup sudo java -jar $JAR_PATH > /home/ubuntu/app.log 2>&1 &
 
           sleep 5
