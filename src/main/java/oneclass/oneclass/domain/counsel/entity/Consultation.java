@@ -20,9 +20,10 @@ public class Consultation {
     @Column(nullable = false)
     private String title;
 
+    @NotNull
     private String name;
+    @NotNull
     private String phone;
-    private String parentPhone;
 
     private LocalDateTime date;
     private String type;
