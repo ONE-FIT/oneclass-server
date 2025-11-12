@@ -32,8 +32,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // 다건 조회(전화번호 리스트로)
     List<Member> findAllByPhoneIn(Collection<String> phones);
 
-    // 전체 전화번호 페이징
-    @Query("select m.phone from Member m")
+    @Query("select m.phone from Member m where m.role in (oneclass.oneclass.domain.member.entity.Role.STUDENT, oneclass.oneclass.domain.member.entity.Role.PARENT)")
     Page<String> findAllPhones(Pageable pageable);
 
     // 특정 학생 id 집합으로 전화번호 페이징

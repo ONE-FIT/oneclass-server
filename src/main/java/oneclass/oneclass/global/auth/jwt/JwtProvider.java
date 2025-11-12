@@ -78,8 +78,6 @@ public class JwtProvider {
     }
 
     // ===== 전화번호 로그인 전용(권장) =====
-    // access: phone/username/name(+role) 포함
-    // refresh: 표준 클레임만(sub/iss/iat/exp/jti). 부가 클레임 미포함 → 토큰 길이 최소화
     public ResponseToken generateTokenByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull) {
         long now = System.currentTimeMillis();
         String access = buildJwtByPhone(phone, roleValue, usernameOrNull, nameOrNull, now + accessValidityMillis, true);
@@ -119,19 +117,17 @@ public class JwtProvider {
         return builder.signWith(key, SignatureAlgorithm.HS256).compact();
     }
 
-    // access=true → 부가 클레임 포함, access=false(refresh) → 부가 클레임 제외(길이 최소화)
+    // access=true → 부가 클레임 포함, access=false(refresh) → 부가 클레임 제외
     private String buildJwtByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull,
                                    long expiryEpochMillis, boolean access) {
         Map<String, Object> claims;
         if (access) {
             Map<String, Object> c = new HashMap<>();
-            // subject가 phone이지만, 접근 편의를 위해 access에는 보조 클레임도 포함
             c.put(PHONE_CLAIM_KEY, phone);
             if (usernameOrNull != null && !usernameOrNull.isBlank()) c.put(USERNAME_CLAIM_KEY, usernameOrNull);
             if (nameOrNull != null && !nameOrNull.isBlank()) c.put(NAME_CLAIM_KEY, nameOrNull);
             claims = c;
         } else {
-            // refresh는 sub/iss/iat/exp/jti(+서명)만 포함
             claims = Map.of();
         }
 
@@ -244,4 +240,16 @@ public class JwtProvider {
     }
 
     public record TokenPair(String accessToken, String refreshToken, long accessTokenExpiresAt, long refreshTokenExpiresAt) {}
+
+    // ===== 최소 추가: 토큰이 만료되었거나 파싱 불가하면 true =====
+    public boolean isTokenInvalid(String token) {
+        try {
+            parseClaimsJws(token);
+            return false; // 유효
+        } catch (ExpiredJwtException e) {
+            return true;  // 만료
+        } catch (JwtException | IllegalArgumentException e) {
+            return true;  // 기타 무효
+        }
+    }
 }
