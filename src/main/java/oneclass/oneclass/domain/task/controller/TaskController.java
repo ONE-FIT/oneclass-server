@@ -7,8 +7,11 @@ import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
+import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.service.TaskService;
+import oneclass.oneclass.global.auth.CustomUserDetails;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -58,6 +61,18 @@ public class TaskController {
     @Operation(summary = "과제 수정", description = "과제 정보를 수정합니다.")
     public TaskResponse updateTask(@RequestBody @Valid UpdateTaskRequest request) {
         return taskService.updateTask(request);
+    }
+
+    /** 🔹 선생님용: 학생의 과제 상태 수정 */
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('TEACHER')")
+    @Operation(summary = "과제 상태 변경 (선생님용)", description = "선생님이 특정 학생의 과제 상태를 변경합니다.")
+    public TaskResponse updateTaskStatus(
+            @PathVariable("id") Long taskId,
+            @RequestParam Long studentId,
+            @RequestParam TaskStatus status
+    ) {
+        return taskService.updateTaskStatus(taskId, studentId, status);
     }
 
     /** 🔹 과제 삭제 */
