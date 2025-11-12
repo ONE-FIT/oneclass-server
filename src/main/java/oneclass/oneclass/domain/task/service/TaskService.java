@@ -136,11 +136,6 @@ public class TaskService {
                 .findByTaskIdAndStudentId(taskId, memberId)
                 .orElseThrow(() -> new CustomException(TaskError.ASSIGNMENT_NOT_FOUND));
 
-
-        // 상태 변경
-        assignment.setTaskStatus(newStatus);
-        taskAssignmentRepository.save(assignment);
-
         // Task 자체는 그대로, 응답은 TaskResponse로 반환
         return TaskResponse.of(assignment.getTask());
     }
