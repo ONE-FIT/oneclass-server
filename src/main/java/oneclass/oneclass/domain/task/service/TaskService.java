@@ -2,7 +2,6 @@ package oneclass.oneclass.domain.task.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.lesson.dto.response.LessonResponse;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;
@@ -52,14 +51,15 @@ public class TaskService {
         Task savedTask = taskRepository.save(task);
 
         // 학생들한테 바로 할당
-        for (Member student : lesson.getStudents()) {
-            TaskAssignment assignment = new TaskAssignment();
-            assignment.setTask(savedTask);
-            assignment.setStudent(student);
-            assignment.setTaskStatus(TaskStatus.ASSIGNED);
+        List<TaskAssignment> assignments = lesson.getStudents().stream().map(student -> {
+            TaskAssignment ta = new TaskAssignment();
+            ta.setTask(savedTask);
+            ta.setStudent(student);
+            ta.setTaskStatus(TaskStatus.ASSIGNED);
+            return ta;
+        }).toList();
 
-            taskAssignmentRepository.save(assignment);
-        }
+        taskAssignmentRepository.saveAll(assignments);
 
         List<Long> memberId = lesson.getStudents().stream().map(Member::getId).toList();
 
