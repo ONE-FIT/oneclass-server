@@ -42,6 +42,61 @@ public class AnnounceService {
         return AnnounceResponse.of(savedAnnounce);
     }
 
+    @Transactional
+    public AnnounceResponse createAnnounceForLesson(CreateAnnounceRequest request, Long lessonId) {
+
+        Announce announce = Announce.builder()
+                .title(request.title())
+                .content(request.content())
+                .important(request.important())
+                .lessonId(lessonId) // ✅ 반 ID 저장
+                .build();
+
+        Announce saved = announceRepository.save(announce);
+
+        // 반별 공지이므로 반 학생에게만 알림을 보낼 수 있음
+        eventPublisher.publishEvent(
+                new AnnounceSavedEvent(
+                        request.content(),
+                        "[반공지] " + request.title()
+                )
+        );
+
+        return AnnounceResponse.of(saved);
+    }
+
+    public List<AnnounceResponse> findAnnouncesByLessonId(Long lessonId) {
+        return announceRepository.findByLessonId(lessonId)
+                .stream()
+                .map(AnnounceResponse::of)
+                .toList();
+    }
+
+
+
+    @Transactional
+    public AnnounceResponse createAnnounceForMember(CreateAnnounceRequest request, Long memberId) {
+        Announce announce = Announce.builder()
+                .title(request.title())
+                .content(request.content())
+                .important(request.important())
+                .memberId(memberId)
+                .build();
+
+        Announce saved = announceRepository.save(announce);
+
+        // (선택) 학생 개인에게 알림 이벤트 발송
+        return AnnounceResponse.of(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AnnounceResponse> findAnnouncesByMemberId(Long memberId) {
+        return announceRepository.findByMemberId(memberId)
+                .stream()
+                .map(AnnounceResponse::of)
+                .toList();
+    }
+
     public AnnounceResponse findAnnounceById(Long id) {
         Announce announce = announceRepository.findById(id)
                 .orElseThrow(() -> new CustomException(AnnounceError.NOT_FOUND));
@@ -59,9 +114,15 @@ public class AnnounceService {
     public AnnounceResponse updateAnnounce(UpdateAnnounceRequest request) {
         Announce announce = announceRepository.findById(request.id())
                 .orElseThrow(() -> new CustomException(AnnounceError.NOT_FOUND));
-        announce.setTitle(request.title());
-        announce.setContent(request.content());
-        announce.setImportant(request.important());
+        // Use entity's update helper if available to avoid relying on individual setters
+        // (keeps encapsulation and works even if there are no setTitle/setContent methods)
+        announce.update(request.title(), request.content(), request.important());
+
+        // record membership/targeting information (use correct record accessor name)
+        if (request.memberId() != null) {
+            announce.setMemberId(request.memberId());
+        }
+
 
         return AnnounceResponse.of(announceRepository.save(announce));
     }
