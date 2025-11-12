@@ -64,16 +64,16 @@ public class TaskController {
     }
 
     /** 🔹 학생용: 자신의 과제 상태 수정 */
-    @PatchMapping("/{taskId}/status")
+    @PatchMapping("/{id}/status")
     @PreAuthorize("hasRole('STUDENT')")
     @Operation(summary = "과제 상태 변경", description = "학생이 자신의 과제 상태를 변경합니다.")
     public TaskResponse updateTaskStatus(
-            @PathVariable Long taskId,
+            @PathVariable Long id,
             @RequestParam TaskStatus status,
             @AuthenticationPrincipal CustomUserDetails userDetails // JWT 인증 사용자
     ) {
         Long memberId = userDetails.getId(); // 인증된 학생 ID
-        return taskService.updateTaskStatus(taskId, memberId, status);
+        return taskService.updateTaskStatus(id, memberId, status);
     }
 
     /** 🔹 과제 삭제 */
