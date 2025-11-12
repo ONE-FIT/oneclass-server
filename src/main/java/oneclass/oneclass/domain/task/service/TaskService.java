@@ -105,10 +105,11 @@ public class TaskService {
         return TaskResponse.of(task);
     }
 
-    public TaskResponse findTaskByTitle(String title) {
-        Task task = taskRepository.findByTitle(title)
-                .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
-        return TaskResponse.of(task);
+    public List<TaskResponse> findTaskByTitle(String title) {
+        return taskRepository.findByTitle(title)
+                .stream()
+                .map(TaskResponse::of)
+                .toList();
     }
 
     public TaskResponse updateTask(UpdateTaskRequest request) {

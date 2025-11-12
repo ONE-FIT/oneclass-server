@@ -1,9 +1,9 @@
 package oneclass.oneclass.domain.counsel.service;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.dto.request.UpdateConsultationRequest;
 import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
+import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
 import oneclass.oneclass.domain.counsel.error.CounselError;
 import oneclass.oneclass.domain.counsel.repository.ConsultationRepository;
@@ -18,6 +18,7 @@ import java.util.List;
 public class ConsultationService {
     private final ConsultationRepository consultationRepository;
 
+    // 상담신청 - 데이터 생성이므로 트랜잭션
     @Transactional
     public Consultation createConsultation(ConsultationRequest request) {
         Consultation con = new Consultation();
@@ -33,6 +34,8 @@ public class ConsultationService {
         return consultationRepository.save(con);
     }
 
+
+
     @Transactional
     public Consultation updateConsultation(UpdateConsultationRequest request) {
         Consultation consultation = resolveTarget(request);
@@ -45,6 +48,7 @@ public class ConsultationService {
             return consultationRepository.findById(request.consultationId())
                     .orElseThrow(() -> new CustomException(CounselError.NOT_FOUND));
         }
+        // name+phone fallback (둘 중 하나라도 없으면 400)
         if (request.name() == null || request.phone() == null) {
             throw new CustomException(CounselError.BAD_REQUEST, "상담자 이름과 전화번호가 필요합니다.");
         }
@@ -75,7 +79,7 @@ public class ConsultationService {
 
     public ConsultationDetailResponse getConsultationDetail(String name, String phone) {
         if (name == null || phone == null) {
-            throw new CustomException(CounselError.BAD_REQUEST, "상담자 이름과 전화번호가 필요합니다.");
+            throw new CustomException(CounselError.BAD_REQUEST);
         }
 
         List<Consultation> matches = consultationRepository.findByNameAndPhone(name, phone);
@@ -90,6 +94,7 @@ public class ConsultationService {
         return ConsultationDetailResponse.from(matches.get(0));
     }
 
+    // 전체 조회
     public List<Consultation> getAllSchedule() {
         return consultationRepository.findAll();
     }
