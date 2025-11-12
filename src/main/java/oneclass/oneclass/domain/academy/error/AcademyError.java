@@ -34,7 +34,7 @@ public enum AcademyError implements CustomError {
     INVALID_EMAIL_FORMAT(400, "유효하지 않은 이메일 형식입니다."), // 이메일 형식 에러
     INVALID_PHONE_FORMAT(400, "유효하지 않은 전화번호 형식입니다."), // 전화번호 형식 에러
     PASSWORD_WEAK(400, "비밀번호가 너무 약합니다. 특수문자, 숫자를 포함하세요."), // 비밀번호 복잡성 강화
-    INVALID_DATE_RANGE(400, "유효하지 않은 날짜 범위입니다.");;
+    INVALID_DATE_RANGE(400, "유효하지 않은 날짜 범위입니다.");
 
     private final int status;
     private final String message;

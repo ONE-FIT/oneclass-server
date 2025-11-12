@@ -20,6 +20,7 @@ public enum MemberError implements CustomError {
     USERNAME_REQUIRED(400, "이름이 필요합니다."),
     PHONE_REQUIRED(400, "전화번호가 필요합니다."),
     ROLE_REQUEST(400,"역할이 필요합니다"),
+    PASSWORD_REQUEST(400,"비밀번호를 입력해주세요."),
 
     //  인증번호 관련
     VERIFICATION_CODE_REQUIRED(400,"인증코드가 필요합니다"),

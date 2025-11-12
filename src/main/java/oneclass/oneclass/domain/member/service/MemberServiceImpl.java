@@ -72,7 +72,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         if (!passwordEncoder.matches(password, member.getPassword())) {
-            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+            throw new CustomException(MemberError.UNAUTHORIZED);
         }
 
         String roleClaim = "ROLE_" + member.getRole().name();
@@ -378,7 +378,7 @@ public class MemberServiceImpl implements MemberService {
         if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty())
             throw new CustomException(MemberError.BAD_REQUEST);
         if (password == null || password.isBlank())
-            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+            throw new CustomException(MemberError.PASSWORD_REQUEST);
 
         Member teacher = memberRepository.findByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));

@@ -126,7 +126,7 @@ public class AcademyServiceImpl implements AcademyService {
     private AcademyRefreshToken getOrCreateRefreshToken(String academyCode, String roleClaim) {
         return academyRefreshTokenRepository.findByAcademyCode(academyCode)
                 .map(saved -> {
-                    if (saved.isExpired() || jwtProvider.isTokenInvalid(saved.getToken())) {
+                    if (jwtProvider.isTokenInvalid(saved.getToken())) {
                         ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
                         saved.rotate(pair.refreshToken(), LocalDateTime.now().plusDays(28));
                     }
@@ -179,7 +179,7 @@ public class AcademyServiceImpl implements AcademyService {
 
         Academy academy = academyRepository.findByAcademyCode(request.academyCode())
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-        if (!academy.getAcademyName().equals(request.academyName())) {
+        if (!academy.getAcademyName().equalsIgnoreCase(request.academyName())) {
             throw new CustomException(AcademyError.INVALID_ACADEMY_NAME, "학원 이름이 일치하지 않습니다.");
         }
 
