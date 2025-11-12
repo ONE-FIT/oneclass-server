@@ -1,18 +1,16 @@
 package oneclass.oneclass.domain.announce.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import oneclass.oneclass.domain.member.entity.Member;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
-@SuperBuilder
-@Table(name = "Announce")
+@AllArgsConstructor
+@Builder
+@Table(name = "announce")
 public class Announce {
 
     @Id
@@ -20,13 +18,22 @@ public class Announce {
     private Long id;
 
     private String title;
-
-    @Column(columnDefinition = "TEXT")
     private String content;
-
     private Boolean important;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Member author;
+    // 반 대상 public/lesson 공지에 사용
+    private Long lessonId;
 
+    // 개별 학생 대상 공지에 사용 (null이면 대상 없음)
+    private Long memberId;
+
+    public void setMemberId(Long memberId) {
+        this.memberId = memberId;
+    }
+
+    public void update(String title, String content, Boolean important) {
+        this.title = title;
+        this.content = content;
+        this.important = important;
+    }
 }

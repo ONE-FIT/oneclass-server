@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface AnnounceRepository extends JpaRepository<Announce, Long> {
     List<Announce> findByTitle(String title);
     Optional<Announce> findById(Long id);
+    List<Announce> findByLessonId(Long lessonId); // ✅ 추가
+    List<Announce> findByMemberId(Long memberId);
 }
