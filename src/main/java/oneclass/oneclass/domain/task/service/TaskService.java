@@ -2,7 +2,6 @@ package oneclass.oneclass.domain.task.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.lesson.dto.response.LessonResponse;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.lesson.repository.LessonRepository;

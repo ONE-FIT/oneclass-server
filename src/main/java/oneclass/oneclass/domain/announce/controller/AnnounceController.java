@@ -40,7 +40,7 @@ public class AnnounceController {
     @GetMapping("/title/{title}")
 
     public ResponseEntity<ApiResponse<List<AnnounceResponse>>> findAnnounceByTitle(@PathVariable String title) {
-        List<AnnounceResponse> response = announceService.findAnnounceByTitle(title);
+        List<AnnounceResponse> response = announceService.findAnnouncesByTitle(title);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
