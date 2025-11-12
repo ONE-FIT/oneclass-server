@@ -6,8 +6,11 @@ import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
+import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.service.TaskService;
+import oneclass.oneclass.global.auth.CustomUserDetails;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -58,6 +61,19 @@ public class TaskController {
     @Operation(summary = "과제 수정", description = "과제 정보를 수정합니다.")
     public TaskResponse updateTask(@RequestBody UpdateTaskRequest request) {
         return taskService.updateTask(request);
+    }
+
+    /** 🔹 학생용: 자신의 과제 상태 수정 */
+    @PatchMapping("/{taskId}/status")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "과제 상태 변경", description = "학생이 자신의 과제 상태를 변경합니다.")
+    public TaskResponse updateTaskStatus(
+            @PathVariable Long taskId,
+            @RequestParam TaskStatus status,
+            @AuthenticationPrincipal CustomUserDetails userDetails // JWT 인증 사용자
+    ) {
+        Long memberId = userDetails.getId(); // 인증된 학생 ID
+        return taskService.updateTaskStatus(taskId, memberId, status);
     }
 
     /** 🔹 과제 삭제 */

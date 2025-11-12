@@ -128,6 +128,26 @@ public class TaskService {
                 .orElseThrow(() ->new CustomException(TaskError.NOT_FOUND));
         taskRepository.delete(task);
     }
+    
+    @Transactional
+    public TaskResponse updateTaskStatus(Long taskId, Long memberId, TaskStatus newStatus) {
+        // 학생의 과제 할당(TaskAssignment) 찾기
+        TaskAssignment assignment = taskAssignmentRepository
+                .findByTaskIdAndStudentId(taskId, memberId)
+                .orElseThrow(() -> new CustomException(TaskError.ASSIGNMENT_NOT_FOUND));
+
+        // 권한 체크: 자신 과제만 수정 가능
+        if (!assignment.getStudent().getId().equals(memberId)) {
+            throw new CustomException(TaskError.UNAUTHORIZED);
+        }
+
+        // 상태 변경
+        assignment.setTaskStatus(newStatus);
+        taskAssignmentRepository.save(assignment);
+
+        // Task 자체는 그대로, 응답은 TaskResponse로 반환
+        return TaskResponse.of(assignment.getTask());
+    }
 
     public List<TaskResponse> findAll() {
         return taskRepository.findAll().stream().map(TaskResponse::of).collect(Collectors.toList());
