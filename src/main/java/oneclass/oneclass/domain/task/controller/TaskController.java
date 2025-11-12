@@ -65,8 +65,8 @@ public class TaskController {
 
     /** 🔹 학생용: 자신의 과제 상태 수정 */
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('STUDENT')")
-    @Operation(summary = "과제 상태 변경", description = "학생이 자신의 과제 상태를 변경합니다.")
+    @PreAuthorize("hasRole('TEACHER')")
+    @Operation(summary = "과제 상태 변경", description = "선생님이 과제 상태를 변경합니다.")
     public TaskResponse updateTaskStatus(
             @PathVariable Long id,
             @RequestParam TaskStatus status,
