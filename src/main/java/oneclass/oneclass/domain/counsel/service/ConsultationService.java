@@ -1,9 +1,9 @@
 package oneclass.oneclass.domain.counsel.service;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.counsel.dto.request.ChangeConsultationStatusRequest;
-import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
 import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
+import oneclass.oneclass.domain.counsel.dto.request.UpdateConsultationRequest;
+import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
 import oneclass.oneclass.domain.counsel.error.CounselError;
 import oneclass.oneclass.domain.counsel.repository.ConsultationRepository;
@@ -18,14 +18,13 @@ import java.util.List;
 public class ConsultationService {
     private final ConsultationRepository consultationRepository;
 
-    // 상담신청 - 데이터 생성이므로 트랜잭션
     @Transactional
     public Consultation createConsultation(ConsultationRequest request) {
         Consultation con = new Consultation();
         con.setTitle(request.title());
-        con.setName(request.name());//학생이름
-        con.setPhone(request.phone());//학부모 전화번호
-        con.setDate(request.date());//희망하는 날짜 ex) 2025-05-23 15:45
+        con.setName(request.name());
+        con.setPhone(request.phone());
+        con.setDate(request.date());
         con.setType(request.type());
         con.setSubject(request.subject());
         con.setDescription(request.description());
@@ -34,24 +33,20 @@ public class ConsultationService {
         return consultationRepository.save(con);
     }
 
-
-
     @Transactional
-    public Consultation updateConsultation(ChangeConsultationStatusRequest request) {
+    public Consultation updateConsultation(UpdateConsultationRequest request) {
         Consultation consultation = resolveTarget(request);
         applyOptionalUpdates(consultation, request);
         return consultationRepository.save(consultation);
     }
 
-    private Consultation resolveTarget(ChangeConsultationStatusRequest request) {
-        // ID가 오면 ID 우선
+    private Consultation resolveTarget(UpdateConsultationRequest request) {
         if (request.consultationId() != null) {
             return consultationRepository.findById(request.consultationId())
                     .orElseThrow(() -> new CustomException(CounselError.NOT_FOUND));
         }
-        // name+phone fallback (둘 중 하나라도 없으면 400)
         if (request.name() == null || request.phone() == null) {
-            throw new CustomException(CounselError.BAD_REQUEST);
+            throw new CustomException(CounselError.BAD_REQUEST, "상담자 이름과 전화번호가 필요합니다.");
         }
         List<Consultation> matches = consultationRepository.findByNameAndPhone(request.name(), request.phone());
         if (matches.isEmpty()) {
@@ -63,7 +58,10 @@ public class ConsultationService {
         return matches.get(0);
     }
 
-    private void applyOptionalUpdates(Consultation consultation, ChangeConsultationStatusRequest request) {
+    private void applyOptionalUpdates(Consultation consultation, UpdateConsultationRequest request) {
+        if (request.date() == null && request.subject() == null && request.description() == null) {
+            throw new CustomException(CounselError.BAD_REQUEST, "수정할 필드를 입력하세요.");
+        }
         if (request.date() != null) {
             consultation.setDate(request.date());
         }
@@ -77,7 +75,7 @@ public class ConsultationService {
 
     public ConsultationDetailResponse getConsultationDetail(String name, String phone) {
         if (name == null || phone == null) {
-            throw new CustomException(CounselError.BAD_REQUEST);
+            throw new CustomException(CounselError.BAD_REQUEST, "상담자 이름과 전화번호가 필요합니다.");
         }
 
         List<Consultation> matches = consultationRepository.findByNameAndPhone(name, phone);
@@ -92,7 +90,6 @@ public class ConsultationService {
         return ConsultationDetailResponse.from(matches.get(0));
     }
 
-    // 전체 조회
     public List<Consultation> getAllSchedule() {
         return consultationRepository.findAll();
     }

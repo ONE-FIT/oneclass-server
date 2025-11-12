@@ -3,9 +3,9 @@ package oneclass.oneclass.domain.counsel.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.counsel.dto.request.ChangeConsultationStatusRequest;
-import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
 import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
+import oneclass.oneclass.domain.counsel.dto.request.UpdateConsultationRequest;
+import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
 import oneclass.oneclass.domain.counsel.service.ConsultationService;
 import oneclass.oneclass.global.dto.ApiResponse;
@@ -31,7 +31,7 @@ public class ConsultationController {
     //상담 상태 변경 ex) 상담신청이 됨 -> 상담신청 날짜 확정
     @Operation(summary = "상담 날짜 확정", description = "상담 날짜를 확정합니다.")
     @PostMapping("/change-status")
-    public ResponseEntity<ApiResponse<Consultation>> changeStatus(@RequestBody @Valid ChangeConsultationStatusRequest request) {
+    public ResponseEntity<ApiResponse<Consultation>> changeStatus(@RequestBody @Valid UpdateConsultationRequest request) {
         Consultation consultation = consultationService.updateConsultation(request);
         return ResponseEntity.ok(ApiResponse.success(consultation));
     }
