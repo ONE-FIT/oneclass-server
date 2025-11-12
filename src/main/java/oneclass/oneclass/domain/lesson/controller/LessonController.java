@@ -41,7 +41,7 @@ public class LessonController {
     @Operation(summary = "검색",
             description = "강의를 title로 검색합니다.")
 
-    public ResponseEntity<List<ApiResponse<LessonResponse>>> findLessonByTitle(@PathVariable String title) {
+    public ResponseEntity<ApiResponse<List<LessonResponse>>> findLessonByTitle(@PathVariable String title) {
         List<LessonResponse> response = lessonService.findLessonByTitle(title);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
