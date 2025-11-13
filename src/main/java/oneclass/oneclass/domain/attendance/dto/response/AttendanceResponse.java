@@ -11,8 +11,9 @@ import java.time.LocalDateTime;
 
 @Getter
 public class AttendanceResponse {
-    public String name;
 
+    private String name; // 학생 이름
+    private String lessonTitle; // ✅ 반(레슨) 이름 추가
     private LocalDate date;
 
     @Enumerated(EnumType.STRING)
@@ -21,15 +22,19 @@ public class AttendanceResponse {
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
 
-    public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate now) {
-        this.name = username;
+    public AttendanceResponse(String name, String lessonTitle, AttendanceStatus attendanceStatus, LocalDate date) {
+        this.name = name;
+        this.lessonTitle = lessonTitle;
         this.attendanceStatus = attendanceStatus;
-        this.date = now;
+        this.date = date;
     }
 
     public static AttendanceResponse fromEntity(Attendance attendance) {
         return new AttendanceResponse(
                 attendance.getMember().getName(),
+                attendance.getMember().getLesson() != null
+                        ? attendance.getMember().getLesson().getTitle()
+                        : "미배정", // ✅ lesson이 null이면 '미배정'
                 attendance.getAttendanceStatus(),
                 attendance.getDate()
         );

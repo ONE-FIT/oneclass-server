@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
+import oneclass.oneclass.domain.lesson.entity.Lesson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +69,10 @@ public class Member {
     @JoinColumn(name = "academy_code", referencedColumnName = "academyCode")
     @JsonIgnore
     private Academy academy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lesson_id")
+    private Lesson lesson;
 
     @Builder
     private Member(Long id, String username, String password, String name,
