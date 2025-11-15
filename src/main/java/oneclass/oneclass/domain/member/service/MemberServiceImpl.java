@@ -22,7 +22,6 @@ import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +73,6 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
-    // 2) 로그인: 1번(전화번호) 스타일의 리프레시 토큰 회전/재발급 흐름을 그대로, subject만 username으로
     @Override
     public ResponseToken login(String username, String password) {
         Member member = memberRepository.findByUsername(username)
@@ -85,38 +83,32 @@ public class MemberServiceImpl implements MemberService {
         }
 
         String roleClaim = "ROLE_" + member.getRole().name();
-        RefreshToken refresh = refreshTokenRepository.findByUsername(username).orElse(null);
+        RefreshToken existing = refreshTokenRepository.findByUsername(username).orElse(null);
 
-        String accessToken;
-        String refreshTokenString;
+        ResponseToken pair;
 
-        if (refresh != null) {
-            if (!refresh.isExpired()) {
-                // 기존 refresh 유지 + access 재발급
-                accessToken = jwtProvider.generateAccessToken(username, roleClaim);
-                refreshTokenString = refresh.getToken();
-            } else {
-                // refresh 만료 → 새 쌍 발급(회전)
-                ResponseToken pair = jwtProvider.generateToken(username, roleClaim);
-                refresh.rotate(pair.refreshToken(), LocalDateTime.now().plusDays(28));
-                accessToken = pair.accessToken();
-                refreshTokenString = pair.refreshToken();
-            }
-        } else {
-            // 최초 발급
-            ResponseToken pair = jwtProvider.generateToken(username, roleClaim);
-            RefreshToken newRt = RefreshToken.builder()
-                    .username(username)
-                    .token(pair.refreshToken())
-                    .expiryDate(LocalDateTime.now().plusDays(28))
-                    .build();
-            refreshTokenRepository.save(newRt);
-
-            accessToken = pair.accessToken();
-            refreshTokenString = pair.refreshToken();
+        if (existing != null && !existing.isExpired()) {
+            // 기존 refresh 유지, access만 새로
+            String access = jwtProvider.generateAccessToken(username, roleClaim);
+            return new ResponseToken(access, existing.getToken());
         }
 
-        return new ResponseToken(accessToken, refreshTokenString);
+        // 새 쌍(만료되었거나 최초)
+        pair = jwtProvider.generateToken(username, roleClaim);
+        LocalDateTime newExpiry = LocalDateTime.now().plusDays(28);
+
+        if (existing != null) {
+            existing.rotate(pair.refreshToken(), newExpiry);
+        } else {
+            refreshTokenRepository.save(
+                    RefreshToken.builder()
+                            .username(username)
+                            .token(pair.refreshToken())
+                            .expiryDate(newExpiry)
+                            .build()
+            );
+        }
+        return new ResponseToken(pair.accessToken(), pair.refreshToken());
     }
 
     // 로그아웃: username + 특정 refreshToken 폐기 (1번 스타일 유지)
@@ -148,14 +140,6 @@ public class MemberServiceImpl implements MemberService {
         String newAccessToken = jwtProvider.generateAccessToken(username, roleClaim);
 
         return new ResponseToken(newAccessToken, rt);
-    }
-
-    // ====== 아래는 기존 구현 유지(필요 메서드만 예시로 포함) ======
-
-    private void validateEmailOrPhoneDuplication(String email, String phone) {
-        // 필요 시 중복 체크 로직 구현
-        // 예) if (email != null && memberRepository.existsByEmail(email)) throw new CustomException(MemberError.CONFLICT);
-        //     if (phone != null && memberRepository.existsByPhone(phone)) throw new CustomException(MemberError.DUPLICATE_PHONE);
     }
 
     private void signupTeacher(SignupRequest request) {
@@ -232,8 +216,11 @@ public class MemberServiceImpl implements MemberService {
                 .role(request.role())
                 .name(request.name())
                 .phone(request.phone())
-                .parentStudents(new java.util.HashSet<>(children))
                 .build();
+
+        for (Member child : children) {
+            parent.addParentStudent(child);
+        }
 
         memberRepository.save(parent);
     }
@@ -299,12 +286,6 @@ public class MemberServiceImpl implements MemberService {
         }
     }
 
-    private boolean isLikelyJwe(String t) {
-        if (t == null) return false;
-        int dots = 0;
-        for (int i = 0; i < t.length(); i++) if (t.charAt(i) == '.') dots++;
-        return dots == 4;
-    }
 
     @Override
     public void sendSignupVerificationCode(String academyCode, String name) {
