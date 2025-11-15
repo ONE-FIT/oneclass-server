@@ -78,20 +78,20 @@ public class JwtProvider {
     }
 
     // ===== 전화번호 로그인 전용(권장) =====
-    public ResponseToken generateTokenByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull) {
+    public ResponseToken generateTokenByUsername(String username, String roleValue, String usernameOrNull, String nameOrNull) {
         long now = System.currentTimeMillis();
-        String access = buildJwtByPhone(phone, roleValue, usernameOrNull, nameOrNull, now + accessValidityMillis, true);
-        String refresh = buildJwtByPhone(phone, null, usernameOrNull, nameOrNull, now + refreshValidityMillis, false);
+        String access = buildJwtByUsername(username, roleValue, usernameOrNull, nameOrNull, now + accessValidityMillis, true);
+        String refresh = buildJwtByUsername(username, null, usernameOrNull, nameOrNull, now + refreshValidityMillis, false);
         return new ResponseToken(access, refresh);
     }
 
-    public String generateAccessTokenByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull) {
-        return buildJwtByPhone(phone, roleValue, usernameOrNull, nameOrNull,
+    public String generateAccessTokenByPhone(String username, String roleValue, String usernameOrNull, String nameOrNull) {
+        return buildJwtByUsername(username, roleValue, usernameOrNull, nameOrNull,
                 System.currentTimeMillis() + accessValidityMillis, true);
     }
 
-    public String generateRefreshTokenByPhone(String phone, String usernameOrNull, String nameOrNull) {
-        return buildJwtByPhone(phone, null, usernameOrNull, nameOrNull,
+    public String generateRefreshTokenByPhone(String username, String usernameOrNull, String nameOrNull) {
+        return buildJwtByUsername(username, null, usernameOrNull, nameOrNull,
                 System.currentTimeMillis() + refreshValidityMillis, false);
     }
 
@@ -118,12 +118,12 @@ public class JwtProvider {
     }
 
     // access=true → 부가 클레임 포함, access=false(refresh) → 부가 클레임 제외
-    private String buildJwtByPhone(String phone, String roleValue, String usernameOrNull, String nameOrNull,
+    private String buildJwtByUsername(String username, String roleValue, String usernameOrNull, String nameOrNull,
                                    long expiryEpochMillis, boolean access) {
         Map<String, Object> claims;
         if (access) {
             Map<String, Object> c = new HashMap<>();
-            c.put(PHONE_CLAIM_KEY, phone);
+            c.put(PHONE_CLAIM_KEY, username);
             if (usernameOrNull != null && !usernameOrNull.isBlank()) c.put(USERNAME_CLAIM_KEY, usernameOrNull);
             if (nameOrNull != null && !nameOrNull.isBlank()) c.put(NAME_CLAIM_KEY, nameOrNull);
             claims = c;
@@ -132,7 +132,7 @@ public class JwtProvider {
         }
 
         String roleToInclude = access ? roleValue : null;
-        return buildJwt(phone, claims, roleToInclude, expiryEpochMillis);
+        return buildJwt(username, claims, roleToInclude, expiryEpochMillis);
     }
 
     // ===== 검증/클레임 =====

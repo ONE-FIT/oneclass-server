@@ -19,7 +19,6 @@ public interface MemberService {
     void deleteParent(Long parentId);
     void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones);
     TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password);
-    void createUsername(String username);
     void deleteUser(String phone);
     String cleanupToken(String token);
 

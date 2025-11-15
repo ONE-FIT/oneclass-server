@@ -48,17 +48,17 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
+    // username 기반 로그인으로 변경 (기존 phone → username)
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<ResponseToken>> login(@RequestBody @Valid LoginRequest req) {
-        String phone = normalizePhone(req.phone());
-        ResponseToken token = memberService.login(phone, req.password());
+        String username = normalizeUsername(req.username());
+        ResponseToken token = memberService.login(username, req.password());
         return ResponseEntity.ok(ApiResponse.success(token));
     }
 
-    private String normalizePhone(String phone) {
-        if (phone == null) return null;
-        return phone.replaceAll("\\D", "");
+    private String normalizeUsername(String username) {
+        return username == null ? null : username.trim();
     }
 
     @Operation(
@@ -78,7 +78,7 @@ public class MemberController {
         // 1) 입력 토큰 정리
         String rt = memberService.cleanupToken(refreshToken);
 
-        // 2) JWE(5세그먼트)면 복호화
+        // 2) JWE(5 세그먼트)면 복호화
         if (isLikelyJwe(rt)) {
             rt = jwtProvider.decryptToken(rt);
         }
@@ -90,20 +90,25 @@ public class MemberController {
             if (!TokenError.TOKEN_EXPIRED.equals(e.getError())) throw e;
         }
 
-        // 4) refresh 토큰 주체(phone)
-        String phoneFromRefresh = jwtProvider.getPhone(rt);
+        // 4) refresh 토큰의 주체(subject = username)
+        String usernameFromRefresh = jwtProvider.getUsername(rt);
 
-        // 5) 인증 주체 phone 추출(중복 로직 -> 메서드화)
-        String phoneFromAuth = resolveAuthenticatedPhone(authentication, request);
+        // 5) 인증 주체 username
+        String usernameFromAuth = resolveAuthenticatedUsername(authentication, request);
 
         // 6) 주체 일치 확인
-        if (!phoneFromAuth.equals(phoneFromRefresh)) {
+        if (!usernameFromAuth.equals(usernameFromRefresh)) {
             throw new CustomException(TokenError.UNAUTHORIZED);
         }
 
-        // 7) 해당 refresh 토큰 폐기
-        memberService.logout(phoneFromRefresh, rt);
+        // 7) 해당 refresh 토큰 폐기 (username 기반)
+        memberService.logout(usernameFromRefresh, rt);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    private String resolveAuthenticatedUsername(Authentication authentication, HttpServletRequest request) {
+        // 기본: SecurityContext의 principal 사용
+        return authentication.getName();
     }
 
     @Operation(summary = "계정탈퇴", description = "계정을 탈퇴합니다.")
@@ -118,14 +123,6 @@ public class MemberController {
         }
         String phoneFromAuth = resolveAuthenticatedPhone(authentication, request);
         memberService.deleteUser(phoneFromAuth);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
-    @Operation(summary = "닉네임 생성", description = "닉네임을 생성합니다.")
-    @PostMapping("/create-username")
-    @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
-    public ResponseEntity<ApiResponse<Void>> createUsername(@RequestParam String username) {
-        memberService.createUsername(username);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

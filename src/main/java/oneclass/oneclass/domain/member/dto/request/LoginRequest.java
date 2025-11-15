@@ -1,10 +1,13 @@
 package oneclass.oneclass.domain.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
+/**
+ * username 기반 로그인 요청 DTO
+ * - 기존 phone 기반을 username 기반으로 전환
+ */
 public record LoginRequest(
-        @NotBlank @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 10~11자리 숫자여야 합니다.") String phone,
-        String name, // 로그인에선 미사용이면 제약 없음
-        @NotBlank String password
-) { }
+        @NotBlank @Size(min = 3, max = 100) String username,
+        @NotBlank @Size(min = 8, max = 64) String password
+) {}
