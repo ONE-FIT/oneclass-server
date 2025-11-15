@@ -6,6 +6,7 @@ import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
+import oneclass.oneclass.domain.member.dto.request.LoginRequest;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.MemberDto;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
@@ -20,6 +21,7 @@ import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
+import oneclass.oneclass.global.validation.PasswordMatches;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -74,27 +76,27 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public ResponseToken login(String username, String password) {
-        Member member = memberRepository.findByUsername(username)
+    public ResponseToken login(LoginRequest request) {
+        Member member = memberRepository.findByUsername(request.username())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
-        if (!passwordEncoder.matches(password, member.getPassword())) {
+        if (!passwordEncoder.matches(request.password(), member.getPassword())) {
             throw new CustomException(MemberError.UNAUTHORIZED);
         }
 
         String roleClaim = "ROLE_" + member.getRole().name();
-        RefreshToken existing = refreshTokenRepository.findByUsername(username).orElse(null);
+        RefreshToken existing = refreshTokenRepository.findByUsername(request.username()).orElse(null);
 
         ResponseToken pair;
 
         if (existing != null && !existing.isExpired()) {
             // 기존 refresh 유지, access만 새로
-            String access = jwtProvider.generateAccessToken(username, roleClaim);
+            String access = jwtProvider.generateAccessToken(request.username(), roleClaim);
             return new ResponseToken(access, existing.getToken());
         }
 
         // 새 쌍(만료되었거나 최초)
-        pair = jwtProvider.generateToken(username, roleClaim);
+        pair = jwtProvider.generateToken(request.username(), roleClaim);
         LocalDateTime newExpiry = LocalDateTime.now().plusDays(28);
 
         if (existing != null) {
@@ -102,7 +104,7 @@ public class MemberServiceImpl implements MemberService {
         } else {
             refreshTokenRepository.save(
                     RefreshToken.builder()
-                            .username(username)
+                            .username(request.username())
                             .token(pair.refreshToken())
                             .expiryDate(newExpiry)
                             .build()

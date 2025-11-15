@@ -78,20 +78,18 @@ public class JwtProvider {
     }
 
     // ===== 전화번호 로그인 전용(권장) =====
-    public ResponseToken generateTokenByUsername(String username, String roleValue, String usernameOrNull, String nameOrNull) {
+    public ResponseToken generateTokenByUsername(String username, String roleValue, String phoneOrNull, String nameOrNull) {
         long now = System.currentTimeMillis();
-        String access = buildJwtByUsername(username, roleValue, usernameOrNull, nameOrNull, now + accessValidityMillis, true);
-        String refresh = buildJwtByUsername(username, null, usernameOrNull, nameOrNull, now + refreshValidityMillis, false);
+        String access = buildJwtByUsername(username, roleValue, phoneOrNull, nameOrNull, now + accessValidityMillis, true);
+        String refresh = buildJwtByUsername(username, null, phoneOrNull, nameOrNull, now + refreshValidityMillis, false);
         return new ResponseToken(access, refresh);
     }
-
-    public String generateAccessTokenByPhone(String username, String roleValue, String usernameOrNull, String nameOrNull) {
-        return buildJwtByUsername(username, roleValue, usernameOrNull, nameOrNull,
+    public String generateAccessTokenByUsername(String username, String roleValue, String phoneOrNull, String nameOrNull) {
+        return buildJwtByUsername(username, roleValue, phoneOrNull, nameOrNull,
                 System.currentTimeMillis() + accessValidityMillis, true);
     }
-
-    public String generateRefreshTokenByPhone(String username, String usernameOrNull, String nameOrNull) {
-        return buildJwtByUsername(username, null, usernameOrNull, nameOrNull,
+    public String generateRefreshTokenByUsername(String username, String phoneOrNull, String nameOrNull) {
+        return buildJwtByUsername(username, null, phoneOrNull, nameOrNull,
                 System.currentTimeMillis() + refreshValidityMillis, false);
     }
 
@@ -118,13 +116,12 @@ public class JwtProvider {
     }
 
     // access=true → 부가 클레임 포함, access=false(refresh) → 부가 클레임 제외
-    private String buildJwtByUsername(String username, String roleValue, String usernameOrNull, String nameOrNull,
-                                   long expiryEpochMillis, boolean access) {
+    private String buildJwtByUsername(String username, String roleValue, String phoneOrNull, String nameOrNull,
+                                      long expiryEpochMillis, boolean access) {
         Map<String, Object> claims;
         if (access) {
             Map<String, Object> c = new HashMap<>();
-            c.put(PHONE_CLAIM_KEY, username);
-            if (usernameOrNull != null && !usernameOrNull.isBlank()) c.put(USERNAME_CLAIM_KEY, usernameOrNull);
+            if (phoneOrNull != null && !phoneOrNull.isBlank()) c.put(PHONE_CLAIM_KEY, phoneOrNull);
             if (nameOrNull != null && !nameOrNull.isBlank()) c.put(NAME_CLAIM_KEY, nameOrNull);
             claims = c;
         } else {

@@ -1,5 +1,8 @@
 package oneclass.oneclass.domain.member.service;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import oneclass.oneclass.domain.member.dto.request.LoginRequest;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
@@ -8,7 +11,7 @@ import java.util.List;
 
 public interface MemberService {
     void signup(SignupRequest request);
-    ResponseToken login(String username, String password);
+    ResponseToken login(LoginRequest request);
     void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃

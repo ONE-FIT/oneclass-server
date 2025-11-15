@@ -48,17 +48,12 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    // username 기반 로그인으로 변경 (기존 phone → username)
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<ResponseToken>> login(@RequestBody @Valid LoginRequest req) {
-        String username = normalizeUsername(req.username());
-        ResponseToken token = memberService.login(username, req.password());
+    public ResponseEntity<ApiResponse<ResponseToken>> login(@RequestBody @Valid LoginRequest request) {
+        // LoginRequest 전체를 서비스로 전달 (서비스가 내부에서 검증/정규화 처리)
+        ResponseToken token = memberService.login(request);
         return ResponseEntity.ok(ApiResponse.success(token));
-    }
-
-    private String normalizeUsername(String username) {
-        return username == null ? null : username.trim();
     }
 
     @Operation(
