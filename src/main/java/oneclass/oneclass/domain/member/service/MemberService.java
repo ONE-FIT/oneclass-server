@@ -8,11 +8,11 @@ import java.util.List;
 
 public interface MemberService {
     void signup(SignupRequest request);
-    ResponseToken login(String phone, String password);
+    ResponseToken login(String username, String password);
     void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃
-    void logout(String phone, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
+    void logout(String username, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
 
     void sendSignupVerificationCode(String academyCode, String name);
     void addStudentsToParent(String parentPhone, String password, List<String> studentPhone);
