@@ -6,6 +6,7 @@ import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
+import oneclass.oneclass.domain.member.dto.request.LoginRequest;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.MemberDto;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
@@ -20,9 +21,9 @@ import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
+import oneclass.oneclass.global.validation.PasswordMatches;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,86 +46,185 @@ public class MemberServiceImpl implements MemberService {
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
     private final JavaMailSender javaMailSender;
 
+    // 1) 회원가입: 2번째(Username 기반 DTO) 형태를 유지하되, 예외/검증은 기존 스타일
     @Override
     public void signup(SignupRequest request) {
         Role selectRole = request.role();
-        if (selectRole == null) throw new CustomException(MemberError.ROLE_REQUEST);
+        if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
-        // phone 중복 검사
-        if (request.phone() != null && !request.phone().isBlank()
-                && memberRepository.existsByPhone(request.phone())) {
-            throw new CustomException(MemberError.DUPLICATE_PHONE);
+        // 비밀번호 확인
+        if (request.password() == null || request.checkPassword() == null
+                || !request.password().equals(request.checkPassword())) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
 
+        // username 중복
+        if (memberRepository.findByUsername(request.username()).isPresent()) {
+            throw new CustomException(MemberError.DUPLICATE_USERNAME);
+        }
+
+        // 이메일/전화 중복(필요 시 구현)
         validatePhoneDuplication(request.phone());
 
+        // 역할별 처리
         switch (selectRole) {
             case TEACHER -> signupTeacher(request);
             case STUDENT -> signupStudent(request);
             case PARENT  -> signupParent(request);
-            default      -> throw new CustomException(MemberError.ROLE_REQUEST);
+            default      -> throw new CustomException(MemberError.BAD_REQUEST);
         }
     }
 
     @Override
-    public ResponseToken login(String phone, String password) {
-        Member member = memberRepository.findByPhone(phone)
+    public ResponseToken login(LoginRequest request) {
+        Member member = memberRepository.findByUsername(request.username())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
-        if (!passwordEncoder.matches(password, member.getPassword())) {
+        if (!passwordEncoder.matches(request.password(), member.getPassword())) {
             throw new CustomException(MemberError.UNAUTHORIZED);
         }
 
         String roleClaim = "ROLE_" + member.getRole().name();
-        RefreshToken refresh = refreshTokenRepository.findByPhone(phone).orElse(null);
+        RefreshToken existing = refreshTokenRepository.findByUsername(request.username()).orElse(null);
 
-        String accessToken;
-        String refreshTokenString;
+        ResponseToken pair;
 
-        if (refresh != null) {
-            if (!refresh.isExpired()) {
-                accessToken = jwtProvider.generateAccessTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
-                refreshTokenString = refresh.getToken();
-            } else {
-                ResponseToken pair = jwtProvider.generateTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
-                refresh.rotate(pair.refreshToken(), LocalDateTime.now().plusDays(28));
-                accessToken = pair.accessToken();
-                refreshTokenString = pair.refreshToken();
-            }
-        } else {
-            ResponseToken pair = jwtProvider.generateTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
-            RefreshToken newRt = RefreshToken.builder()
-                    .phone(phone)
-                    .token(pair.refreshToken())
-                    .expiryDate(LocalDateTime.now().plusDays(28))
-                    .build();
-            refreshTokenRepository.save(newRt);
-
-            accessToken = pair.accessToken();
-            refreshTokenString = pair.refreshToken();
+        if (existing != null && !existing.isExpired()) {
+            // 기존 refresh 유지, access만 새로
+            String access = jwtProvider.generateAccessToken(request.username(), roleClaim);
+            return new ResponseToken(access, existing.getToken());
         }
 
-        return new ResponseToken(accessToken, refreshTokenString);
+        // 새 쌍(만료되었거나 최초)
+        pair = jwtProvider.generateToken(request.username(), roleClaim);
+        LocalDateTime newExpiry = LocalDateTime.now().plusDays(28);
+
+        if (existing != null) {
+            existing.rotate(pair.refreshToken(), newExpiry);
+        } else {
+            refreshTokenRepository.save(
+                    RefreshToken.builder()
+                            .username(request.username())
+                            .token(pair.refreshToken())
+                            .expiryDate(newExpiry)
+                            .build()
+            );
+        }
+        return new ResponseToken(pair.accessToken(), pair.refreshToken());
     }
 
+    // 로그아웃: username + 특정 refreshToken 폐기 (1번 스타일 유지)
     @Override
-    public void createUsername(String username) {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        String principal = auth.getName();
+    public void logout(String username, String refreshToken) {
+        boolean exists = refreshTokenRepository.existsByUsernameAndToken(username, refreshToken);
+        if (!exists) throw new CustomException(TokenError.NOT_FOUND);
+        refreshTokenRepository.deleteByUsernameAndToken(username, refreshToken);
+    }
 
-        Member member = memberRepository.findByUsername(principal)
-                .or(() -> memberRepository.findByPhone(principal))
+    // 재발급: 1번 스타일 유지, subject = username
+    @Override
+    public ResponseToken reissue(String refreshToken) {
+        String rt = cleanupToken(refreshToken); // 기존 유틸 사용 가정
+        jwtProvider.validateToken(rt);
+
+        // subject = username
+        String username = jwtProvider.getUsername(rt);
+        Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
-        if (username == null || username.isBlank()) {
-            throw new CustomException(MemberError.USERNAME_REQUIRED);
-        }
-        if (memberRepository.existsByUsername(username)) {
-            throw new CustomException(MemberError.DUPLICATE_USERNAME);
+        RefreshToken saved = refreshTokenRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(TokenError.NOT_FOUND));
+        if (!saved.getToken().equals(rt) || saved.isExpired()) {
+            throw new CustomException(TokenError.TOKEN_EXPIRED, "리프레시 토큰이 유효하지 않습니다.");
         }
 
-        member.setUsername(username);
+        String roleClaim = "ROLE_" + member.getRole().name();
+        String newAccessToken = jwtProvider.generateAccessToken(username, roleClaim);
+
+        return new ResponseToken(newAccessToken, rt);
+    }
+
+    private void signupTeacher(SignupRequest request) {
+        String academyCode = request.academyCode();
+        String userInputCode = request.verificationCode();
+
+        if (academyCode == null || academyCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+
+        if (userInputCode == null || userInputCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
+        }
+        AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.VERIFICATION_CODE_NOT_FOUND));
+        if (!savedCode.getCode().equals(userInputCode)) {
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
+        }
+        if (savedCode.getExpiry().isBefore(LocalDateTime.now())) {
+            throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
+        }
+        academyVerificationCodeRepository.delete(savedCode);
+
+        Member member = Member.builder()
+                .username(request.username())
+                .password(passwordEncoder.encode(request.password()))
+                .role(request.role())
+                .academy(academy)
+                .name(request.name())
+                .phone(request.phone())
+                .build();
+
         memberRepository.save(member);
+    }
+
+    private void signupStudent(SignupRequest request) {
+        String academyCode = request.academyCode();
+        if (academyCode == null || academyCode.trim().isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+
+        Member member = Member.builder()
+                .username(request.username())
+                .password(passwordEncoder.encode(request.password()))
+                .role(request.role())
+                .academy(academy)
+                .name(request.name())
+                .phone(request.phone())
+                .build();
+
+        memberRepository.save(member);
+    }
+
+    private void signupParent(SignupRequest request) {
+        List<String> studentUsernames = request.studentId();
+        if (studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST);
+        }
+
+        List<Member> children = new ArrayList<>();
+        for (String s : studentUsernames) {
+            Member child = memberRepository.findByUsername(s)
+                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+            children.add(child);
+        }
+
+        Member parent = Member.builder()
+                .username(request.username())
+                .password(passwordEncoder.encode(request.password()))
+                .role(request.role())
+                .name(request.name())
+                .phone(request.phone())
+                .build();
+
+        for (Member child : children) {
+            parent.addParentStudent(child);
+        }
+
+        memberRepository.save(parent);
     }
 
     @Override
@@ -166,14 +266,6 @@ public class MemberServiceImpl implements MemberService {
         return code.trim().replaceAll("\\s+", "").toUpperCase();
     }
 
-    // 로그아웃: 특정 refresh 토큰만 폐기 (이제 phone 기준)
-    @Override
-    public void logout(String phone, String refreshToken) {
-        boolean exists = refreshTokenRepository.existsByPhoneAndToken(phone, refreshToken);
-        if (!exists) throw new CustomException(TokenError.NOT_FOUND, "토큰을 찾을 수 없습니다.");
-        refreshTokenRepository.deleteByPhoneAndToken(phone, refreshToken);
-    }
-
     @Override
     public void deleteUser(String phone) {
         Member member = memberRepository.findByPhone(phone)
@@ -190,121 +282,12 @@ public class MemberServiceImpl implements MemberService {
         return v;
     }
 
-    public ResponseToken reissue(String refreshToken) {
-        String rt = cleanupToken(refreshToken);
-
-        if (isLikelyJwe(rt)) {
-            rt = jwtProvider.decryptToken(rt);
-        }
-
-        jwtProvider.validateToken(rt);
-
-        String phone = jwtProvider.getPhone(rt);
-        Member member = memberRepository.findByPhone(phone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-
-        RefreshToken saved = refreshTokenRepository.findByPhone(phone)
-                .orElseThrow(() -> new CustomException(TokenError.NOT_FOUND, "토큰을 찾을 수 없습니다."));
-        if (!saved.getToken().equals(rt) || saved.isExpired()) {
-            throw new CustomException(TokenError.TOKEN_EXPIRED, "리프레시 토큰이 유효하지 않습니다.");
-        }
-
-        String roleClaim = "ROLE_" + member.getRole().name();
-        String newAccessToken = jwtProvider.generateAccessTokenByPhone(phone, roleClaim, member.getUsername(), member.getName());
-
-        return new ResponseToken(newAccessToken, rt);
-    }
-
-    private void signupTeacher(SignupRequest request) {
-        String academyCode = request.academyCode();
-        String userInputCode = request.verificationCode();
-
-        if (academyCode == null || academyCode.trim().isEmpty())
-            throw new CustomException(AcademyError.INVALID_ACADEMY_CODE);
-
-        Academy academy = academyRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-
-        if (userInputCode == null || userInputCode.trim().isEmpty())
-            throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
-
-        AcademyVerificationCode savedCode = academyVerificationCodeRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new CustomException(AcademyError.VERIFICATION_CODE_NOT_FOUND));
-
-        if (!savedCode.getCode().equals(userInputCode))
-            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
-        if (savedCode.getExpiry().isBefore(LocalDateTime.now()))
-            throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
-
-        academyVerificationCodeRepository.delete(savedCode);
-
-        Member member = Member.builder()
-                .phone(request.phone())
-                .password(passwordEncoder.encode(request.password()))
-                .role(request.role())
-                .academy(academy)
-                .name(request.name())
-                .build();
-
-        memberRepository.save(member);
-    }
-
-    private void signupStudent(SignupRequest request) {
-        String academyCode = request.academyCode();
-        if (academyCode == null || academyCode.trim().isEmpty())
-            throw new CustomException(AcademyError.INVALID_ACADEMY_CODE);
-
-        Academy academy = academyRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-
-        Member member = Member.builder()
-                .phone(request.phone())
-                .password(passwordEncoder.encode(request.password()))
-                .role(request.role())
-                .academy(academy)
-                .name(request.name())
-                .build();
-
-        memberRepository.save(member);
-    }
-
-    private void signupParent(SignupRequest request) {
-        String studentPhone = request.studentPhone();
-        if (studentPhone == null || studentPhone.isBlank()) {
-            throw new CustomException(MemberError.PHONE_REQUIRED, "자녀 전화번호가 필요합니다.");
-        }
-
-        Member parent = Member.builder()
-                .phone(request.phone())
-                .password(passwordEncoder.encode(request.password()))
-                .role(request.role())
-                .name(request.name())
-                .build();
-
-        Member child = memberRepository.findByPhone(studentPhone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + studentPhone));
-
-        if (child.getRole() != Role.STUDENT) {
-            throw new CustomException(MemberError.BAD_REQUEST, "연결하려는 계정이 학생이 아닙니다: " + studentPhone);
-        }
-
-        parent.addParentStudent(child);
-
-        memberRepository.save(parent);
-    }
-
     private void validatePhoneDuplication(String phone) {
         if (memberRepository.findByPhone(phone).isPresent()) {
             throw new CustomException(MemberError.DUPLICATE_PHONE);
         }
     }
 
-    private boolean isLikelyJwe(String t) {
-        if (t == null) return false;
-        int dots = 0;
-        for (int i = 0; i < t.length(); i++) if (t.charAt(i) == '.') dots++;
-        return dots == 4;
-    }
 
     @Override
     public void sendSignupVerificationCode(String academyCode, String name) {
@@ -378,7 +361,7 @@ public class MemberServiceImpl implements MemberService {
         if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty())
             throw new CustomException(MemberError.BAD_REQUEST);
         if (password == null || password.isBlank())
-            throw new CustomException(MemberError.PASSWORD_REQUEST);
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
 
         Member teacher = memberRepository.findByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));

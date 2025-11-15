@@ -2,16 +2,23 @@ package oneclass.oneclass.domain.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -23,17 +30,27 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, length = 100)
+    // 유저네임: 로그인 / 표시명 분리하려면 displayName 추가 고려
+    @Column(nullable = false, unique = true, length = 100)
+    @NotBlank
     private String username;
 
+    @JsonIgnore
+    @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
+    @NotBlank
     private String name;
 
-    @Column(unique = true, length = 11)
+    @Column(nullable = false, unique = true, length = 11)
     @Pattern(regexp = "^\\d{10,11}$")
+    @NotBlank
     private String phone;
+
+    @Email
+    @Column(unique = true, length = 150)
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -52,11 +69,13 @@ public class Member {
             joinColumns = @JoinColumn(name = "teacher_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
     )
+    @JsonIgnore
     private Set<Member> teachingStudents = new HashSet<>();
 
     // Student -> Teachers (inverse)
     @Builder.Default
     @ManyToMany(mappedBy = "teachingStudents")
+    @JsonIgnore
     private Set<Member> teachers = new HashSet<>();
 
     // Parent -> Children
@@ -67,52 +86,97 @@ public class Member {
             joinColumns = @JoinColumn(name = "parent_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
     )
+    @JsonIgnore
     private Set<Member> parentStudents = new HashSet<>();
 
     // Child -> Parents (inverse)
     @Builder.Default
     @ManyToMany(mappedBy = "parentStudents")
+    @JsonIgnore
     private Set<Member> parents = new HashSet<>();
 
-    // 명시적 getter들(IDE Lombok 문제 회피용)
-    public Set<Member> getTeachers() { return teachers; }
-    public Set<Member> getTeachingStudents() { return teachingStudents; }
-    public Set<Member> getParentStudents() { return parentStudents; }
-    public Set<Member> getParents() { return parents; }
+    @Version
+    private Long version;
 
-    // 편의 메서드(양방향 동기화 + 중복 방지)
+    @CreatedDate
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @LastModifiedDate
+    private Instant updatedAt;
+
+    // ===== 편의 메서드 (역할/무결성 검증 추가) =====
+
     public void addStudent(Member student) {
-        if (this.teachingStudents == null) this.teachingStudents = new HashSet<>();
-        if (student.teachers == null) student.teachers = new HashSet<>();
-        if (this.teachingStudents.add(student)) {
+        requireRole(this, Role.TEACHER, "교사만 학생을 추가할 수 있습니다.");
+        requireRole(student, Role.STUDENT, "추가 대상은 학생이어야 합니다.");
+        if (isSelf(student)) return; // 자기 자신 무시
+        if (teachingStudents.add(student)) {
             student.teachers.add(this);
         }
     }
+
     public void removeStudent(Member student) {
-        if (this.teachingStudents != null && this.teachingStudents.remove(student)) {
-            if (student.teachers != null) student.teachers.remove(this);
-        }
-    }
-    public void addParentStudent(Member child) {
-        if (this.parentStudents == null) this.parentStudents = new HashSet<>();
-        if (child.parents == null) child.parents = new HashSet<>();
-        if (this.parentStudents.add(child)) {
-            child.parents.add(this);
-        }
-    }
-    public void removeParentStudent(Member child) {
-        if (this.parentStudents != null && this.parentStudents.remove(child)) {
-            if (child.parents != null) child.parents.remove(this);
+        if (teachingStudents.remove(student)) {
+            student.teachers.remove(this);
         }
     }
 
-    // Set 안정성: id 기반 equals/hashCode
+    public void addParentStudent(Member child) {
+        requireRole(this, Role.PARENT, "부모만 자녀를 추가할 수 있습니다.");
+        requireRole(child, Role.STUDENT, "자녀 대상은 학생이어야 합니다.");
+        if (isSelf(child)) return;
+        if (parentStudents.add(child)) {
+            child.parents.add(this);
+        }
+    }
+
+    public void removeParentStudent(Member child) {
+        if (parentStudents.remove(child)) {
+            child.parents.remove(this);
+        }
+    }
+
+    // ===== 내부 유틸 =====
+    private boolean isSelf(Member other) {
+        return this == other || (this.id != null && other.id != null && Objects.equals(this.id, other.id));
+    }
+
+    private void requireRole(Member m, Role expected, String message) {
+        if (m.role != expected) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    // equals/hashCode: 영속 id 기반
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Member m)) return false;
         return id != null && Objects.equals(id, m.id);
     }
+
     @Override
-    public int hashCode() { return Objects.hash(id); }
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    // 선택적으로 username 변경 로직 제한하기 위한 메서드(직접 Setter 대신)
+    public void changeUsername(String newUsername) {
+        if (newUsername == null || newUsername.isBlank()) {
+            throw new IllegalArgumentException("username은 비어있을 수 없습니다.");
+        }
+        this.username = newUsername;
+    }
+
+    public void changePassword(String encodedPassword) {
+        if (encodedPassword == null || encodedPassword.isBlank()) {
+            throw new IllegalArgumentException("패스워드가 비어있습니다.");
+        }
+        this.password = encodedPassword;
+    }
+
+    public void assignAcademy(Academy academy) {
+        this.academy = academy;
+    }
 }
