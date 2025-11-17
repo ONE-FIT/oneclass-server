@@ -30,11 +30,11 @@ public class AttendanceResponse {
     }
 
     public static AttendanceResponse fromEntity(Attendance attendance) {
+        var member = attendance.getMember();
+        var lesson = member.getLesson();
         return new AttendanceResponse(
-                attendance.getMember().getName(),
-                attendance.getMember().getLesson() != null
-                        ? attendance.getMember().getLesson().getTitle()
-                        : "미배정", // ✅ lesson이 null이면 '미배정'
+                member.getName(),
+                lesson != null ? lesson.getTitle() : "미배정",
                 attendance.getAttendanceStatus(),
                 attendance.getDate()
         );

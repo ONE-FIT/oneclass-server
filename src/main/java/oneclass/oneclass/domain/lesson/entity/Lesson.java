@@ -36,6 +36,11 @@ public class Lesson {
     @OneToMany(mappedBy = "lesson")
     private List<Member> students = new ArrayList<>();
 
+    public void addStudent(Member student) {
+        this.students.add(student);
+        student.setLesson(this);
+    }
+
     // 수업에 속한 과제들
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> tasks = new ArrayList<>();
