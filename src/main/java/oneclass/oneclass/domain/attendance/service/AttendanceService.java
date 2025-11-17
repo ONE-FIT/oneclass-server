@@ -60,7 +60,7 @@ public class AttendanceService {
         return absentMembers.stream()
                 .map(member -> new AttendanceResponse(
                         member.getName(),
-                        "미배정",
+                        member.getLesson() != null ? member.getLesson().getTitle() : "미배정",
                         AttendanceStatus.ABSENT,
                         date
                 ))
