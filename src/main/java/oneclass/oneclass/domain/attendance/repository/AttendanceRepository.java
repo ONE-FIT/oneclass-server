@@ -33,5 +33,5 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     JOIN m.academy ac
     WHERE ac.academyCode = :academyId AND a.date = :date
 """)
-    List<Attendance> findByAcademyAndDate(@Param("academyId") Long academyId, @Param("date") LocalDate date);
+    List<Attendance> findByAcademyAndDate(@Param("academyId") String academyId, @Param("date") LocalDate date);
 }

@@ -1,9 +1,10 @@
 package oneclass.oneclass.domain.announce.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import oneclass.oneclass.domain.member.entity.Member;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter

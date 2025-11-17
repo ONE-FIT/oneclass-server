@@ -101,14 +101,7 @@ public class AttendanceService {
 
     // ✅ 엔티티 → DTO 변환 메서드
     private AttendanceResponse attendanceToResponse(Attendance attendance) {
-        // Member.getLesson()가 존재하지 않을 수 있으므로, 안전하게 '미배정'으로 처리합니다.
-        String lessonTitle = "미배정";
-        return new AttendanceResponse(
-                attendance.getMember().getName(),
-                lessonTitle,
-                attendance.getAttendanceStatus(),
-                attendance.getDate()
-        );
+        return AttendanceResponse.fromEntity(attendance);
     }
 
     // ✅ --- QR 코드 + nonce 저장/검증 기능 ---
@@ -257,17 +250,12 @@ public class AttendanceService {
         nonceRepository.deleteExpiredOrUsed(LocalDateTime.now());
     }
 
-    public List<AttendanceResponse> getTodayAttendanceByAcademy(Long academyId) {
+    public List<AttendanceResponse> getTodayAttendanceByAcademy(String academyId) {
         LocalDate today = LocalDate.now();
         List<Attendance> attendances = attendanceRepository.findByAcademyAndDate(academyId, today);
 
         return attendances.stream()
-                .map(a -> new AttendanceResponse(
-                        a.getMember().getName(),
-                        "미배정",
-                        a.getAttendanceStatus(),
-                        a.getDate()
-                ))
+                .map(AttendanceResponse::fromEntity)
                 .toList();
     }
     public List<AttendanceResponse> getAttendanceByDate(Long lessonId, LocalDate date) {

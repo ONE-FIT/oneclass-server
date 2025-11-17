@@ -54,7 +54,7 @@ public class AttendanceController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "학원별 오늘 출석 현황 조회", description = "특정 학원의 오늘자 전체 학생 출석 상태를 조회합니다.")
     public ResponseEntity<List<AttendanceResponse>> getTodayAttendanceByAcademy(
-            @PathVariable Long academyId
+            @PathVariable String academyId
     ) {
         return ResponseEntity.ok(attendanceService.getTodayAttendanceByAcademy(academyId));
     }

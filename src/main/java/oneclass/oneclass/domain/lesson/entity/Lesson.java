@@ -33,12 +33,7 @@ public class Lesson {
     private Member teacher;
 
     // 수업을 듣는 학생들
-    @ManyToMany
-    @JoinTable(
-            name = "lesson_student",
-            joinColumns = @JoinColumn(name = "lesson_id"),
-            inverseJoinColumns = @JoinColumn(name = "student_id")
-    )
+    @OneToMany(mappedBy = "lesson")
     private List<Member> students = new ArrayList<>();
 
     // 수업에 속한 과제들

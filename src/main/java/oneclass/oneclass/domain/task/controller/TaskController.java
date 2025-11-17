@@ -8,9 +8,7 @@ import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
 import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.service.TaskService;
-import oneclass.oneclass.global.auth.CustomUserDetails;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
