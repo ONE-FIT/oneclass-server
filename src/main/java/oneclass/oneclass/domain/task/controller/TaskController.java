@@ -1,6 +1,7 @@
 package oneclass.oneclass.domain.task.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
@@ -16,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/task")
 @RequiredArgsConstructor
-@CrossOrigin(origins ="*")
 public class TaskController {
 
     private final TaskService taskService;
@@ -25,7 +25,7 @@ public class TaskController {
     @PostMapping("/create/{lessonId}")
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @Operation(summary = "과제 생성 (레슨 전체 대상)", description = "레슨에 속한 모든 학생에게 과제를 생성합니다.")
-    public TaskResponse createLessonTask(@RequestBody CreateTaskRequest request, @PathVariable Long lessonId) {
+    public TaskResponse createLessonTask(@RequestBody @Valid CreateTaskRequest request, @PathVariable Long lessonId) {
         return taskService.createLessonTask(request, lessonId);
     }
 
@@ -33,7 +33,7 @@ public class TaskController {
     @PostMapping("/create-one")
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @Operation(summary = "개별 과제 생성", description = "특정 학생에게만 과제를 생성합니다.")
-    public TaskResponse createEachTask(@RequestBody CreateEachTaskRequest request) {
+    public TaskResponse createEachTask(@RequestBody @Valid CreateEachTaskRequest request) {
         return taskService.createEachTask(request);
     }
 
@@ -57,7 +57,7 @@ public class TaskController {
     @PatchMapping
     @PreAuthorize("hasAnyRole('ADMIN','TEACHER')")
     @Operation(summary = "과제 수정", description = "과제 정보를 수정합니다.")
-    public TaskResponse updateTask(@RequestBody UpdateTaskRequest request) {
+    public TaskResponse updateTask(@RequestBody @Valid UpdateTaskRequest request) {
         return taskService.updateTask(request);
     }
 

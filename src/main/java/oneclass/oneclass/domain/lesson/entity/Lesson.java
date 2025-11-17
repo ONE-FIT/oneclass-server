@@ -1,10 +1,7 @@
 package oneclass.oneclass.domain.lesson.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.task.entity.Task;
@@ -34,9 +31,17 @@ public class Lesson {
 
     // 수업을 듣는 학생들
     @OneToMany(mappedBy = "lesson")
+    @ManyToMany
+    @JoinTable(
+            name = "lesson_student",
+            joinColumns = @JoinColumn(name = "lesson_id"),
+            inverseJoinColumns = @JoinColumn(name = "student_id")
+    )
+    @Builder.Default
     private List<Member> students = new ArrayList<>();
 
     // 수업에 속한 과제들
+    @Builder.Default
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> tasks = new ArrayList<>();
 }
