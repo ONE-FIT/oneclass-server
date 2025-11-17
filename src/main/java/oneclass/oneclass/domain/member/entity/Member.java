@@ -74,12 +74,13 @@ public class Member {
     @JoinColumn(name = "lesson_id")
     private Lesson lesson;
 
+
     @Builder
     private Member(Long id, String username, String password, String name,
                    String phone, String email, Role role,
-                   List<Member> teachingStudents, List<Member> teachers,
-                   List<Member> parentStudents, List<Member> parents,
-                   Academy academy) {
+                   java.util.List<Member> teachingStudents, java.util.List<Member> teachers,
+                   java.util.List<Member> parentStudents, java.util.List<Member> parents,
+                   Academy academy, Lesson lesson) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -88,10 +89,11 @@ public class Member {
         this.email = email;
         this.role = role;
         if (teachingStudents != null) teachingStudents.forEach(this::addStudent);
-        if (teachers != null) teachers.forEach(this::addTeacher);
+        if (teachers != null) teachers.forEach(teacher -> teacher.addStudent(this));
         if (parentStudents != null) parentStudents.forEach(this::addParentStudent);
-        if (parents != null) parents.forEach(this::addParent);
+        if (parents != null) parents.forEach(parent -> parent.addParentStudent(this));
         this.academy = academy;
+        this.lesson = lesson;
     }
 
     // ===== 편의 메서드(Teacher↔Student) =====

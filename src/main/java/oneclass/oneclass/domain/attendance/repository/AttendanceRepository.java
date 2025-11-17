@@ -29,7 +29,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     @Query("""
     SELECT a FROM Attendance a
-    JOIN a.member m
+    JOIN FETCH a.member m
+    LEFT JOIN FETCH m.lesson
     JOIN m.academy ac
     WHERE ac.academyCode = :academyId AND a.date = :date
 """)
