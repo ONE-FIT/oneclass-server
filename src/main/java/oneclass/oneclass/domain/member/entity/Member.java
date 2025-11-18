@@ -195,4 +195,16 @@ public class Member {
     public void assignAcademy(Academy academy) {
         this.academy = academy;
     }
+    // Member.java에 추가
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Member)) return false;
+        Member member = (Member) o;
+        return java.util.Objects.equals(username, member.username);
+    }
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(username);
+    }
 }

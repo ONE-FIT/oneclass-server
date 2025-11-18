@@ -162,7 +162,7 @@ public class AnnounceService {
         }
 
 
-        return AnnounceResponse.of(announceRepository.save(announce));
+        return AnnounceResponse.of(announce);
     }
 
     @Transactional
