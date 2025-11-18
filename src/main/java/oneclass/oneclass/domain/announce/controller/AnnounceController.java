@@ -34,34 +34,34 @@ public class AnnounceController {
             description = "강의를 고르고 공지를 만듭니다.")
     @PostMapping("/lesson/{lessonId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AnnounceResponse> createLessonAnnounce(
+    public ResponseEntity<ApiResponse<AnnounceResponse>> createLessonAnnounce(
             @PathVariable Long lessonId,
             @RequestBody CreateAnnounceRequest request
     ) {
-        return ResponseEntity.ok(announceService.createAnnounceForLesson(request, lessonId));
+        return ResponseEntity.ok(ApiResponse.success(announceService.createAnnounceForLesson(request, lessonId)));
     }
 
     @Operation(summary = "검색",
             description = "반 전용 공지를 id로 찾습니다")
     @GetMapping("/lesson/{lessonId}")
-    public ResponseEntity<List<AnnounceResponse>> getLessonAnnounces(@PathVariable Long lessonId) {
-        return ResponseEntity.ok(announceService.findAnnouncesByLessonId(lessonId));
+    public ResponseEntity<ApiResponse<List<AnnounceResponse>>> getLessonAnnounces(@PathVariable Long lessonId) {
+        return ResponseEntity.ok(ApiResponse.success(announceService.findAnnouncesByLessonId(lessonId)));
     }
 
     @Operation(summary = "학생 전용 공지 생성", description = "특정 학생에게만 공지를 생성합니다.")
     @PostMapping("/member/{memberId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AnnounceResponse> createAnnounceForMember(
+    public ResponseEntity<ApiResponse<AnnounceResponse>> createAnnounceForMember(
             @PathVariable Long memberId,
             @RequestBody CreateAnnounceRequest request
     ) {
-        return ResponseEntity.ok(announceService.createAnnounceForMember(request, memberId));
+        return ResponseEntity.ok(ApiResponse.success(announceService.createAnnounceForMember(request, memberId)));
     }
 
     @Operation(summary = "학생 공지 조회", description = "특정 학생에게 전달된 공지를 조회합니다.")
     @GetMapping("/member/{memberId}")
-    public ResponseEntity<List<AnnounceResponse>> getAnnouncesByMemberId(@PathVariable Long memberId) {
-        return ResponseEntity.ok(announceService.findAnnouncesByMemberId(memberId));
+    public ResponseEntity<ApiResponse<List<AnnounceResponse>>> getAnnouncesByMemberId(@PathVariable Long memberId) {
+        return ResponseEntity.ok(ApiResponse.success(announceService.findAnnouncesByMemberId(memberId)));
     }
 
     @Operation(summary = "검색",
