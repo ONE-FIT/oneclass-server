@@ -1,15 +1,16 @@
 package oneclass.oneclass.domain.sendon.event;
 
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToAllNow;
 import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToLessonNow;
 import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToMemberNow;
 import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsResetPasswordCode;
 import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsSendShortMessageNow;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -33,16 +34,16 @@ public class EntitySavedEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAnnounceForLessonSavedEvent(AnnounceForLessonSavedEvent event) {
-        smsSendLongMessageToLessonNow.setLessonId(event.lessonId());
-        smsSendLongMessageToLessonNow.send(event.content(), event.title());
+        // Thread-safe: lessonId를 파라미터로 전달
+        smsSendLongMessageToLessonNow.sendToLesson(event.content(), event.title(), event.lessonId());
     }
 
     // 학생 개인 공지가 생성되면 해당 학생에게 메세지 발송
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAnnounceForMemberSavedEvent(AnnounceForMemberSavedEvent event) {
-        smsSendLongMessageToMemberNow.setMemberId(event.memberId());
-        smsSendLongMessageToMemberNow.send(event.content(), event.title());
+        // Thread-safe: memberId를 파라미터로 전달
+        smsSendLongMessageToMemberNow.sendToMember(event.content(), event.title(), event.memberId());
     }
 
     // 과제가 저장되면 메세지 발송
