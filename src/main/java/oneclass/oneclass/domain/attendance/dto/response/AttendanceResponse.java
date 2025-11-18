@@ -11,20 +11,33 @@ import java.time.LocalDateTime;
 
 @Getter
 public class AttendanceResponse {
+  
+    private final Long studentId;
+    private final String studentName;
+    private final String username;
 
-    private String name; // 학생 이름
-    private String lessonTitle; // ✅ 반(레슨) 이름 추가
-    private LocalDate date;
+    private final LocalDate date;
 
     @Enumerated(EnumType.STRING)
-    private AttendanceStatus attendanceStatus; // PRESENT / ABSENT / LATE / EXCUSED
+    private final AttendanceStatus attendanceStatus; // PRESENT / ABSENT / LATE / EXCUSED
 
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
 
-    public AttendanceResponse(String name, String lessonTitle, AttendanceStatus attendanceStatus, LocalDate date) {
-        this.name = name;
-        this.lessonTitle = lessonTitle;
+    public AttendanceResponse(Long studentId, String studentName, AttendanceStatus attendanceStatus, LocalDate date) {
+        this.studentId = studentId;
+        this.studentName = studentName;
+        this.username = studentName;
+        this.attendanceStatus = attendanceStatus;
+        this.date = date;
+    }
+
+    // 기존 생성자 유지 (하위 호환성)
+    @Deprecated
+    public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate now) {
+        this.studentId = null;
+        this.studentName = username;
+        this.username = username;
         this.attendanceStatus = attendanceStatus;
         this.date = date;
     }

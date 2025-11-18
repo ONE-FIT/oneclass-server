@@ -58,12 +58,7 @@ public class AttendanceService {
     public List<AttendanceResponse> getTodayAbsentMembers(Long lessonId, LocalDate date) {
         List<Member> absentMembers = memberRepository.findAbsentMembersByLessonAndDate(lessonId, date);
         return absentMembers.stream()
-                .map(member -> new AttendanceResponse(
-                        member.getName(),
-                        member.getLesson() != null ? member.getLesson().getTitle() : "미배정",
-                        AttendanceStatus.ABSENT,
-                        date
-                ))
+                .map(m -> new AttendanceResponse(m.getId(), m.getName(), AttendanceStatus.ABSENT, date))
                 .toList();
     }
     // ✅ 오늘 지각한 사람들
@@ -101,7 +96,12 @@ public class AttendanceService {
 
     // ✅ 엔티티 → DTO 변환 메서드
     private AttendanceResponse attendanceToResponse(Attendance attendance) {
-        return AttendanceResponse.fromEntity(attendance);
+        return new AttendanceResponse(
+                attendance.getMember().getId(),
+                attendance.getMember().getName(),
+                attendance.getAttendanceStatus(),
+                attendance.getDate()
+        );
     }
 
     // ✅ --- QR 코드 + nonce 저장/검증 기능 ---
