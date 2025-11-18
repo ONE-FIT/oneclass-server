@@ -45,6 +45,6 @@ public class Lesson {
     }
     // 수업에 속한 과제들
     @Builder.Default
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "lesson")
     private List<Task> tasks = new ArrayList<>();
 }

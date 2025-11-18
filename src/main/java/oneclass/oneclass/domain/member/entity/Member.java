@@ -102,7 +102,7 @@ public class Member {
 
     @Builder
     private Member(Long id, String username, String password, String name,
-                   String phone, String email, Role role,
+                   String phone, Role role,
                    java.util.List<Member> teachingStudents, java.util.List<Member> teachers,
                    java.util.List<Member> parentStudents, java.util.List<Member> parents,
                    Academy academy, Lesson lesson) {
