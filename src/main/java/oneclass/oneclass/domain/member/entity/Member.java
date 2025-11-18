@@ -20,7 +20,6 @@ public class Member {
     private Long id;
 
     @Column(nullable = false, unique = true, length = 100)
-    @Setter(AccessLevel.NONE)
     private String username;
 
     private String password;
