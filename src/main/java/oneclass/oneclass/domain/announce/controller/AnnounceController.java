@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/announce")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://oneclass.xeneric.kr"})
 public class AnnounceController {
     private final AnnounceService announceService;
 
