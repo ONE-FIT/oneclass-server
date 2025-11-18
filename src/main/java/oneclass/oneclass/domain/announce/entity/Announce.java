@@ -29,6 +29,10 @@ public class Announce {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member author;
 
+    private Long lessonId;
+
+    private Long memberId;
+
     public void setMemberId(Long memberId) {
         this.memberId = memberId;
     }

@@ -1,10 +1,6 @@
 package oneclass.oneclass.domain.member.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import oneclass.oneclass.domain.member.entity.Role;
 import oneclass.oneclass.global.validation.PasswordMatches;
 
@@ -16,7 +12,6 @@ import java.util.List;
  * - Parent 가입 시 자녀 식별자는 username 목록(studentId)로 받음
  * - Teacher/Student 가입 시 academyCode 필수(서비스에서 검증)
  * - Teacher 가입 시 verificationCode 필수(서비스에서 검증)
- *
  * 주의: 서비스가 getXxx() 접근자를 사용하므로, record 컴포넌트 외에 브릿지 getter를 제공한다.
  */
 @PasswordMatches(password = "password", confirm = "checkPassword")

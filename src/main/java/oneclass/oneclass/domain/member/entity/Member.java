@@ -8,13 +8,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
-
 import oneclass.oneclass.domain.lesson.entity.Lesson;
-
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 
 import java.time.Instant;
 import java.util.HashSet;

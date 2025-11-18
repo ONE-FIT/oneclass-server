@@ -1,9 +1,9 @@
 package oneclass.oneclass.domain.counsel.service;
 
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.dto.request.UpdateConsultationRequest;
 import oneclass.oneclass.domain.counsel.dto.response.ConsultationDetailResponse;
-import oneclass.oneclass.domain.counsel.dto.request.ConsultationRequest;
 import oneclass.oneclass.domain.counsel.entity.Consultation;
 import oneclass.oneclass.domain.counsel.error.CounselError;
 import oneclass.oneclass.domain.counsel.repository.ConsultationRepository;
