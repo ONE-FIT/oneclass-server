@@ -1,10 +1,13 @@
 package oneclass.oneclass.domain.announce.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public record CreateAnnounceRequest(
-        String title,
-        String content,
-        Boolean important,
-        String reservation,
-        Long lessonId // ✅ 추가
+        @NotBlank String title,
+        @NotBlank String content,
+        @NotNull Boolean important,
+        @NotBlank String reservation,
+        @NotNull Long lessonId // ✅ 추가
 ) {
 }

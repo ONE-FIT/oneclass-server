@@ -1,11 +1,14 @@
 package oneclass.oneclass.domain.announce.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public record UpdateAnnounceRequest(
-        Long id,
-        String title,
-        String content,
-        Boolean important,
-        Long memberId
+        @NotNull Long id,
+        @NotBlank String title,
+        @NotBlank String content,
+        @NotNull Boolean important,
+        @NotNull Long memberId
 ) {
 
 }
