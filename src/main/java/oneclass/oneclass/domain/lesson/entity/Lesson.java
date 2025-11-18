@@ -36,18 +36,13 @@ public class Lesson {
     @OneToMany(mappedBy = "lesson")
     private Set<Member> students = new HashSet<>();
 
-    private List<Member> students = new ArrayList<>();
     public void addStudent(Member student) {
-        // 학생이 이미 다른 수업에 속해 있는 경우, 이전 수업에서 학생을 제거합니다.
         if (student.getLesson() != null && !student.getLesson().equals(this)) {
             student.getLesson().getStudents().remove(student);
         }
-        // 학생의 수업 정보를 현재 수업으로 설정합니다. (연관관계의 주인)
         student.setLesson(this);
-        // Set은 중복을 허용하지 않으므로, contains 확인 없이 바로 추가할 수 있습니다.
         this.students.add(student);
     }
-
     // 수업에 속한 과제들
     @Builder.Default
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
