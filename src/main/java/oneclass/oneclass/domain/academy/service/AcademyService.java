@@ -1,8 +1,8 @@
 package oneclass.oneclass.domain.academy.service;
 
-import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
 import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
+import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 
 public interface AcademyService {

@@ -41,11 +41,11 @@ public class LessonService {
         return LessonResponse.of(lesson);
     }
 
-    public LessonResponse findLessonByTitle(String title) {
-        Lesson lesson = lessonRepository.findByTitle(title)
-                .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
-
-        return LessonResponse.of(lesson);
+    public List<LessonResponse> findLessonByTitle(String title) {
+        return lessonRepository.findByTitle(title)
+                .stream()
+                .map(LessonResponse::of)
+                .toList();
     }
 
     public LessonResponse updateLesson(UpdateLessonRequest request) {

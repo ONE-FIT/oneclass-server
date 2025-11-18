@@ -105,10 +105,11 @@ public class TaskService {
         return TaskResponse.of(task);
     }
 
-    public TaskResponse findTaskByTitle(String title) {
-        Task task = taskRepository.findByTitle(title)
-                .orElseThrow(() -> new CustomException(TaskError.NOT_FOUND));
-        return TaskResponse.of(task);
+    public List<TaskResponse> findTaskByTitle(String title) {
+        return taskRepository.findByTitle(title)
+                .stream()
+                .map(TaskResponse::of)
+                .toList();
     }
 
     public TaskResponse updateTask(UpdateTaskRequest request) {
@@ -126,6 +127,20 @@ public class TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() ->new CustomException(TaskError.NOT_FOUND));
         taskRepository.delete(task);
+    }
+
+    @Transactional
+    public TaskResponse updateTaskStatus(Long taskId, Long memberId, TaskStatus newStatus) {
+        // 학생의 과제 할당(TaskAssignment) 찾기
+        TaskAssignment assignment = taskAssignmentRepository
+                .findByTaskIdAndStudentId(taskId, memberId)
+                .orElseThrow(() -> new CustomException(TaskError.ASSIGNMENT_NOT_FOUND));
+
+        // 과제 상태 업데이트
+        assignment.setTaskStatus(newStatus);
+
+        // Task 자체는 그대로, 응답은 TaskResponse로 반환
+        return TaskResponse.of(assignment.getTask());
     }
 
     public List<TaskResponse> findAll() {

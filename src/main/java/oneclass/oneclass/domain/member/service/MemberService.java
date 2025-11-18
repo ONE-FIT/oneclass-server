@@ -1,25 +1,27 @@
 package oneclass.oneclass.domain.member.service;
 
-import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import oneclass.oneclass.domain.member.dto.request.LoginRequest;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 
 import java.util.List;
 
 public interface MemberService {
     void signup(SignupRequest request);
-    ResponseToken login(String phone, String password);
+    ResponseToken login(LoginRequest request);
     void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
 
     // 로그아웃
-    void logout(String phone, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
+    void logout(String username, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
 
     void sendSignupVerificationCode(String academyCode, String name);
     void addStudentsToParent(String parentPhone, String password, List<String> studentPhone);
     void deleteParent(Long parentId);
     void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones);
     TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password);
-    void createUsername(String username);
     void deleteUser(String phone);
     String cleanupToken(String token);
 

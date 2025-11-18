@@ -4,7 +4,8 @@ public record UpdateAnnounceRequest(
         Long id,
         String title,
         String content,
-        Boolean important
+        Boolean important,
+        Long memberId
 ) {
 
 }

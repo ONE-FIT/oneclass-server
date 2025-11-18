@@ -15,6 +15,7 @@ import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
+import oneclass.oneclass.global.dto.ApiResponse;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,28 +36,24 @@ public class MemberController {
 
     @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
     @PostMapping("/signup-code")
-    public ResponseEntity<Void> sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
+    public ResponseEntity<ApiResponse<Void>> sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
         memberService.sendSignupVerificationCode(academyCode, name);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<Void> signup(@RequestBody @Valid SignupRequest request) {
+    public ResponseEntity<ApiResponse<Void>> signup(@RequestBody @Valid SignupRequest request) {
         memberService.signup(request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
     @PostMapping("/login")
-    public ResponseEntity<ResponseToken> login(@RequestBody @Valid LoginRequest req) {
-        String phone = normalizePhone(req.getPhone());
-        return ResponseEntity.ok(memberService.login(phone, req.getPassword()));
-    }
-
-    private String normalizePhone(String phone) {
-        if (phone == null) return null;
-        return phone.replaceAll("\\D", "");
+    public ResponseEntity<ApiResponse<ResponseToken>> login(@RequestBody @Valid LoginRequest request) {
+        // LoginRequest 전체를 서비스로 전달 (서비스가 내부에서 검증/정규화 처리)
+        ResponseToken token = memberService.login(request);
+        return ResponseEntity.ok(ApiResponse.success(token));
     }
 
     @Operation(
@@ -65,7 +62,7 @@ public class MemberController {
     )
     @PostMapping("/logout")
     @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
-    public ResponseEntity<Void> logout(
+    public ResponseEntity<ApiResponse<Void>> logout(
             Authentication authentication,
             HttpServletRequest request,
             @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
@@ -76,7 +73,7 @@ public class MemberController {
         // 1) 입력 토큰 정리
         String rt = memberService.cleanupToken(refreshToken);
 
-        // 2) JWE(5세그먼트)면 복호화
+        // 2) JWE(5 세그먼트)면 복호화
         if (isLikelyJwe(rt)) {
             rt = jwtProvider.decryptToken(rt);
         }
@@ -88,26 +85,31 @@ public class MemberController {
             if (!TokenError.TOKEN_EXPIRED.equals(e.getError())) throw e;
         }
 
-        // 4) refresh 토큰 주체(phone)
-        String phoneFromRefresh = jwtProvider.getPhone(rt);
+        // 4) refresh 토큰의 주체(subject = username)
+        String usernameFromRefresh = jwtProvider.getUsername(rt);
 
-        // 5) 인증 주체 phone 추출(중복 로직 -> 메서드화)
-        String phoneFromAuth = resolveAuthenticatedPhone(authentication, request);
+        // 5) 인증 주체 username
+        String usernameFromAuth = resolveAuthenticatedUsername(authentication, request);
 
         // 6) 주체 일치 확인
-        if (!phoneFromAuth.equals(phoneFromRefresh)) {
+        if (!usernameFromAuth.equals(usernameFromRefresh)) {
             throw new CustomException(TokenError.UNAUTHORIZED);
         }
 
-        // 7) 해당 refresh 토큰 폐기
-        memberService.logout(phoneFromRefresh, rt);
-        return ResponseEntity.noContent().build();
+        // 7) 해당 refresh 토큰 폐기 (username 기반)
+        memberService.logout(usernameFromRefresh, rt);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    private String resolveAuthenticatedUsername(Authentication authentication, HttpServletRequest request) {
+        // 기본: SecurityContext의 principal 사용
+        return authentication.getName();
     }
 
     @Operation(summary = "계정탈퇴", description = "계정을 탈퇴합니다.")
     @DeleteMapping("/delete-user")
     @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
-    public ResponseEntity<Void> deleteUser(
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
             Authentication authentication,
             HttpServletRequest request
     ){
@@ -116,27 +118,19 @@ public class MemberController {
         }
         String phoneFromAuth = resolveAuthenticatedPhone(authentication, request);
         memberService.deleteUser(phoneFromAuth);
-        return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "닉네임 생성", description = "닉네임을 생성합니다.")
-    @PostMapping("/create-username")
-    @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
-    public ResponseEntity<Void> createUsername(@RequestParam String username) {
-        memberService.createUsername(username);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         memberService.resetPassword(
-                request.getPhone(),
-                request.getNewPassword(),
-                request.getCheckPassword(),
-                request.getVerificationCode()
+                request.phone(),
+                request.newPassword(),
+                request.checkPassword(),
+                request.verificationCode()
         );
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     private boolean isLikelyJwe(String t) {
@@ -146,69 +140,69 @@ public class MemberController {
     @Operation(summary = "선생님 계정에 학생 추가", description = "학생을 추가합니다.")
     @PostMapping("/teachers/{teacherPhone}/students")
     @PreAuthorize("hasAnyRole('TEACHER')")
-    public ResponseEntity<TeacherStudentsResponse> addStudentsToTeacher(
+    public ResponseEntity<ApiResponse<TeacherStudentsResponse>> addStudentsToTeacher(
             @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request,
             Authentication authentication
     ) {
         TeacherStudentsResponse response = memberService.addStudentsToTeacher(
                 teacherPhone,
-                request.getStudentPhones(),
-                request.getPassword()
+                request.studentPhones(),
+                request.password()
         );
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @Operation(summary = "선생님 계정에 학생 제거", description = "학생을 제거합니다.")
     @DeleteMapping("/teachers/{teacherPhone}/students")
     @PreAuthorize("hasAnyRole('TEACHER')")
-    public ResponseEntity<Void> removeStudentsFromTeacher(
+    public ResponseEntity<ApiResponse<Void>> removeStudentsFromTeacher(
             @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request,
             Authentication authentication
     ) {
-        memberService.removeStudentsFromTeacher(teacherPhone, request.getStudentPhones());
-        return ResponseEntity.noContent().build();
+        memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "특정 선생님 맡고있는 학생 리스트조회", description = "학생을 조회합니다.")
     @GetMapping("/teachers/{teacherPhone}/students")
     @PreAuthorize("hasAnyRole('TEACHER','PARENT','STUDENT')")
-    public ResponseEntity<List<String>> listStudentsOfTeacher(
+    public ResponseEntity<ApiResponse<List<String>>> listStudentsOfTeacher(
             @PathVariable String teacherPhone,
             Authentication authentication
     ) {
         String requester = (authentication != null) ? authentication.getName() : null;
         List<String> students = memberService.listStudentsOfTeacher(requester, teacherPhone);
-        return ResponseEntity.ok(students);
+        return ResponseEntity.ok(ApiResponse.success(students));
     }
 
     @Operation(summary = "특정 학생의 선생님 조회", description = "선생님을 조회합니다.")
     @GetMapping("/students/{studentPhone}/teachers")
     @PreAuthorize("hasAnyRole('TEACHER','PARENT','STUDENT')")
-    public ResponseEntity<List<String>> listTeachersOfStudent(
+    public ResponseEntity<ApiResponse<List<String>>> listTeachersOfStudent(
             @PathVariable String studentPhone,
             Authentication authentication
     ) {
         String requester = (authentication != null) ? authentication.getName() : null;
         List<String> teachers = memberService.listTeachersOfStudent(requester, studentPhone);
-        return ResponseEntity.ok(teachers);
+        return ResponseEntity.ok(ApiResponse.success(teachers));
     }
 
     @Operation(summary = "부모님 삭제", description = "학생계정에 등록된 부모님을 삭제합니다.")
     @DeleteMapping("/parent/{parentId}")
     @PreAuthorize("hasAnyRole('PARENT','TEACHER')")
-    public ResponseEntity<Void> deleteParent(@PathVariable Long parentId) {
+    public ResponseEntity<ApiResponse<Void>> deleteParent(@PathVariable Long parentId) {
         memberService.deleteParent(parentId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
     @PostMapping("/parent/add-students")
     @PreAuthorize("hasAnyRole('PARENT')")
-    public ResponseEntity<Void> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
-        memberService.addStudentsToParent(request.getPhone(), request.getPassword(), request.getStudentPhones());
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ApiResponse<Void>> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
+        memberService.addStudentsToParent(request.phone(), request.password(), request.studentPhones());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     /**

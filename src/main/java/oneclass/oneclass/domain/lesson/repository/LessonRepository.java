@@ -4,9 +4,9 @@ import oneclass.oneclass.domain.lesson.entity.Lesson;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
-    Optional<Lesson> findByTitle(String title);
+    List<Lesson> findByTitle(String title);
 }

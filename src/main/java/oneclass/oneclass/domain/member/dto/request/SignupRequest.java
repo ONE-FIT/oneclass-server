@@ -1,35 +1,38 @@
 package oneclass.oneclass.domain.member.dto.request;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import oneclass.oneclass.domain.member.entity.Role;
+import oneclass.oneclass.global.validation.PasswordMatches;
 
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-public class SignupRequest {
-    private String password;
-    private String checkPassword;
-    private String name;
-//    private String email;
-    private String phone;
-    private Role role;
-    private String verificationCode;
-    private String academyCode;
-    private String studentPhone;
+/**
+ * username 기반 회원가입 요청 DTO
+ * - 기존 phone 기반에서 username 기반으로 전환
+ * - Parent 가입 시 자녀 식별자는 username 목록(studentId)로 받음
+ * - Teacher/Student 가입 시 academyCode 필수(서비스에서 검증)
+ * - Teacher 가입 시 verificationCode 필수(서비스에서 검증)
+ *
+ * 주의: 서비스가 getXxx() 접근자를 사용하므로, record 컴포넌트 외에 브릿지 getter를 제공한다.
+ */
+@PasswordMatches(password = "password", confirm = "checkPassword")
+public record SignupRequest(
+        @NotBlank @Size(min = 3, max = 100) String username,
+        @NotBlank @Size(min = 8, max = 64) String password,
+        @NotBlank @Size(min = 8, max = 64) String checkPassword,
+        @NotBlank String name,
+        @NotBlank @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 10~11자리 숫자여야 합니다.") String phone,
+        @Email String email,
+        @NotNull Role role,
 
-    @Builder
-    public SignupRequest(String password, String name, String email, String phone,
-                         Role role, String verificationCode, String academyCode, List<String> studentUsername) {
-        this.password = password;
-        this.checkPassword = password;
-        this.name = name;
-//        this.email = email;
-        this.phone = phone;
-        this.role = role;
-        this.verificationCode = verificationCode;
-        this.academyCode = academyCode;
-    }
-}
+        // 역할별 선택 입력(서비스에서 조건 검증)
+        String verificationCode, // TEACHER 전용
+        String academyCode,      // TEACHER/STUDENT 전용
+
+        // PARENT 전용: 자녀 username 목록
+        List<String> studentId
+) {}
