@@ -21,6 +21,9 @@ import java.util.Optional;
  */
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
+    @Query("SELECT m.phone FROM Member m WHERE m.lesson.lessonId = :lessonId AND m.phone IS NOT NULL AND m.phone != ''")
+    Page<String> findPhonesByLessonId(@Param("lessonId") Long lessonId, Pageable pageable);
+
     // 단건 조회
     Optional<Member> findByUsername(String username);
     Optional<Member> findByPhone(String phone);

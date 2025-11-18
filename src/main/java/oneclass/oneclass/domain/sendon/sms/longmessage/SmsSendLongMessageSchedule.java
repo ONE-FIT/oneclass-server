@@ -39,7 +39,7 @@ public class SmsSendLongMessageSchedule extends BaseScenario {
                     );
                     log.info("예약 LMS 발송 완료. Page: {}, Count: {}, Reservation: {}",
                             phonePage.getNumber(), phonePage.getNumberOfElements(), reservationTime);
-                    log.debug("응답: {}", gson.toJson(sendSms));
+                    log.info("응답: {}", gson.toJson(sendSms));
                 } catch (Exception e) {
                     log.error("예약 LMS 발송 중 오류 발생. Page: {}, Size: {}, Reservation: {}",
                             phonePage.getNumber(), phonePage.getSize(), reservationTime, e);

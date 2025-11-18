@@ -31,6 +31,16 @@ spring:
           starttls.enable: true
           ssl.trust: smtp.gmail.com
 
+  # ✅ HTTPS 적용
+server:
+  port: ${EC2_PORT}
+  ssl:
+    key-store: /home/ubuntu/keystore.p12
+    key-store-password: ${SSL_PASSWORD}
+    keyStoreType: PKCS12
+    keyAlias: tomcat
+
+
 logging:
   level:
     root: INFO
@@ -41,5 +51,4 @@ logging:
     org.springframework.security: WARN
 
 jwt:
-  # 운영에서는 반드시 환경변수 제공(미제공 시 실패)
   secret: ${JWT_SECRET}

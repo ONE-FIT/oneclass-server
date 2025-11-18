@@ -51,8 +51,8 @@ public class SecurityConfig {
             "/swagger-ui/**",
 
             "/swagger-ui.html",
-            "/swagger-ui/index.html"
-
+            "/swagger-ui/index.html",
+            "/.well-known/acme-challenge/**",
     };
 
     @Bean

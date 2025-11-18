@@ -53,6 +53,16 @@ public class AttendanceController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    // AttendanceController.java
+    @GetMapping("/academy/{academyId}/today")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "학원별 오늘 출석 현황 조회", description = "특정 학원의 오늘자 전체 학생 출석 상태를 조회합니다.")
+    public ResponseEntity<List<AttendanceResponse>> getTodayAttendanceByAcademy(
+            @PathVariable String academyId
+    ) {
+        return ResponseEntity.ok(attendanceService.getTodayAttendanceByAcademy(academyId));
+    }
+
     @GetMapping(value = "/qr/{lessonId}/cached", produces = MediaType.IMAGE_PNG_VALUE)
     @Operation(summary = "Qr이미지",
             description = "캐시에 저장된 최신 QR 코드 이미지를 반환합니다.")
