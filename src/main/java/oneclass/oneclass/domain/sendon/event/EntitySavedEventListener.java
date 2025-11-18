@@ -1,16 +1,14 @@
 package oneclass.oneclass.domain.sendon.event;
 
+import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.domain.sendon.kakao.message.KakaoSendFriendTalkToAll;
+import oneclass.oneclass.domain.sendon.kakao.message.KakaoSendFriendTalkToTarget;
+import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToAllNow;
+import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsSendShortMessageNow;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-
-import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToAllNow;
-import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToLessonNow;
-import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToMemberNow;
-import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsResetPasswordCode;
-import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsSendShortMessageNow;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +18,7 @@ public class EntitySavedEventListener {
     private final SmsSendLongMessageToMemberNow smsSendLongMessageToMemberNow;
     private final SmsSendShortMessageNow smsSendShortMessageNow;
     private final SmsResetPasswordCode smsResetPasswordCode;
+    private final SmsSendLongMessageSchedule smsSendLongMessageSchedule;
 
     // 메세지 발송은 비동기 처리
 
@@ -53,10 +52,17 @@ public class EntitySavedEventListener {
         smsSendShortMessageNow.send(event.description(), event.title(), event.memberId());
     }
 
+    // 예약 공지가 저장되면 메세지 발송
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleVerificationCodeSavedEvent(VerificationCodeSavedEvent event) {
         smsResetPasswordCode.send("비밀번호 재설정 코드 : " + event.tempCode(), event.phone());
     }
 
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleReservationSavedEvent(ReservationAnnounceSavedEvent event) {
+        smsSendLongMessageSchedule.send(event.content(), event.title(), event.reservation());
+    }
 }
