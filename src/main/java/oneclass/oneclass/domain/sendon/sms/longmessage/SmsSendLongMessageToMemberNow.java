@@ -1,9 +1,5 @@
 package oneclass.oneclass.domain.sendon.sms.longmessage;
 
-import java.util.List;
-
-import org.springframework.stereotype.Component;
-
 import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +8,9 @@ import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Component
@@ -22,7 +21,7 @@ public class SmsSendLongMessageToMemberNow extends BaseScenario {
 
     public void sendToMember(String message, String title, Long memberId) {
         if (memberId == null) {
-            throw new CustomException(MemberError.INVALID_LESSON_ID_VALUE);
+            throw new CustomException(MemberError.INVALID_MEMBER_ID_VALUE);
         }
 
         Member member = memberRepository.findById(memberId)

@@ -1,34 +1,23 @@
 package oneclass.oneclass.domain.sendon.sms.longmessage;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
-
-import com.google.gson.GsonBuilder;
-
-import io.sendon.Sendon;
 import io.sendon.sms.response.SendSms;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.lesson.error.LessonError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SmsSendLongMessageToLessonNow extends BaseScenario {
     
     private final MemberRepository memberRepository;
-
-    public SmsSendLongMessageToLessonNow(MemberRepository memberRepository) {
-        this.memberRepository = memberRepository;
-        this.sendon = Sendon.getInstance(USER_ID, USER_APIKEY, true);
-        this.gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .disableHtmlEscaping()
-                .create();
-    }
 
     public void sendToLesson(String message, String title, Long lessonId) {
         if (lessonId == null) {

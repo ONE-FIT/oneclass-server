@@ -5,7 +5,7 @@ import oneclass.oneclass.global.exception.CustomError;
 
 public enum MemberError implements CustomError {
 
-    INVALID_LESSON_ID_VALUE(400, "멤버 ID가 입력되지 않았습니다."),
+    INVALID_MEMBER_ID_VALUE(400, "멤버 ID가 입력되지 않았습니다."),
     NOT_FOUND(404, "회원을 찾을 수 없습니다."),
     UNAUTHORIZED(401, "비밀번호가 일치하지 않습니다."),
     FORBIDDEN(403,"조회 권한이 없습니다"),
