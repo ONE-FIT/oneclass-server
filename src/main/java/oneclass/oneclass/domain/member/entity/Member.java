@@ -147,13 +147,12 @@ public class Member {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Member)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         Member member = (Member) o;
-        return id != null && id.equals(member.id);
+        return java.util.Objects.equals(username, member.username);
     }
-
     @Override
     public int hashCode() {
-        return id != null ? id.hashCode() : 0;
+        return java.util.Objects.hash(username);
     }
 }
