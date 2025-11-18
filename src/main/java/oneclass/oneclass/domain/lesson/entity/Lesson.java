@@ -33,7 +33,7 @@ public class Lesson {
 
     // 수업을 듣는 학생들
 
-    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+@OneToMany(mappedBy = "lesson")
     private Set<Member> students = new HashSet<>();
 
     public void addStudent(Member student) {
