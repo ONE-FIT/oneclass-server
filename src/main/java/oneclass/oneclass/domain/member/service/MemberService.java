@@ -1,7 +1,5 @@
 package oneclass.oneclass.domain.member.service;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import oneclass.oneclass.domain.member.dto.request.LoginRequest;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;

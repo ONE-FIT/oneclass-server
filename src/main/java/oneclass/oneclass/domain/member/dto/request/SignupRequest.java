@@ -1,10 +1,6 @@
 package oneclass.oneclass.domain.member.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import oneclass.oneclass.domain.member.entity.Role;
 import oneclass.oneclass.global.validation.PasswordMatches;
 
