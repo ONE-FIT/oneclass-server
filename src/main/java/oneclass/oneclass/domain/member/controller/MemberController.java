@@ -106,21 +106,6 @@ public class MemberController {
         return authentication.getName();
     }
 
-    @Operation(summary = "계정탈퇴", description = "계정을 탈퇴합니다.")
-    @DeleteMapping("/delete-user")
-    @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(
-            Authentication authentication,
-            HttpServletRequest request
-    ){
-        if (authentication == null) {
-            throw new CustomException(TokenError.UNAUTHORIZED);
-        }
-        String phoneFromAuth = resolveAuthenticatedPhone(authentication, request);
-        memberService.deleteUser(phoneFromAuth);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
@@ -189,46 +174,11 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(teachers));
     }
 
-    @Operation(summary = "부모님 삭제", description = "학생계정에 등록된 부모님을 삭제합니다.")
-    @DeleteMapping("/parent/{parentId}")
-    @PreAuthorize("hasAnyRole('PARENT','TEACHER')")
-    public ResponseEntity<ApiResponse<Void>> deleteParent(@PathVariable Long parentId) {
-        memberService.deleteParent(parentId);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
     @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
     @PostMapping("/parent/add-students")
     @PreAuthorize("hasAnyRole('PARENT')")
     public ResponseEntity<ApiResponse<Void>> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
-        memberService.addStudentsToParent(request.phone(), request.password(), request.studentPhones());
+        memberService.addStudentsToParent(request.username(), request.password(), request.studentUsernames());
         return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
-    /**
-     * 인증 정보와 request attribute에서 phone(주체)을 일관되게 추출.
-     * 1) 필터가 세팅한 request attribute "auth.phone" 우선
-     * 2) Authentication.getName() 이 전화번호 패턴이면 그대로 사용
-     * 3) 아니라면 username으로 간주하고 DB에서 Member 조회 후 phone 추출
-     */
-    private String resolveAuthenticatedPhone(Authentication authentication, HttpServletRequest request) {
-        if (authentication == null) {
-            throw new CustomException(TokenError.UNAUTHORIZED);
-        }
-
-        String phoneFromAttr = (String) request.getAttribute("auth.phone");
-        if (phoneFromAttr != null && !phoneFromAttr.isBlank()) {
-            return phoneFromAttr;
-        }
-
-        String principal = authentication.getName();
-        if (principal != null && principal.matches("^\\d{10,}$")) {
-            return principal;
-        }
-
-        // principal이 username이라고 가정
-        Member member = memberRepository.findByUsername(principal)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        return member.getPhone();
     }
 }

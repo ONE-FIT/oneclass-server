@@ -16,11 +16,9 @@ public interface MemberService {
     void logout(String username, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
 
     void sendSignupVerificationCode(String academyCode, String name);
-    void addStudentsToParent(String parentPhone, String password, List<String> studentPhone);
-    void deleteParent(Long parentId);
+    void addStudentsToParent(String parentUsername, String password, List<String> studentUsernames);
     void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones);
     TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password);
-    void deleteUser(String phone);
     String cleanupToken(String token);
 
     //refreshToken 검증

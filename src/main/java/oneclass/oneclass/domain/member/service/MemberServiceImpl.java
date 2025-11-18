@@ -51,6 +51,8 @@ public class MemberServiceImpl implements MemberService {
         Role selectRole = request.role();
         if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
+        validatePhoneDuplication(request.phone());
+
         // 비밀번호 확인
         if (request.password() == null || request.checkPassword() == null
                 || !request.password().equals(request.checkPassword())) {
@@ -169,7 +171,7 @@ public class MemberServiceImpl implements MemberService {
         Member member = Member.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
-                .role(request.role())
+                .role(Role.TEACHER)
                 .academy(academy)
                 .name(request.name())
                 .phone(request.phone())
@@ -189,7 +191,7 @@ public class MemberServiceImpl implements MemberService {
         Member member = Member.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
-                .role(request.role())
+                .role(Role.STUDENT)
                 .academy(academy)
                 .name(request.name())
                 .phone(request.phone())
@@ -199,31 +201,41 @@ public class MemberServiceImpl implements MemberService {
     }
 
     private void signupParent(SignupRequest request) {
-        List<String> studentUsernames = request.studentId();
-        if (studentUsernames == null || studentUsernames.isEmpty()) {
-            throw new CustomException(MemberError.BAD_REQUEST);
+        // 1) 단일 자녀 username 검증
+        String childUsername = request.childUsername();
+        if (childUsername == null || childUsername.isBlank()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "childUsername(자녀 아이디)가 필요합니다.");
+        }
+        if (childUsername.equals(request.username())) {
+            throw new CustomException(MemberError.BAD_REQUEST, "자기 자신을 자녀로 등록할 수 없습니다.");
         }
 
-        List<Member> children = new ArrayList<>();
-        for (String s : studentUsernames) {
-            Member child = memberRepository.findByUsername(s)
-                    .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-            children.add(child);
+        // 2) 자녀 조회 + 역할 검증
+        Member child = memberRepository.findByUsername(childUsername.trim())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "자녀 계정을 찾을 수 없습니다: " + childUsername));
+
+        if (child.getRole() != Role.STUDENT) {
+            throw new CustomException(MemberError.BAD_REQUEST, "자녀 username은 STUDENT 계정이어야 합니다.");
         }
 
+        // 3) 부모 엔티티 생성
         Member parent = Member.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
-                .role(request.role())
+                .role(Role.PARENT) // 안전하게 강제
                 .name(request.name())
                 .phone(request.phone())
                 .build();
 
-        for (Member child : children) {
-            parent.addParentStudent(child);
-        }
+        // 4) 관계 연결 (양방향 메서드가 parent.addParentStudent(child)로 구현돼 있다고 가정)
+        parent.addParentStudent(child);
 
-        memberRepository.save(parent);
+        // 5) 저장 (동시성/유니크 제약 대응)
+        try {
+            memberRepository.save(parent);
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            throw new CustomException(MemberError.CONFLICT);
+        }
     }
 
     @Override
@@ -264,14 +276,6 @@ public class MemberServiceImpl implements MemberService {
         if (code == null) return "";
         return code.trim().replaceAll("\\s+", "").toUpperCase();
     }
-
-    @Override
-    public void deleteUser(String phone) {
-        Member member = memberRepository.findByPhone(phone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        memberRepository.delete(member);
-    }
-
     @Override
     public String cleanupToken(String token) {
         if (token == null) return null;
@@ -319,40 +323,80 @@ public class MemberServiceImpl implements MemberService {
         javaMailSender.send(message);
     }
 
+    @Transactional
     @Override
-    public void addStudentsToParent(String parentPhone, String password, List<String> studentPhones) {
-        if (studentPhones == null || studentPhones.isEmpty()) {
-            throw new CustomException(MemberError.BAD_REQUEST);
+    public void addStudentsToParent(String parentUsername, String password, List<String> studentUsernames) {
+        // 기본 검증
+        if (parentUsername == null || parentUsername.isBlank()) {
+            throw new CustomException(MemberError.USERNAME_REQUIRED);
+        }
+        if (studentUsernames == null || studentUsernames.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "자녀 username 목록이 비어있습니다.");
         }
 
-        Member parent = memberRepository.findByPhone(parentPhone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        // 입력 정규화(공백 제거) + 중복 제거
+        LinkedHashSet<String> requested = studentUsernames.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (requested.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "유효한 자녀 username이 없습니다.");
+        }
+
+        // 부모 조회 + 본인 확인(비밀번호)
+        Member parent = memberRepository.findByUsername(parentUsername.trim())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "부모 계정을 찾을 수 없습니다: " + parentUsername));
 
         if (!passwordEncoder.matches(password, parent.getPassword())) {
-            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+            throw new CustomException(MemberError.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
+        }
+        // 부모 역할 검증(선택: 강제하고 싶다면)
+        if (parent.getRole() != Role.PARENT) {
+            throw new CustomException(MemberError.BAD_REQUEST, "해당 계정은 PARENT가 아닙니다: " + parent.getUsername());
         }
 
-        List<Member> children = memberRepository.findAllByPhoneIn(studentPhones);
-        Map<String, Member> byPhone = children.stream()
-                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
-                        (existing, replacement) -> existing));
+        // self-assign 방지
+        if (requested.contains(parent.getUsername())) {
+            throw new CustomException(MemberError.BAD_REQUEST, "자기 자신을 자녀로 추가할 수 없습니다.");
+        }
 
-        for (String phone : studentPhones) {
-            Member child = byPhone.get(phone);
-            if (child == null) throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + phone);
-            if (child.getRole() != Role.STUDENT) throw new CustomException(MemberError.BAD_REQUEST);
+        // 자녀 일괄 조회 (N+1 제거)
+        List<Member> children = memberRepository.findAllByUsernameIn(requested);
+        Set<String> found = children.stream().map(Member::getUsername).collect(Collectors.toSet());
+
+        //누락된 username들 수집
+        List<String> missing = requested.stream().filter(u -> !found.contains(u)).toList();
+        if (!missing.isEmpty()) {
+            throw new CustomException(MemberError.NOT_FOUND, "다음 자녀 계정을 찾을 수 없습니다: " + String.join(", ", missing));
+        }
+
+        // 역할 검증(학생인지)
+        List<String> notStudents = children.stream()
+                .filter(c -> c.getRole() != Role.STUDENT)
+                .map(Member::getUsername)
+                .toList();
+        if (!notStudents.isEmpty()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "학생 계정이 아닌 username 포함: " + String.join(", ", notStudents));
+        }
+
+        // 이미 연결된 자녀는 건너뛰어 멱등성 보장
+        //    parent.getParentStudents()가 Set이라면 contains가 잘 동작하도록 equals/hashCode 구현 확인(보통 id 기반)
+        Set<Member> already = parent.getParentStudents() == null ? Set.of() : parent.getParentStudents();
+        int added = 0;
+        for (Member child : children) {
+            if (already.contains(child)) continue; // 이미 연결된 경우 무시
             parent.addParentStudent(child);
+            added++;
         }
-        memberRepository.save(parent);
-    }
 
-    @Override
-    public void deleteParent(Long parentId) {
-        Member parent = memberRepository.findById(parentId)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        parent.getParentStudents().clear();
-        memberRepository.save(parent);
-        memberRepository.delete(parent);
+
+        // 저장 + 무결성 예외 매핑
+        try {
+            memberRepository.save(parent); // owning side가 parent라면 join 테이블 갱신됨
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new CustomException(MemberError.CONFLICT, "관계 저장 중 충돌이 발생했습니다.");
+        }
     }
 
     @Override
