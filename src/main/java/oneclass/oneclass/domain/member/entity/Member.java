@@ -143,4 +143,17 @@ public class Member {
             parent.parentStudents.add(this);
         }
     }
+    // Member.java에 추가
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Member that = (Member) o;
+        return this.id != null && this.id.equals(that.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }
