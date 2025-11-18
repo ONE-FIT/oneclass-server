@@ -1,0 +1,144 @@
+name: CI/CD Pipeline (HTTPS)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << 'ENV_EOF'
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}
+          SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          SMS_MOBILE_FROM=${{ secrets.SMS_MOBILE_FROM }}
+          USER_ID=${{ secrets.USER_ID }}
+          USER_APIKEY=${{ secrets.USER_APIKEY }}
+          SSL_PASSWORD=${{ secrets.SSL_PASSWORD }}
+          EC2_PORT=${{ secrets.EC2_PORT }}
+          ENV_EOF
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Make .ssh directory
+        run: mkdir -p ~/.ssh
+
+      - name: Add EC2 to known_hosts
+        run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy JAR to EC2
+        run: scp -i key.pem build/libs/oneclass-0.0.1-SNAPSHOT.jar ubuntu@${{ secrets.EC2_HOST }}:~/
+
+      - name: Copy .env file to EC2
+        run: scp -i key.pem .env ubuntu@${{ secrets.EC2_HOST }}:~/
+
+      - name: Create deployment script with HTTPS
+        run: |
+          cat > deploy.sh << 'SCRIPT_END'
+          #!/bin/bash
+          set -e
+
+          echo "=== Starting deployment ==="
+
+          # 0️⃣ Load environment variables from .env
+          if [ -f "/home/ubuntu/.env" ]; then
+            export $(grep -v '^#' /home/ubuntu/.env | xargs)
+          fi
+
+          DOMAIN="onefit.xeneric.kr"
+          EMAIL="${{ secrets.LETSENCRYPT_EMAIL }}"
+          SSL_PASSWORD="${SSL_PASSWORD}"
+          JAR_PATH="/home/ubuntu/oneclass-0.0.1-SNAPSHOT.jar"
+          KEYSTORE_PATH="/home/ubuntu/keystore.p12"
+
+          # 1️⃣ Stop existing Java processes
+          sudo pkill -9 java || true
+          sleep 3
+          if pgrep -f "oneclass.*\.jar" > /dev/null; then
+            sudo pkill -9 -f "oneclass.*\.jar"
+            sleep 2
+          fi
+
+          # 2️⃣ Install certbot if not exists
+          if ! command -v certbot > /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y certbot
+          fi
+
+          # 3️⃣ Issue/renew Let's Encrypt certificate
+          sudo certbot certonly --non-interactive --agree-tos --standalone -d $DOMAIN --email $EMAIL || true
+
+          # 4️⃣ Generate keystore.p12 for Spring Boot
+          sudo openssl pkcs12 -export \
+            -in /etc/letsencrypt/live/$DOMAIN/fullchain.pem \
+            -inkey /etc/letsencrypt/live/$DOMAIN/privkey.pem \
+            -out $KEYSTORE_PATH \
+            -name tomcat \
+            -password pass:$SSL_PASSWORD
+
+          sudo chown ubuntu:ubuntu $KEYSTORE_PATH
+
+          # 5️⃣ Start Spring Boot on HTTPS port
+          echo "=== Launching Spring Boot on port $EC2_PORT ==="
+          nohup sudo java -jar -Dspring.profiles.active=prod $JAR_PATH > /home/ubuntu/app.log 2>&1 &
+
+          sleep 5
+
+          if pgrep -f "oneclass.*\.jar" > /dev/null; then
+            echo "✅ Application started successfully on HTTPS"
+          else
+            echo "❌ Failed to start application"
+            tail -n 20 /home/ubuntu/app.log
+          fi
+          SCRIPT_END
+
+          chmod +x deploy.sh
+
+      - name: Copy deployment script to EC2
+        run: scp -i key.pem deploy.sh ubuntu@${{ secrets.EC2_HOST }}:~/
+
+      - name: Execute deployment on EC2
+        run: ssh -i key.pem ubuntu@${{ secrets.EC2_HOST }} 'bash ~/deploy.sh'
+
+      - name: Verify deployment
+        run: |
+          sleep 10
+          ssh -i key.pem ubuntu@${{ secrets.EC2_HOST }} '
+            if ps aux | grep "[j]ava -jar ~/oneclass-0.0.1-SNAPSHOT.jar" > /dev/null; then
+              echo "✅ Application is running on HTTPS!"
+            else
+              echo "⚠️ Java process not found"
+            fi
+            echo "=== Last 50 lines of app.log ==="
+            tail -n 50 ~/app.log || echo "⚠️ Log file not found"
+          '
+
+      - name: Deployment completed
+        run: echo "✅ Deployment with HTTPS completed successfully!"

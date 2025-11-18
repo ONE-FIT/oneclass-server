@@ -4,25 +4,26 @@ spring:
       on-profile: dev
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/oneclass
-    username: root
-    password:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/oneclass}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
+        use_sql_comments: false
 
   mail:
     host: smtp.gmail.com
     port: 587
-    username: abcb090125@gmail.com
-    password: ${SPRING_MAIL_PASSWORD}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -30,18 +31,16 @@ spring:
           starttls.enable: true
           ssl.trust: smtp.gmail.com
 
-jwt:
-  secret: "dev-very-long-secret-6YtQ3pV9mN2aR7sK4xH8cL1jW5zE0uD3bF6gIqT9yX4v"
+
+server:
+  port: 8080
+
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
+    root: INFO
+    org.springframework: INFO
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
     org.hibernate.type.descriptor.sql.BasicBinder: OFF
-    org.springframework.security.config.annotation.authentication.configuration.UserDetailsServiceAutoConfiguration: ERROR
-
-#toss:
-ret-key: test_sk_xxxxxxxxxxxxxxxxx
-
-#  secret-key: test_sk_xxxxxxxxxxxxxxxxx
-
+    org.springframework.security: WARN
