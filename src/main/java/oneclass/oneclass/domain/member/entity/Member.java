@@ -154,6 +154,6 @@ public class Member {
 
     @Override
     public int hashCode() {
-        return 31;
+        return id != null ? id.hashCode() : 0;
     }
 }
