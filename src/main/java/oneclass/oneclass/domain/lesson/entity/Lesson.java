@@ -10,7 +10,9 @@ import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.task.entity.Task;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -34,8 +36,7 @@ public class Lesson {
 
     // 수업을 듣는 학생들
     @OneToMany(mappedBy = "lesson")
-    private List<Member> students = new ArrayList<>();
-
+    private Set<Member> students = new HashSet<>();
     public void addStudent(Member student) {
         // 학생이 이미 다른 수업에 속해 있는 경우, 이전 수업에서 학생을 제거합니다.
         if (student.getLesson() != null && !student.getLesson().equals(this)) {
@@ -43,8 +44,7 @@ public class Lesson {
         }
         // 학생의 수업 정보를 현재 수업으로 설정합니다. (연관관계의 주인)
         student.setLesson(this);
-
-        // Set을 사용하면 add가 중복을 알아서 처리하므로, contains 확인 없이 바로 추가할 수 있습니다.
+        // Set은 중복을 허용하지 않으므로, contains 확인 없이 바로 추가할 수 있습니다.
         this.students.add(student);
     }
 
