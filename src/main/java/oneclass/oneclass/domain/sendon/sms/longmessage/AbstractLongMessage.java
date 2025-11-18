@@ -3,16 +3,14 @@ package oneclass.oneclass.domain.sendon.sms.longmessage;
 import io.sendon.sms.response.SendSms;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import oneclass.oneclass.domain.sendon.ExecutableWithMessageAndTitle;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 
 @Slf4j
-public abstract class AbstractLongMessage extends BaseScenario implements ExecutableWithMessageAndTitle {
+public abstract class AbstractLongMessage extends BaseScenario {
 
-    @Override
     public void execute(String message, String title){
         Pageable pageable = PageRequest.of(0, PHONE_PAGE_SIZE);
         Page<String> phonePage;

@@ -2,14 +2,20 @@ package oneclass.oneclass.domain.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.member.dto.*;
+import oneclass.oneclass.domain.member.dto.request.*;
+import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
+import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
+import oneclass.oneclass.global.dto.ApiResponse;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,7 +23,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
 @RestController
@@ -29,36 +34,26 @@ public class MemberController {
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
 
-    @Operation(summary = "부모님 삭제", description = "학생계정에 등록된 부모님을 삭제합니다.")
-    @DeleteMapping("/parent/{parentId}")
-    public ResponseEntity<Void> deleteParent(@PathVariable Long parentId) {
-        memberService.deleteParent(parentId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
-    @PostMapping("/add-students")
-    public ResponseEntity<Void> addStudentsToParent(@RequestBody AddStudentsRequest request) {
-        memberService.addStudentsToParent(request.getUsername(), request.getPassword(), request.getStudentUsernames());
-        return ResponseEntity.noContent().build();
-    }
-
     @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
     @PostMapping("/signup-code")
-    public void sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
+    public ResponseEntity<ApiResponse<Void>> sendSignupVerificationCode(@RequestParam String academyCode, @RequestParam String name) {
         memberService.sendSignupVerificationCode(academyCode, name);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "회원가입", description = "새로운 회원을 등록합니다.")
     @PostMapping("/signup")
-    public void signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<ApiResponse<Void>> signup(@RequestBody @Valid SignupRequest request) {
         memberService.signup(request);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "로그인", description = "회원 로그인 및 토큰 발급")
     @PostMapping("/login")
-    public ResponseToken login(@RequestBody LoginRequest request) {
-        return memberService.login(request.getUsername(), request.getPassword());
+    public ResponseEntity<ApiResponse<ResponseToken>> login(@RequestBody @Valid LoginRequest request) {
+        // LoginRequest 전체를 서비스로 전달 (서비스가 내부에서 검증/정규화 처리)
+        ResponseToken token = memberService.login(request);
+        return ResponseEntity.ok(ApiResponse.success(token));
     }
 
     @Operation(
@@ -67,113 +62,123 @@ public class MemberController {
     )
     @PostMapping("/logout")
     @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
-    public ResponseEntity<Void> logoutMember(
+    public ResponseEntity<ApiResponse<Void>> logout(
             Authentication authentication,
+            HttpServletRequest request,
             @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
     ) {
         if (authentication == null) throw new CustomException(TokenError.UNAUTHORIZED);
         if (refreshToken == null || refreshToken.isBlank()) throw new CustomException(TokenError.UNAUTHORIZED);
 
-        String rt = cleanToken(refreshToken);
+        // 1) 입력 토큰 정리
+        String rt = memberService.cleanupToken(refreshToken);
 
-        // JWE(5 세그먼트)면 복호화 후 JWS 를 얻음
+        // 2) JWE(5 세그먼트)면 복호화
         if (isLikelyJwe(rt)) {
             rt = jwtProvider.decryptToken(rt);
         }
 
-        // 1) Refresh 토큰 유효성/서명/만료 검증
-        jwtProvider.validateToken(rt);
+        // 3) refresh 토큰 검증 (만료는 허용하고 삭제만 진행하고 싶다면 TOKEN_EXPIRED만 허용)
+        try {
+            jwtProvider.validateToken(rt);
+        } catch (CustomException e) {
+            if (!TokenError.TOKEN_EXPIRED.equals(e.getError())) throw e;
+        }
 
-        // 2) Refresh subject와 인증 주체(username) 일치 확인
-        String username = authentication.getName();
-        String subject = jwtProvider.getUsername(rt);
-        if (!username.equals(subject)) throw new CustomException(TokenError.UNAUTHORIZED);
+        // 4) refresh 토큰의 주체(subject = username)
+        String usernameFromRefresh = jwtProvider.getUsername(rt);
 
-        // 3) 해당 Refresh 토큰만 폐기
-        memberService.logout(username, rt);
-        return ResponseEntity.noContent().build();
+        // 5) 인증 주체 username
+        String usernameFromAuth = resolveAuthenticatedUsername(authentication, request);
+
+        // 6) 주체 일치 확인
+        if (!usernameFromAuth.equals(usernameFromRefresh)) {
+            throw new CustomException(TokenError.UNAUTHORIZED);
+        }
+
+        // 7) 해당 refresh 토큰 폐기 (username 기반)
+        memberService.logout(usernameFromRefresh, rt);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @Operation(summary = "아이디 찾기", description = "이메일 또는 전화번호로 아이디를 조회합니다.")
-    @GetMapping("/find-username")
-    public String findUsername(@RequestParam String emailOrPhone) {
-        return memberService.findUsername(emailOrPhone);
-    }
-
-    @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
-    @PostMapping("/send-reset-password-email")
-    public void sendResetPasswordEmail(@RequestBody Map<String, String> request) {
-        String emailOrPhone = request.get("emailOrPhone");
-        memberService.sendResetPasswordEmail(emailOrPhone);
+    private String resolveAuthenticatedUsername(Authentication authentication, HttpServletRequest request) {
+        // 기본: SecurityContext의 principal 사용
+        return authentication.getName();
     }
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
-    public void resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         memberService.resetPassword(
-                request.getUsername(),
-                request.getNewPassword(),
-                request.getVerificationCode(),
-                request.getCheckPassword()
+                request.phone(),
+                request.newPassword(),
+                request.checkPassword(),
+                request.verificationCode()
         );
-    }
-
-    private String cleanToken(String t) {
-        String v = t.trim();
-        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
-        if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
-        return v;
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     private boolean isLikelyJwe(String t) {
-        return TokenUtils.isLikelyJwe(t); // 5 segments
+        return TokenUtils.isLikelyJwe(t);
     }
 
-    //선생님한테 배우는 학생 추가
     @Operation(summary = "선생님 계정에 학생 추가", description = "학생을 추가합니다.")
-    @PostMapping("/teachers/{teacherUsername}/students")
-    public ResponseEntity<Void> addStudentsToTeacher(
-            @PathVariable String teacherUsername,
-            @RequestBody @Valid TeacherStudentsRequest request,
-            Authentication authentication // 인증 정보(필요 시 요청자 확인)
-    ) {
-        // 현재 서비스 시그니처는 teacherUsername, studentUsernames, password 를 받음.
-        // 요청자가 본인(teacher)인지 검증하려면 authentication을 사용해 토큰 기반 확인을 추가 구현 가능.
-        memberService.addStudentsToTeacher(teacherUsername, request.getStudentUsernames(), request.getPassword());
-        return ResponseEntity.noContent().build();
-    }
-
-    // 선생님에게서 여러 학생 제거
-    @DeleteMapping("/teachers/{teacherUsername}/students")
-    public ResponseEntity<Void> removeStudentsFromTeacher(
-            @PathVariable String teacherUsername,
+    @PostMapping("/teachers/{teacherPhone}/students")
+    @PreAuthorize("hasAnyRole('TEACHER')")
+    public ResponseEntity<ApiResponse<TeacherStudentsResponse>> addStudentsToTeacher(
+            @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request,
             Authentication authentication
     ) {
-        // remove에서는 password가 현재 필요없음(서비스 레벨에서 role 체크)
-        memberService.removeStudentsFromTeacher(teacherUsername, request.getStudentUsernames());
-        return ResponseEntity.noContent().build();
+        TeacherStudentsResponse response = memberService.addStudentsToTeacher(
+                teacherPhone,
+                request.studentPhones(),
+                request.password()
+        );
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    // 선생님이 맡고 있는 학생 username 리스트 조회
-    @GetMapping("/teachers/{teacherUsername}/students")
-    public ResponseEntity<List<String>> listStudentsOfTeacher(
-            @PathVariable String teacherUsername,
+    @Operation(summary = "선생님 계정에 학생 제거", description = "학생을 제거합니다.")
+    @DeleteMapping("/teachers/{teacherPhone}/students")
+    @PreAuthorize("hasAnyRole('TEACHER')")
+    public ResponseEntity<ApiResponse<Void>> removeStudentsFromTeacher(
+            @PathVariable String teacherPhone,
+            @RequestBody @Valid TeacherStudentsRequest request,
+            Authentication authentication
+    ) {
+        memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "특정 선생님 맡고있는 학생 리스트조회", description = "학생을 조회합니다.")
+    @GetMapping("/teachers/{teacherPhone}/students")
+    @PreAuthorize("hasAnyRole('TEACHER','PARENT','STUDENT')")
+    public ResponseEntity<ApiResponse<List<String>>> listStudentsOfTeacher(
+            @PathVariable String teacherPhone,
             Authentication authentication
     ) {
         String requester = (authentication != null) ? authentication.getName() : null;
-        List<String> students = memberService.listStudentsOfTeacher(requester, teacherUsername);
-        return ResponseEntity.ok(students);
+        List<String> students = memberService.listStudentsOfTeacher(requester, teacherPhone);
+        return ResponseEntity.ok(ApiResponse.success(students));
     }
 
-    // 특정 학생의 담당 선생님 username 리스트 조회
-    @GetMapping("/students/{studentUsername}/teachers")
-    public ResponseEntity<List<String>> listTeachersOfStudent(
-            @PathVariable String studentUsername,
+    @Operation(summary = "특정 학생의 선생님 조회", description = "선생님을 조회합니다.")
+    @GetMapping("/students/{studentPhone}/teachers")
+    @PreAuthorize("hasAnyRole('TEACHER','PARENT','STUDENT')")
+    public ResponseEntity<ApiResponse<List<String>>> listTeachersOfStudent(
+            @PathVariable String studentPhone,
             Authentication authentication
     ) {
         String requester = (authentication != null) ? authentication.getName() : null;
-        List<String> teachers = memberService.listTeachersOfStudent(requester, studentUsername);
-        return ResponseEntity.ok(teachers);
+        List<String> teachers = memberService.listTeachersOfStudent(requester, studentPhone);
+        return ResponseEntity.ok(ApiResponse.success(teachers));
+    }
+
+    @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
+    @PostMapping("/parent/add-students")
+    @PreAuthorize("hasAnyRole('PARENT')")
+    public ResponseEntity<ApiResponse<Void>> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
+        memberService.addStudentsToParent(request.username(), request.password(), request.studentUsernames());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

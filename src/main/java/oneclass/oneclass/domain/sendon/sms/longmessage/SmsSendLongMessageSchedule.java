@@ -1,6 +1,6 @@
 package oneclass.oneclass.domain.sendon.sms.longmessage;
 
-import io.sendon.sms.request.MmsBuilder;
+import io.sendon.sms.request.LmsBuilder;
 import io.sendon.sms.request.Reservation;
 import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-@Deprecated
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -30,7 +29,7 @@ public class SmsSendLongMessageSchedule extends BaseScenario {
             phonePage = findTargets(pageable);
             if (!phonePage.getContent().isEmpty()) {
                 try {
-                    SendSms sendSms = sendon.sms.sendMms(new MmsBuilder()
+                    SendSms sendSms = sendon.sms.sendLms(new LmsBuilder()
                             .setFrom(SMS_MOBILE_FROM)
                             .setTo(phonePage.getContent())
                             .setTitle(title)
@@ -40,7 +39,7 @@ public class SmsSendLongMessageSchedule extends BaseScenario {
                     );
                     log.info("예약 LMS 발송 완료. Page: {}, Count: {}, Reservation: {}",
                             phonePage.getNumber(), phonePage.getNumberOfElements(), reservationTime);
-                    log.debug("응답: {}", gson.toJson(sendSms));
+                    log.info("응답: {}", gson.toJson(sendSms));
                 } catch (Exception e) {
                     log.error("예약 LMS 발송 중 오류 발생. Page: {}, Size: {}, Reservation: {}",
                             phonePage.getNumber(), phonePage.getSize(), reservationTime, e);

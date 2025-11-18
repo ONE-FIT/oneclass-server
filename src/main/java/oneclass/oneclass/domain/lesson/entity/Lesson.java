@@ -1,10 +1,7 @@
 package oneclass.oneclass.domain.lesson.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.task.entity.Task;
@@ -35,8 +32,11 @@ public class Lesson {
     private Member teacher;
 
     // 수업을 듣는 학생들
+
     @OneToMany(mappedBy = "lesson")
     private Set<Member> students = new HashSet<>();
+
+    private List<Member> students = new ArrayList<>();
     public void addStudent(Member student) {
         // 학생이 이미 다른 수업에 속해 있는 경우, 이전 수업에서 학생을 제거합니다.
         if (student.getLesson() != null && !student.getLesson().equals(this)) {
@@ -49,6 +49,7 @@ public class Lesson {
     }
 
     // 수업에 속한 과제들
+    @Builder.Default
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> tasks = new ArrayList<>();
 }

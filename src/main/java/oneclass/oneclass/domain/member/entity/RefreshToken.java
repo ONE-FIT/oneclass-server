@@ -18,10 +18,10 @@ import java.time.LocalDateTime;
 public class RefreshToken {
 
     @Id
-    @Column(length = 100)
+    @Column(length = 100, nullable = false, unique = true)
     private String username;   // PK = username (유저당 1개)
 
-    @Column(nullable = false, length = 300)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String token;
 
     @Column(nullable = false)
@@ -35,5 +35,4 @@ public class RefreshToken {
         this.token = newToken;
         this.expiryDate = newExpiry;
     }
-
 }

@@ -2,73 +2,98 @@ package oneclass.oneclass.domain.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Member {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 유저네임: 로그인 / 표시명 분리하려면 displayName 추가 고려
     @Column(nullable = false, unique = true, length = 100)
+    @NotBlank
     private String username;
 
+    @JsonIgnore
+    @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
+    @NotBlank
     private String name;
 
+    @Column(nullable = false, unique = true, length = 11)
+    @Pattern(regexp = "^\\d{10,11}$")
+    @NotBlank
     private String phone;
-    private String email;
+
 
     @Enumerated(EnumType.STRING)
     @NotNull
     private Role role;
 
-    // 선생 → 학생
-    @ManyToMany
-    @JoinTable(
-            name = "teacher_student",
-            joinColumns = @JoinColumn(name = "teacher_username", referencedColumnName = "username"),
-            inverseJoinColumns = @JoinColumn(name = "student_username", referencedColumnName = "username")
-    )
-    @JsonIgnore
-    private List<Member> teachingStudents = new ArrayList<>();
-
-    // 학생 → 선생
-    @ManyToMany(mappedBy = "teachingStudents")
-    @JsonIgnore
-    private List<Member> teachers = new ArrayList<>();
-
-    // 부모 → 자녀
-    @ManyToMany
-    @JoinTable(
-            name = "parent_student",
-            joinColumns = @JoinColumn(name = "parent_username", referencedColumnName = "username"),
-            inverseJoinColumns = @JoinColumn(name = "student_username", referencedColumnName = "username")
-    )
-    @JsonIgnore
-    private List<Member> parentStudents = new ArrayList<>();
-
-    // 자녀 → 부모
-    @ManyToMany(mappedBy = "parentStudents")
-    @JsonIgnore
-    private List<Member> parents = new ArrayList<>();
-
-    // 학원
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "academy_code", referencedColumnName = "academyCode")
     @JsonIgnore
     private Academy academy;
+
+    // Teacher -> Students
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(
+            name = "teacher_student",
+            joinColumns = @JoinColumn(name = "teacher_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
+    )
+    @JsonIgnore
+    private Set<Member> teachingStudents = new HashSet<>();
+
+    // Student -> Teachers (inverse)
+    @Builder.Default
+    @ManyToMany(mappedBy = "teachingStudents")
+    @JsonIgnore
+    private Set<Member> teachers = new HashSet<>();
+
+    // Parent -> Children
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(
+            name = "parent_student",
+            joinColumns = @JoinColumn(name = "parent_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id")
+    )
+    @JsonIgnore
+    private Set<Member> parentStudents = new HashSet<>();
+
+    // Child -> Parents (inverse)
+    @Builder.Default
+    @ManyToMany(mappedBy = "parentStudents")
+    @JsonIgnore
+    private Set<Member> parents = new HashSet<>();
+
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lesson_id")
@@ -96,52 +121,79 @@ public class Member {
         this.lesson = lesson;
     }
 
-    // ===== 편의 메서드(Teacher↔Student) =====
+    // ===== 편의 메서드 (역할/무결성 검증 추가) =====
+
     public void addStudent(Member student) {
-        if (!this.teachingStudents.contains(student)) {
-            this.teachingStudents.add(student);
-        }
-        if (!student.teachers.contains(this)) {
+        requireRole(this, Role.TEACHER, "교사만 학생을 추가할 수 있습니다.");
+        requireRole(student, Role.STUDENT, "추가 대상은 학생이어야 합니다.");
+        if (isSelf(student)) return; // 자기 자신 무시
+        if (teachingStudents.add(student)) {
             student.teachers.add(this);
         }
     }
 
     public void removeStudent(Member student) {
-        this.teachingStudents.remove(student);
-        student.teachers.remove(this);
-    }
-
-    public void addTeacher(Member teacher) {
-        if (!this.teachers.contains(teacher)) {
-            this.teachers.add(teacher);
-        }
-        if (!teacher.teachingStudents.contains(this)) {
-            teacher.teachingStudents.add(this);
+        if (teachingStudents.remove(student)) {
+            student.teachers.remove(this);
         }
     }
 
-    public void removeTeacher(Member teacher) {
-        this.teachers.remove(teacher);
-        teacher.teachingStudents.remove(this);
-    }
-
-    // ===== 편의 메서드(Parent↔Child) =====
     public void addParentStudent(Member child) {
-        if (!this.parentStudents.contains(child)) {
-            this.parentStudents.add(child);
-        }
-        if (!child.parents.contains(this)) {
+        requireRole(this, Role.PARENT, "부모만 자녀를 추가할 수 있습니다.");
+        requireRole(child, Role.STUDENT, "자녀 대상은 학생이어야 합니다.");
+        if (isSelf(child)) return;
+        if (parentStudents.add(child)) {
             child.parents.add(this);
         }
     }
 
-    public void addParent(Member parent) {
-        if (!this.parents.contains(parent)) {
-            this.parents.add(parent);
+    public void removeParentStudent(Member child) {
+        if (parentStudents.remove(child)) {
+            child.parents.remove(this);
         }
-        if (!parent.parentStudents.contains(this)) {
-            parent.parentStudents.add(this);
+    }
+
+    // ===== 내부 유틸 =====
+    private boolean isSelf(Member other) {
+        return this == other || (this.id != null && other.id != null && Objects.equals(this.id, other.id));
+    }
+
+    private void requireRole(Member m, Role expected, String message) {
+        if (m.role != expected) {
+            throw new IllegalArgumentException(message);
         }
+    }
+
+    // equals/hashCode: 영속 id 기반
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Member m)) return false;
+        return id != null && Objects.equals(id, m.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    // 선택적으로 username 변경 로직 제한하기 위한 메서드(직접 Setter 대신)
+    public void changeUsername(String newUsername) {
+        if (newUsername == null || newUsername.isBlank()) {
+            throw new IllegalArgumentException("username은 비어있을 수 없습니다.");
+        }
+        this.username = newUsername;
+    }
+
+    public void changePassword(String encodedPassword) {
+        if (encodedPassword == null || encodedPassword.isBlank()) {
+            throw new IllegalArgumentException("패스워드가 비어있습니다.");
+        }
+        this.password = encodedPassword;
+    }
+
+    public void assignAcademy(Academy academy) {
+        this.academy = academy;
     }
     // Member.java에 추가
     @Override

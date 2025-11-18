@@ -5,14 +5,23 @@ import oneclass.oneclass.domain.announce.dto.request.CreateAnnounceRequest;
 import oneclass.oneclass.domain.announce.dto.request.UpdateAnnounceRequest;
 import oneclass.oneclass.domain.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.domain.announce.entity.Announce;
+import oneclass.oneclass.domain.announce.entity.AnnounceStatus;
+import oneclass.oneclass.domain.announce.entity.AnnounceType;
 import oneclass.oneclass.domain.announce.error.AnnounceError;
 import oneclass.oneclass.domain.announce.repository.AnnounceRepository;
+import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.error.MemberError;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
+import oneclass.oneclass.domain.sendon.event.AnnounceForLessonSavedEvent;
+import oneclass.oneclass.domain.sendon.event.AnnounceForMemberSavedEvent;
 import oneclass.oneclass.domain.sendon.event.AnnounceSavedEvent;
+import oneclass.oneclass.domain.sendon.event.ReservationAnnounceSavedEvent;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,22 +31,44 @@ import java.util.stream.Collectors;
 public class AnnounceService {
     private final AnnounceRepository announceRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final TimeValidator timeValidator;
+    private final MemberRepository memberRepository;
 
     @Transactional
-    public AnnounceResponse createAnnounce(CreateAnnounceRequest request) {
+    public AnnounceResponse createAnnounce(Principal principal, CreateAnnounceRequest request) {
+
+        if (principal == null) {
+            throw new CustomException(MemberError.UNAUTHORIZED);
+        }
+
+        String username = principal.getName();
+        Member author = memberRepository.findByUsername(username).orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+
+        boolean isReservation = request.reservation() != null && !request.reservation().isBlank();
+
+        if (isReservation) {
+            timeValidator.validateAndParse(request.reservation());
+        }
 
         Announce announce = Announce.builder()
                 .title(request.title())
                 .content(request.content())
                 // 중요한 공지인지 아닌지 체크가 가능한 Boolean 속성의 important
                 .important(request.important())
+                .announceType(isReservation ? AnnounceType.SCHEDULED : AnnounceType.IMMEDIATE)
+                .announceStatus(isReservation ? AnnounceStatus.SCHEDULED : AnnounceStatus.PUBLISHED)
+                .author(author)
                 .build();
 
         // 만약 메세지 발송 코드가 저장 코드 위에 있을 경우, 저장에 실패했지만 메세지는 전송되는 경우가 있을 수 있음
         Announce savedAnnounce = announceRepository.save(announce);
 
         // Announce가 저장되면 이벤트 발생시킴
-        eventPublisher.publishEvent(new AnnounceSavedEvent(request.content(), request.title()));
+        if (isReservation) {
+            eventPublisher.publishEvent(new ReservationAnnounceSavedEvent(request.content(), request.title(), request.reservation()));
+        } else {
+            eventPublisher.publishEvent(new AnnounceSavedEvent(request.content(), request.title()));
+        }
 
         return AnnounceResponse.of(savedAnnounce);
     }
@@ -49,16 +80,17 @@ public class AnnounceService {
                 .title(request.title())
                 .content(request.content())
                 .important(request.important())
-                .lessonId(lessonId) // ✅ 반 ID 저장
+                .lessonId(lessonId) // 반 ID 저장
                 .build();
 
         Announce saved = announceRepository.save(announce);
 
-        // 반별 공지이므로 반 학생에게만 알림을 보낼 수 있음
+        // 반별 공지이므로 반 학생에게만 알림을 보냄
         eventPublisher.publishEvent(
-                new AnnounceSavedEvent(
+                new AnnounceForLessonSavedEvent(
                         request.content(),
-                        "[반공지] " + request.title()
+                        "[반공지] " + request.title(),
+                        lessonId
                 )
         );
 
@@ -72,8 +104,6 @@ public class AnnounceService {
                 .toList();
     }
 
-
-
     @Transactional
     public AnnounceResponse createAnnounceForMember(CreateAnnounceRequest request, Long memberId) {
         Announce announce = Announce.builder()
@@ -85,7 +115,15 @@ public class AnnounceService {
 
         Announce saved = announceRepository.save(announce);
 
-        // (선택) 학생 개인에게 알림 이벤트 발송
+        // 학생 개인에게 알림 이벤트 발송
+        eventPublisher.publishEvent(
+                new AnnounceForMemberSavedEvent(
+                        request.content(),
+                        "[개인공지] " + request.title(),
+                        memberId
+                )
+        );
+
         return AnnounceResponse.of(saved);
     }
 
