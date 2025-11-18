@@ -18,7 +18,7 @@ public class SmsResetPasswordCode extends BaseScenario {
 
     private final MemberRepository memberRepository;
 
-    public void execute(String message, String phone) {
+    public String execute(String message, String phone) {
 
         SendSms sendSms = sendon.sms.sendSms(new SmsBuilder()
                 .setFrom(SMS_MOBILE_FROM)
@@ -28,6 +28,7 @@ public class SmsResetPasswordCode extends BaseScenario {
         );
 
         log.debug("응답: {}", gson.toJson(sendSms));
+        return gson.toJson(sendSms);
     }
 
     public String getDescription() {
