@@ -25,9 +25,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByUsername(String username);
     Optional<Member> findByPhone(String phone);
 
-    // 존재 여부
-    boolean existsByPhone(String phone);
-    boolean existsByUsername(String username);
 
     // 다건 조회(전화번호 리스트로)
     List<Member> findAllByPhoneIn(Collection<String> phones);
@@ -106,7 +103,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     """)
     Optional<Member> findStudentWithTeachersAndParentsByPhoneFetchJoin(@Param("phone") String phone);
 
-    boolean existsByEmail(String email);
 
     List<Member> findAllByUsernameIn(Collection<String> usernames);
 }

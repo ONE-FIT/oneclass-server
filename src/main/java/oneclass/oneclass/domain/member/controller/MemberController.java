@@ -178,7 +178,7 @@ public class MemberController {
     @PostMapping("/parent/add-students")
     @PreAuthorize("hasAnyRole('PARENT')")
     public ResponseEntity<ApiResponse<Void>> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
-        memberService.addStudentsToParent(request.phone(), request.password(), request.studentPhones());
+        memberService.addStudentsToParent(request.username(), request.password(), request.studentUsernames());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

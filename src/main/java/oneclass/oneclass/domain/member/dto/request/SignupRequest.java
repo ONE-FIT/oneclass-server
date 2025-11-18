@@ -30,5 +30,5 @@ public record SignupRequest(
         String academyCode,      // TEACHER/STUDENT 전용
 
         // PARENT 전용: 자녀 username 목록
-        List<String> studentId
+        String childUsername
 ) {}

@@ -48,9 +48,6 @@ public class Member {
     @NotBlank
     private String phone;
 
-    @Email
-    @Column(unique = true, length = 150)
-    private String email;
 
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -95,15 +92,6 @@ public class Member {
     @JsonIgnore
     private Set<Member> parents = new HashSet<>();
 
-    @Version
-    private Long version;
-
-    @CreatedDate
-    @Column(updatable = false)
-    private Instant createdAt;
-
-    @LastModifiedDate
-    private Instant updatedAt;
 
     // ===== 편의 메서드 (역할/무결성 검증 추가) =====
 
