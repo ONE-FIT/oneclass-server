@@ -1,5 +1,12 @@
 package oneclass.oneclass.domain.announce.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.announce.dto.request.CreateAnnounceRequest;
 import oneclass.oneclass.domain.announce.dto.request.UpdateAnnounceRequest;
@@ -7,14 +14,10 @@ import oneclass.oneclass.domain.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.domain.announce.entity.Announce;
 import oneclass.oneclass.domain.announce.error.AnnounceError;
 import oneclass.oneclass.domain.announce.repository.AnnounceRepository;
+import oneclass.oneclass.domain.sendon.event.AnnounceForLessonSavedEvent;
+import oneclass.oneclass.domain.sendon.event.AnnounceForMemberSavedEvent;
 import oneclass.oneclass.domain.sendon.event.AnnounceSavedEvent;
 import oneclass.oneclass.global.exception.CustomException;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -49,16 +52,17 @@ public class AnnounceService {
                 .title(request.title())
                 .content(request.content())
                 .important(request.important())
-                .lessonId(lessonId) // ✅ 반 ID 저장
+                .lessonId(lessonId) // 반 ID 저장
                 .build();
 
         Announce saved = announceRepository.save(announce);
 
-        // 반별 공지이므로 반 학생에게만 알림을 보낼 수 있음
+        // 반별 공지이므로 반 학생에게만 알림을 보냄
         eventPublisher.publishEvent(
-                new AnnounceSavedEvent(
+                new AnnounceForLessonSavedEvent(
                         request.content(),
-                        "[반공지] " + request.title()
+                        "[반공지] " + request.title(),
+                        lessonId
                 )
         );
 
@@ -72,8 +76,6 @@ public class AnnounceService {
                 .toList();
     }
 
-
-
     @Transactional
     public AnnounceResponse createAnnounceForMember(CreateAnnounceRequest request, Long memberId) {
         Announce announce = Announce.builder()
@@ -85,7 +87,15 @@ public class AnnounceService {
 
         Announce saved = announceRepository.save(announce);
 
-        // (선택) 학생 개인에게 알림 이벤트 발송
+        // 학생 개인에게 알림 이벤트 발송
+        eventPublisher.publishEvent(
+                new AnnounceForMemberSavedEvent(
+                        request.content(),
+                        "[개인공지] " + request.title(),
+                        memberId
+                )
+        );
+
         return AnnounceResponse.of(saved);
     }
 
