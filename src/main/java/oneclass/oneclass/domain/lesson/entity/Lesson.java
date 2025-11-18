@@ -37,8 +37,17 @@ public class Lesson {
     private List<Member> students = new ArrayList<>();
 
     public void addStudent(Member student) {
-        this.students.add(student);
+        // 학생이 기존에 다른 수업에 속해 있었다면, 이전 수업에서 학생을 제거합니다.
+        if (student.getLesson() != null) {
+            student.getLesson().getStudents().remove(student);
+        }
+        // 학생의 수업 정보를 현재 수업으로 설정합니다. (연관관계의 주인)
         student.setLesson(this);
+
+        // 현재 수업의 학생 목록에 아직 없다면 추가합니다.
+        if (!this.students.contains(student)) {
+            this.students.add(student);
+        }
     }
 
     // 수업에 속한 과제들
