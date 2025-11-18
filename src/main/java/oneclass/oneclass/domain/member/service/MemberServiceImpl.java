@@ -51,6 +51,11 @@ public class MemberServiceImpl implements MemberService {
         Role selectRole = request.role();
         if (selectRole == null) throw new CustomException(MemberError.BAD_REQUEST);
 
+        if (request.email() != null && !request.email().isBlank() && memberRepository.existsByEmail((request.email()))) {
+            throw new CustomException(MemberError.DUPLICATE_EMAIL);
+        }
+        validatePhoneDuplication(request.phone());
+
         // 비밀번호 확인
         if (request.password() == null || request.checkPassword() == null
                 || !request.password().equals(request.checkPassword())) {
@@ -264,14 +269,6 @@ public class MemberServiceImpl implements MemberService {
         if (code == null) return "";
         return code.trim().replaceAll("\\s+", "").toUpperCase();
     }
-
-    @Override
-    public void deleteUser(String phone) {
-        Member member = memberRepository.findByPhone(phone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        memberRepository.delete(member);
-    }
-
     @Override
     public String cleanupToken(String token) {
         if (token == null) return null;
@@ -319,40 +316,39 @@ public class MemberServiceImpl implements MemberService {
         javaMailSender.send(message);
     }
 
+    // 부모에게 자녀 추가 (username 기반)
     @Override
-    public void addStudentsToParent(String parentPhone, String password, List<String> studentPhones) {
-        if (studentPhones == null || studentPhones.isEmpty()) {
+    public void addStudentsToParent(String parentUsername, String password, List<String> studentUsernames) {
+        if (studentUsernames == null || studentUsernames.isEmpty()) {
             throw new CustomException(MemberError.BAD_REQUEST);
         }
 
-        Member parent = memberRepository.findByPhone(parentPhone)
+        // 부모 조회 (username 기준)
+        Member parent = memberRepository.findByUsername(parentUsername)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
+        // 비밀번호 확인
         if (!passwordEncoder.matches(password, parent.getPassword())) {
             throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
 
-        List<Member> children = memberRepository.findAllByPhoneIn(studentPhones);
-        Map<String, Member> byPhone = children.stream()
-                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
-                        (existing, replacement) -> existing));
+        // 학생 일괄 조회 (username 기준)
+        List<Member> children = memberRepository.findAllByUsernameIn(studentUsernames);
+        Map<String, Member> byUsername = children.stream()
+                .collect(Collectors.toMap(Member::getUsername, m -> m, (existing, replacement) -> existing));
 
-        for (String phone : studentPhones) {
-            Member child = byPhone.get(phone);
-            if (child == null) throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + phone);
-            if (child.getRole() != Role.STUDENT) throw new CustomException(MemberError.BAD_REQUEST);
+        for (String uname : studentUsernames) {
+            Member child = byUsername.get(uname);
+            if (child == null) {
+                throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + uname);
+            }
+            if (child.getRole() != Role.STUDENT) {
+                throw new CustomException(MemberError.BAD_REQUEST, "대상 계정이 학생이 아닙니다: " + uname);
+            }
             parent.addParentStudent(child);
         }
-        memberRepository.save(parent);
-    }
 
-    @Override
-    public void deleteParent(Long parentId) {
-        Member parent = memberRepository.findById(parentId)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        parent.getParentStudents().clear();
         memberRepository.save(parent);
-        memberRepository.delete(parent);
     }
 
     @Override

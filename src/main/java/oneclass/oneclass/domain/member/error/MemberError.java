@@ -15,6 +15,7 @@ public enum MemberError implements CustomError {
     PASSWORD_TOO_SHORT(400, "비밀번호는 최소 8자 이상이어야 합니다."),
     PASSWORD_CONFIRM_MISMATCH(400, "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
     DUPLICATE_USERNAME(409,"이미 사용 중인 닉네임입니다."),
+    DUPLICATE_EMAIL(409,"이미 사용 중인 이메일입니다."),
 
     //  필수값 누락
     USERNAME_REQUIRED(400, "이름이 필요합니다."),

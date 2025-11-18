@@ -105,4 +105,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
         where m.phone = :phone
     """)
     Optional<Member> findStudentWithTeachersAndParentsByPhoneFetchJoin(@Param("phone") String phone);
+
+    boolean existsByEmail(String email);
+
+    List<Member> findAllByUsernameIn(Collection<String> usernames);
 }
