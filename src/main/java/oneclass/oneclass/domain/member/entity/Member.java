@@ -8,9 +8,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
+
+import oneclass.oneclass.domain.lesson.entity.Lesson;
+
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -97,6 +101,33 @@ public class Member {
 
     @Version
     private Long version;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lesson_id")
+    private Lesson lesson;
+
+
+    @Builder
+    private Member(Long id, String username, String password, String name,
+                   String phone, String email, Role role,
+                   java.util.List<Member> teachingStudents, java.util.List<Member> teachers,
+                   java.util.List<Member> parentStudents, java.util.List<Member> parents,
+                   Academy academy, Lesson lesson) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.name = name;
+        this.phone = phone;
+        this.email = email;
+        this.role = role;
+        if (teachingStudents != null) teachingStudents.forEach(this::addStudent);
+        if (teachers != null) teachers.forEach(teacher -> teacher.addStudent(this));
+        if (parentStudents != null) parentStudents.forEach(this::addParentStudent);
+        if (parents != null) parents.forEach(parent -> parent.addParentStudent(this));
+        this.academy = academy;
+        this.lesson = lesson;
+    }
 
     @CreatedDate
     @Column(updatable = false)
