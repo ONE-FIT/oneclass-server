@@ -1,9 +1,11 @@
 package oneclass.oneclass.domain.sendon.event;
 
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.domain.sendon.kakao.message.KakaoSendFriendTalkToAll;
-import oneclass.oneclass.domain.sendon.kakao.message.KakaoSendFriendTalkToTarget;
+import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageSchedule;
 import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToAllNow;
+import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToLessonNow;
+import oneclass.oneclass.domain.sendon.sms.longmessage.SmsSendLongMessageToMemberNow;
+import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsResetPasswordCode;
 import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsSendShortMessageNow;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;

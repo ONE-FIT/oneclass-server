@@ -1,17 +1,18 @@
 package oneclass.oneclass.domain.announce.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.announce.dto.request.CreateAnnounceRequest;
 import oneclass.oneclass.domain.announce.dto.request.UpdateAnnounceRequest;
 import oneclass.oneclass.domain.announce.dto.response.AnnounceResponse;
 import oneclass.oneclass.domain.announce.service.AnnounceService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import oneclass.oneclass.global.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -24,8 +25,8 @@ public class AnnounceController {
     @Operation(summary = "공지 생성",
             description = "공지를 만듭니다.")
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse<AnnounceResponse>> createAnnounce(@RequestBody @Valid CreateAnnounceRequest request) {
-        AnnounceResponse response = announceService.createAnnounce(request);
+    public ResponseEntity<ApiResponse<AnnounceResponse>> createAnnounce(Principal principal, @RequestBody @Valid CreateAnnounceRequest request) {
+        AnnounceResponse response = announceService.createAnnounce(principal, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
