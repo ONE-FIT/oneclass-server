@@ -147,13 +147,17 @@ public class Member {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Member)) {
+            return false;
+        }
         Member that = (Member) o;
-        return this.id != null && this.id.equals(that.getId());
+        return id != null && id.equals(that.getId());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        // 엔티티의 영속성 상태(transient/persistent)에 관계없이 일관된 해시코드를 반환하기 위해 고정값을 사용합니다.
+        // 이는 Set 컬렉션에서 객체를 안전하게 관리하기 위함입니다.
+        return 31;
     }
 }
