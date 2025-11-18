@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.sendon.sms.shortmessage;
+package oneclass.oneclass.domain.sendon.sms.deprecated;
 
 import io.sendon.Log;
 import io.sendon.sms.request.Reservation;

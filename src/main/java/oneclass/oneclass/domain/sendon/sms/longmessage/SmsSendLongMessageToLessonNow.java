@@ -31,7 +31,7 @@ public class SmsSendLongMessageToLessonNow extends AbstractLongMessage {
         }
 
         Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반입니다."));
+                .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
 
         List<String> phones = lesson.getStudents().stream()
                 .map(Member::getPhone)

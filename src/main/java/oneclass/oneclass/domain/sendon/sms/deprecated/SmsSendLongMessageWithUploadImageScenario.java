@@ -1,4 +1,4 @@
-package oneclass.oneclass.domain.sendon.sms.longmessage;
+package oneclass.oneclass.domain.sendon.sms.deprecated;
 
 import io.sendon.Log;
 import io.sendon.sms.request.MmsBuilder;
