@@ -34,7 +34,7 @@ public class AttendanceResponse {
 
     // 기존 생성자 유지 (하위 호환성)
     @Deprecated
-    public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate now) {
+    public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate date) {
         this.studentId = null;
         this.studentName = username;
         this.username = username;
@@ -44,10 +44,9 @@ public class AttendanceResponse {
 
     public static AttendanceResponse fromEntity(Attendance attendance) {
         var member = attendance.getMember();
-        var lesson = member.getLesson();
         return new AttendanceResponse(
-                member.getName(),
-                lesson != null ? lesson.getTitle() : "미배정",
+                member.getId(),  // Long 타입
+                member.getName(),  // String
                 attendance.getAttendanceStatus(),
                 attendance.getDate()
         );

@@ -111,7 +111,6 @@ public class Member {
         this.password = password;
         this.name = name;
         this.phone = phone;
-        this.email = email;
         this.role = role;
         if (teachingStudents != null) teachingStudents.forEach(this::addStudent);
         if (teachers != null) teachers.forEach(teacher -> teacher.addStudent(this));
@@ -175,36 +174,5 @@ public class Member {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    // 선택적으로 username 변경 로직 제한하기 위한 메서드(직접 Setter 대신)
-    public void changeUsername(String newUsername) {
-        if (newUsername == null || newUsername.isBlank()) {
-            throw new IllegalArgumentException("username은 비어있을 수 없습니다.");
-        }
-        this.username = newUsername;
-    }
-
-    public void changePassword(String encodedPassword) {
-        if (encodedPassword == null || encodedPassword.isBlank()) {
-            throw new IllegalArgumentException("패스워드가 비어있습니다.");
-        }
-        this.password = encodedPassword;
-    }
-
-    public void assignAcademy(Academy academy) {
-        this.academy = academy;
-    }
-    // Member.java에 추가
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Member)) return false;
-        Member member = (Member) o;
-        return java.util.Objects.equals(username, member.username);
-    }
-    @Override
-    public int hashCode() {
-        return java.util.Objects.hash(username);
     }
 }
