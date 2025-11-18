@@ -6,7 +6,6 @@ import io.sendon.sms.response.UploadImage;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import oneclass.oneclass.domain.sendon.ExecutableWithMessageAndTitle;
 
 import java.io.File;
 import java.util.Arrays;
@@ -14,11 +13,10 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Deprecated
-public class SmsSendLongMessageWithUploadImageScenario extends BaseScenario implements ExecutableWithMessageAndTitle {
+public class SmsSendLongMessageWithUploadImageScenario extends BaseScenario {
 
     private final MemberRepository memberRepository;
 
-    @Override
     public void execute(String message, String title) {
         List<File> images = Arrays.asList(new File("./img/aligo.png"));
         UploadImage uploadImage = sendon.sms.uploadImages(images);
