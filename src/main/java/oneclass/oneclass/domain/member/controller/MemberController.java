@@ -148,30 +148,6 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @Operation(summary = "특정 선생님 맡고있는 학생 리스트조회", description = "학생을 조회합니다.")
-    @GetMapping("/teachers/{teacherPhone}/students")
-    @PreAuthorize("hasAnyRole('TEACHER','PARENT','STUDENT')")
-    public ResponseEntity<ApiResponse<List<String>>> listStudentsOfTeacher(
-            @PathVariable String teacherPhone,
-            Authentication authentication
-    ) {
-        String requester = (authentication != null) ? authentication.getName() : null;
-        List<String> students = memberService.listStudentsOfTeacher(requester, teacherPhone);
-        return ResponseEntity.ok(ApiResponse.success(students));
-    }
-
-    @Operation(summary = "특정 학생의 선생님 조회", description = "선생님을 조회합니다.")
-    @GetMapping("/students/{studentPhone}/teachers")
-    @PreAuthorize("hasAnyRole('TEACHER','PARENT','STUDENT')")
-    public ResponseEntity<ApiResponse<List<String>>> listTeachersOfStudent(
-            @PathVariable String studentPhone,
-            Authentication authentication
-    ) {
-        String requester = (authentication != null) ? authentication.getName() : null;
-        List<String> teachers = memberService.listTeachersOfStudent(requester, studentPhone);
-        return ResponseEntity.ok(ApiResponse.success(teachers));
-    }
-
     @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
     @PostMapping("/parent/add-students")
     @PreAuthorize("hasAnyRole('PARENT')")
