@@ -23,8 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -39,6 +39,9 @@ public class AcademyServiceImpl implements AcademyService {
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender javaMailSender;
 
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w-\\.]+@[\\w-\\.]+\\.\\w+$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\d{10,11}$");
+
     public String generateRandomCode(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder sb = new StringBuilder();
@@ -49,6 +52,8 @@ public class AcademyServiceImpl implements AcademyService {
 
     @Override
     public AcademySignupResponse academySignup(AcademySignupRequest request) {
+        validateSignupRequest(request);
+
         Role role = Role.ACADEMY;
         String randomAcademyCode;
 
@@ -62,8 +67,6 @@ public class AcademyServiceImpl implements AcademyService {
         do {
             randomAcademyCode = generateRandomCode(8);
         } while (academyRepository.findByAcademyCode(randomAcademyCode).isPresent());
-
-        // 비밀번호 일치 검증은 DTO(@PasswordMatches)에서 수행
 
         Academy academy = Academy.builder()
                 .role(role)
@@ -84,106 +87,120 @@ public class AcademyServiceImpl implements AcademyService {
         );
     }
 
-    @Override
-    public ResponseToken login(String academyCode, String academyName, String password) {
-        Academy academy = academyRepository.findByAcademyCode(academyCode)
-                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-        if (!passwordEncoder.matches(password, academy.getPassword())) {
-            throw new CustomException(AcademyError.UNAUTHORIZED);
+    private void validateSignupRequest(AcademySignupRequest request) {
+        if (!EMAIL_PATTERN.matcher(request.email()).matches()) {
+            throw new CustomException(AcademyError.INVALID_EMAIL_FORMAT, "이메일 형식이 유효하지 않습니다.");
         }
-
-        String roleClaim = "ROLE_" + academy.getRole().name();
-
-        Optional<AcademyRefreshToken> refreshOpt =
-                academyRefreshTokenRepository.findByAcademyCode(academyCode);
-
-        if (refreshOpt.isPresent()) {
-            AcademyRefreshToken saved = refreshOpt.get();
-
-            boolean needRotate = false;
-            try {
-                jwtProvider.validateToken(saved.getToken());
-            } catch (CustomException ex) {
-                needRotate = true;
-            }
-
-            if (!needRotate && !saved.isExpired()) {
-                String accessToken = jwtProvider.generateAccessToken(academyCode, roleClaim);
-                return new ResponseToken(accessToken, saved.getToken());
-            }
-
-            ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
-            saved.rotate(pair.refreshToken(), LocalDateTime.now().plusDays(28));
-            return new ResponseToken(pair.accessToken(), pair.refreshToken());
+        if (!PHONE_PATTERN.matcher(request.phone()).matches()) {
+            throw new CustomException(AcademyError.INVALID_PHONE_FORMAT, "전화번호는 10~11자리 숫자여야 합니다.");
         }
-
-        ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
-        AcademyRefreshToken tokenToSave = AcademyRefreshToken.builder()
-                .academyCode(academyCode)
-                .token(pair.refreshToken())
-                .expiryDate(LocalDateTime.now().plusDays(28))
-                .build();
-        academyRefreshTokenRepository.save(tokenToSave);
-
-        return new ResponseToken(pair.accessToken(), pair.refreshToken());
+        if (request.password().length() < 8) {
+            throw new CustomException(AcademyError.PASSWORD_TOO_SHORT);
+        }
+        if (request.academyName() == null || request.academyName().isBlank()) {
+            throw new CustomException(AcademyError.INVALID_ACADEMY_NAME, "학원 이름이 비어있거나 유효하지 않습니다.");
+        }
     }
 
     @Override
-    public void sendResetPasswordEmail(String code, String name){
-        Academy academy = academyRepository.findByAcademyCodeAndAcademyName(code , name)
-                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-        String academyCode = academy.getAcademyCode();
+    public ResponseToken login(String academyCode, String academyName, String password) {
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND, "학원을 찾을 수 없습니다."));
+        if (!passwordEncoder.matches(password, academy.getPassword())) {
+            throw new CustomException(AcademyError.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
+        }
+
+        if (!academy.getAcademyName().equalsIgnoreCase(academyName)) {
+            throw new CustomException(AcademyError.INVALID_ACADEMY_NAME, "학원 이름이 일치하지 않습니다.");
+        }
+
+        String roleClaim = "ROLE_" + academy.getRole().name();
+        AcademyRefreshToken refreshToken = getOrCreateRefreshToken(academyCode, roleClaim);
+
+        return new ResponseToken(
+                jwtProvider.generateAccessToken(academyCode, roleClaim),
+                refreshToken.getToken()
+        );
+    }
+
+    private AcademyRefreshToken getOrCreateRefreshToken(String academyCode, String roleClaim) {
+        return academyRefreshTokenRepository.findByAcademyCode(academyCode)
+                .map(saved -> {
+                    if (jwtProvider.isTokenInvalid(saved.getToken())) {
+                        ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
+                        saved.rotate(pair.refreshToken(), LocalDateTime.now().plusDays(28));
+                    }
+                    return saved;
+                })
+                .orElseGet(() -> {
+                    ResponseToken pair = jwtProvider.generateToken(academyCode, roleClaim);
+                    AcademyRefreshToken tokenToSave = AcademyRefreshToken.builder()
+                            .academyCode(academyCode)
+                            .token(pair.refreshToken())
+                            .expiryDate(LocalDateTime.now().plusDays(28))
+                            .build();
+                    return academyRefreshTokenRepository.save(tokenToSave);
+                });
+    }
+
+    @Override
+    public void sendResetPasswordEmail(String code, String name) {
+        Academy academy = academyRepository.findByAcademyCodeAndAcademyName(code, name)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND, "학원을 찾을 수 없습니다."));
+
         String tempCode = UUID.randomUUID().toString().substring(0, 13);
 
         AcademyVerificationCode verificationCode = AcademyVerificationCode.builder()
-                .academyCode(academyCode)
+                .academyCode(academy.getAcademyCode())
                 .code(tempCode)
                 .expiry(LocalDateTime.now().plusMinutes(10))
                 .build();
 
         academyVerificationCodeRepository.save(verificationCode);
 
-        String to = academy.getEmail();
-        String subject = "비밀번호 재설정 인증코드";
-        String text = "인증코드: " + tempCode + "\n10분 내에 입력해주세요.";
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
-
-        javaMailSender.send(message);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(academy.getEmail());
+            message.setSubject("비밀번호 재설정 인증코드");
+            message.setText("인증코드: " + tempCode + "\n10분 내에 입력해주세요.");
+            javaMailSender.send(message);
+        } catch (org.springframework.mail.MailException e) {
+            log.error("이메일 전송 실패: {}", e.getMessage());
+            throw new CustomException(AcademyError.EMAIL_SEND_FAILED);
+        }
     }
 
     @Override
-    public void resetPassword(ResetAcademyPasswordRequest request){
+    public void resetPassword(ResetAcademyPasswordRequest request) {
         AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(request.academyCode())
-                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(AcademyError.VERIFICATION_CODE_NOT_FOUND));
 
-        if (!codeEntity.getCode().equals(request.verificationCode())) {
-            throw new CustomException(AcademyError.INVALID_VERIFICATION_CODE);
-        }
-        if (codeEntity.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new CustomException(AcademyError.EXPIRED_VERIFICATION_CODE);
-        }
+        verifyCodeExpirationAndMatch(codeEntity, request.verificationCode());
 
         Academy academy = academyRepository.findByAcademyCode(request.academyCode())
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
-        if (!academy.getAcademyName().equals(request.academyName())) {
-            throw new CustomException(AcademyError.NOT_FOUND);
+        if (!academy.getAcademyName().equalsIgnoreCase(request.academyName())) {
+            throw new CustomException(AcademyError.INVALID_ACADEMY_NAME, "학원 이름이 일치하지 않습니다.");
         }
 
-        // 비밀번호 일치 검증은 DTO(@PasswordMatches)에서 수행
         academy.setPassword(passwordEncoder.encode(request.newPassword()));
         academyRepository.save(academy);
     }
 
-    // 특정 Refresh 토큰만 폐기(다중 세션 지원)
+    private void verifyCodeExpirationAndMatch(AcademyVerificationCode entity, String verificationCode) {
+        if (!entity.getCode().equals(verificationCode)) {
+            throw new CustomException(AcademyError.INVALID_VERIFICATION_CODE);
+        }
+        if (entity.getExpiry().isBefore(LocalDateTime.now())) {
+            throw new CustomException(AcademyError.EXPIRED_VERIFICATION_CODE);
+        }
+    }
+
     @Override
     public void logout(String academyCode, String refreshToken) {
         boolean exists = academyRefreshTokenRepository.existsByAcademyCodeAndToken(academyCode, refreshToken);
         if (!exists) {
-            throw new CustomException(AcademyError.NOT_FOUND);
+            throw new CustomException(AcademyError.ALREADY_LOGGED_OUT, "이미 로그아웃된 토큰입니다.");
         }
         academyRefreshTokenRepository.deleteByAcademyCodeAndToken(academyCode, refreshToken);
     }

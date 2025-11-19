@@ -29,4 +29,23 @@ public class Announce {
     @ManyToOne(fetch = FetchType.LAZY)
     private Member author;
 
+    private Long lessonId;
+
+    private Long memberId;
+
+    public void setMemberId(Long memberId) {
+        this.memberId = memberId;
+    }
+
+    public void update(String title, String content, Boolean important) {
+        this.title = title;
+        this.content = content;
+        this.important = important;
+    }
+    @Enumerated(EnumType.STRING)
+    AnnounceType announceType;
+
+    @Enumerated(EnumType.STRING)
+    AnnounceStatus announceStatus;
+
 }

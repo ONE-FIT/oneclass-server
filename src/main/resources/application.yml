@@ -16,13 +16,17 @@ app:
   qr-code:
     validity-minutes: 1
 
+# 공통 로그 최소화(세부 환경은 각 프로필에서)
 logging:
   level:
+    root: INFO
     org.springframework: INFO
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF
 
 jwt:
-  # 공통 만료시간
-  token-validity-in-seconds: 3600
-  refresh-validity-in-seconds: 1209600
-  # 개발 편의용 fallback(운영에서는 application-prod.yml에서 강제)
+  token-validity-in-seconds: 3600        # 1시간
+  refresh-validity-in-seconds: 1209600   # 14일
+  # 개발 편의 fallback (prod에서는 별도 설정에서 override)
   secret: ${JWT_SECRET:dev-secret-change-me-at-least-32-characters-xxxxxxxx}

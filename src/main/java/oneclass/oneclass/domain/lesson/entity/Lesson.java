@@ -7,7 +7,9 @@ import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.task.entity.Task;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -30,15 +32,17 @@ public class Lesson {
     private Member teacher;
 
     // 수업을 듣는 학생들
-    @ManyToMany
-    @JoinTable(
-            name = "lesson_student",
-            joinColumns = @JoinColumn(name = "lesson_id"),
-            inverseJoinColumns = @JoinColumn(name = "student_id")
-    )
-    @Builder.Default
-    private List<Member> students = new ArrayList<>();
 
+    @OneToMany(mappedBy = "lesson")
+    private Set<Member> students = new HashSet<>();
+
+    public void addStudent(Member student) {
+        if (student.getLesson() != null && !student.getLesson().equals(this)) {
+            student.getLesson().getStudents().remove(student);
+        }
+        student.setLesson(this);
+        this.students.add(student);
+    }
     // 수업에 속한 과제들
     @Builder.Default
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)

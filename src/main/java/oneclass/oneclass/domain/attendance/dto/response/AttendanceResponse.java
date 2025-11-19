@@ -11,25 +11,32 @@ import java.time.LocalDateTime;
 
 @Getter
 public class AttendanceResponse {
-    public String name;
+  
+    private final Long studentId;
+    private final String studentName;
+    private final String username;
 
-    private LocalDate date;
+    private final LocalDate date;
 
     @Enumerated(EnumType.STRING)
-    private AttendanceStatus attendanceStatus; // PRESENT / ABSENT / LATE / EXCUSED
+    private final AttendanceStatus attendanceStatus; // PRESENT / ABSENT / LATE / EXCUSED
 
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
 
-    public AttendanceResponse(String username, AttendanceStatus attendanceStatus, LocalDate now) {
-        this.name = username;
+    public AttendanceResponse(Long studentId, String studentName, String username, AttendanceStatus attendanceStatus, LocalDate date) {
+        this.studentId = studentId;
+        this.studentName = studentName;
+        this.username = username;
         this.attendanceStatus = attendanceStatus;
-        this.date = now;
+        this.date = date;
     }
 
     public static AttendanceResponse fromEntity(Attendance attendance) {
         return new AttendanceResponse(
+                attendance.getId(),
                 attendance.getMember().getName(),
+                attendance.getMember().getUsername(),
                 attendance.getAttendanceStatus(),
                 attendance.getDate()
         );

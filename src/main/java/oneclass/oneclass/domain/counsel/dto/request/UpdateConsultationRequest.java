@@ -1,0 +1,18 @@
+package oneclass.oneclass.domain.counsel.dto.request;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+
+import java.time.LocalDateTime;
+
+public record UpdateConsultationRequest(
+        Long consultationId,
+        String name, // ID가 없을 때 name+phone으로 조회하므로 NotBlank는 걸지 않음
+        @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 10~11자리 숫자여야 합니다.")
+        @NotNull
+        String phone, // 값이 있으면 형식 검증
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul") LocalDateTime date,        // 옵션 업데이트 필드
+        String subject,            // 옵션 업데이트 필드
+        String description         // 옵션 업데이트 필드
+) { }

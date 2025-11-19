@@ -4,7 +4,8 @@ import oneclass.oneclass.global.exception.CustomError;
 
 public enum LessonError implements CustomError {
 
-    NOT_FOUND(404, "강의를 찾을 수 없습니다.");
+    NOT_FOUND(404, "강의를 찾을 수 없습니다."),
+    INVALID_LESSON_ID_VALUE(400, "강의 ID가 입력되지 않았습니다.");
 
     private final int status;
     private final String message;

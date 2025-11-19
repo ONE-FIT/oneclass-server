@@ -45,7 +45,7 @@ public class AttendanceService {
         }
         return attendanceRepository.findByLessonIdAndDateAndAttendanceStatus(lessonId, today, status)
                 .stream()
-                .map(this::attendanceToResponse)
+                .map(AttendanceResponse::fromEntity)
                 .toList();
     }
 
@@ -58,7 +58,7 @@ public class AttendanceService {
     public List<AttendanceResponse> getTodayAbsentMembers(Long lessonId, LocalDate date) {
         List<Member> absentMembers = memberRepository.findAbsentMembersByLessonAndDate(lessonId, date);
         return absentMembers.stream()
-                .map(member -> new AttendanceResponse(member.getName(), AttendanceStatus.ABSENT, date))
+                .map(m -> new AttendanceResponse(m.getId(), m.getName(), m.getUsername(), AttendanceStatus.ABSENT, date))
                 .toList();
     }
     // ✅ 오늘 지각한 사람들
@@ -75,7 +75,7 @@ public class AttendanceService {
     public List<AttendanceResponse> getAttendanceByMember(Long memberId) {
         return attendanceRepository.findByMemberId(memberId)
                 .stream()
-                .map(this::attendanceToResponse)
+                .map(AttendanceResponse::fromEntity)
                 .toList();
     }
 
@@ -83,7 +83,7 @@ public class AttendanceService {
     public List<AttendanceResponse> getAttendanceByDate(LocalDate date) {
         List<Attendance> attendanceList = attendanceRepository.findByDate(date);
         return attendanceList.stream()
-                .map(this::attendanceToResponse)
+                .map(AttendanceResponse::fromEntity)
                 .toList();
     }
 
@@ -95,13 +95,7 @@ public class AttendanceService {
     }
 
     // ✅ 엔티티 → DTO 변환 메서드
-    private AttendanceResponse attendanceToResponse(Attendance attendance) {
-        return new AttendanceResponse(
-                attendance.getMember().getName(),
-                attendance.getAttendanceStatus(),
-                attendance.getDate()
-        );
-    }
+
 
     // ✅ --- QR 코드 + nonce 저장/검증 기능 ---
 
@@ -249,10 +243,18 @@ public class AttendanceService {
         nonceRepository.deleteExpiredOrUsed(LocalDateTime.now());
     }
 
+    public List<AttendanceResponse> getTodayAttendanceByAcademy(String academyId) {
+        LocalDate today = LocalDate.now();
+        List<Attendance> attendances = attendanceRepository.findByAcademyAndDate(academyId, today);
+
+        return attendances.stream()
+                .map(AttendanceResponse::fromEntity)
+                .toList();
+    }
     public List<AttendanceResponse> getAttendanceByDate(Long lessonId, LocalDate date) {
         List<Attendance> attendanceList = attendanceRepository.findByLessonIdAndDate(lessonId, date);
         return attendanceList.stream()
-                .map(this::attendanceToResponse)
+                .map(AttendanceResponse::fromEntity)
                 .toList();
     }
 }

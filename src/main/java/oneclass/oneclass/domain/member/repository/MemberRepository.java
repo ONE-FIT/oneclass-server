@@ -21,19 +21,18 @@ import java.util.Optional;
  */
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
+    @Query("SELECT m.phone FROM Member m WHERE m.lesson.lessonId = :lessonId AND m.phone IS NOT NULL AND m.phone != ''")
+    Page<String> findPhonesByLessonId(@Param("lessonId") Long lessonId, Pageable pageable);
+
     // 단건 조회
     Optional<Member> findByUsername(String username);
     Optional<Member> findByPhone(String phone);
 
-    // 존재 여부
-    boolean existsByPhone(String phone);
-    boolean existsByUsername(String username);
 
     // 다건 조회(전화번호 리스트로)
     List<Member> findAllByPhoneIn(Collection<String> phones);
 
-    // 전체 전화번호 페이징
-    @Query("select m.phone from Member m")
+    @Query("select m.phone from Member m where m.role in (oneclass.oneclass.domain.member.entity.Role.STUDENT, oneclass.oneclass.domain.member.entity.Role.PARENT)")
     Page<String> findAllPhones(Pageable pageable);
 
     // 특정 학생 id 집합으로 전화번호 페이징
@@ -106,4 +105,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
         where m.phone = :phone
     """)
     Optional<Member> findStudentWithTeachersAndParentsByPhoneFetchJoin(@Param("phone") String phone);
+
+
+    List<Member> findAllByUsernameIn(Collection<String> usernames);
 }

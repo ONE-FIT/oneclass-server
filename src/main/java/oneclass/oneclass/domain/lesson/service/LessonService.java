@@ -41,11 +41,11 @@ public class LessonService {
         return LessonResponse.of(lesson);
     }
 
-    public LessonResponse findLessonByTitle(String title) {
-        Lesson lesson = lessonRepository.findByTitle(title)
-                .orElseThrow(() -> new CustomException(LessonError.NOT_FOUND));
-
-        return LessonResponse.of(lesson);
+    public List<LessonResponse> findLessonByTitle(String title) {
+        return lessonRepository.findByTitle(title)
+                .stream()
+                .map(LessonResponse::of)
+                .toList();
     }
 
     public LessonResponse updateLesson(UpdateLessonRequest request) {
@@ -77,8 +77,7 @@ public class LessonService {
         Member student = memberRepository.findById(studentId)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
-        lesson.getStudents().add(student);
-        lessonRepository.save(lesson);
+        lesson.addStudent(student); // 편의 메서드를 사용하여 연관관계를 관리합니다.
     }
 
     public List<LessonResponse> findAll() {
