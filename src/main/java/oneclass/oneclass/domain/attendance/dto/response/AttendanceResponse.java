@@ -8,7 +8,6 @@ import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Getter
 public class AttendanceResponse {
