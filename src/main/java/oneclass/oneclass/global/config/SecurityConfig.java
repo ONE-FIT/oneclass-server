@@ -139,13 +139,32 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOriginPatterns(List.of("https://oneclass.xeneric.kr", "https://oneclass.xeneric.kr:7777"));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
+    }
+
+    @Bean
+    public CorsFilter swaggerCorsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*")); // swagger는 다 허용
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/v3/api-docs/**", config);
+        source.registerCorsConfiguration("/swagger-ui/**", config);
+        source.registerCorsConfiguration("/swagger-ui.html", config);
+        source.registerCorsConfiguration("/swagger-ui/index.html", config);
+        source.registerCorsConfiguration("/.well-known/acme-challenge/**", config);
+
         return new CorsFilter(source);
     }
 }
