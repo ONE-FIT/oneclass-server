@@ -15,7 +15,6 @@ import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
