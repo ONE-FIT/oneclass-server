@@ -1,22 +1,21 @@
 package oneclass.oneclass.domain.sendon.sms.shortmessage;
 
+import java.util.Collections;
+
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+
 import io.sendon.sms.request.SmsBuilder;
 import io.sendon.sms.response.SendSms;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
-
-import java.util.Collections;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SmsResetPasswordCode extends BaseScenario {
-
-    private final MemberRepository memberRepository;
 
     public String execute(String message, String phone) {
 
@@ -31,6 +30,7 @@ public class SmsResetPasswordCode extends BaseScenario {
         return gson.toJson(sendSms);
     }
 
+    @Override
     public String getDescription() {
         return "[SMS] 비밀번호 초기화 메세지 전송";
     }

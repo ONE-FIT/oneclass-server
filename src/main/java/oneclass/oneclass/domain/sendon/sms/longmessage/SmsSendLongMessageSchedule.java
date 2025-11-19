@@ -1,5 +1,11 @@
 package oneclass.oneclass.domain.sendon.sms.longmessage;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+
 import io.sendon.sms.request.LmsBuilder;
 import io.sendon.sms.request.Reservation;
 import io.sendon.sms.response.SendSms;
@@ -7,11 +13,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.sendon.BaseScenario;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -58,6 +59,7 @@ public class SmsSendLongMessageSchedule extends BaseScenario {
         execute(message, title, reservationTime);
     }
 
+    @Override
     public String getDescription() {
         return "[LMS] 예약문자 발송";
     }
