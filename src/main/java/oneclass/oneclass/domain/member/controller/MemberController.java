@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.request.*;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
-import oneclass.oneclass.domain.member.entity.Member;
-import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;

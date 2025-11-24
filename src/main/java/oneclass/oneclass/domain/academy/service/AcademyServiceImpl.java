@@ -164,7 +164,7 @@ public class AcademyServiceImpl implements AcademyService {
             message.setSubject("비밀번호 재설정 인증코드");
             message.setText("인증코드: " + tempCode + "\n10분 내에 입력해주세요.");
             javaMailSender.send(message);
-        } catch (Exception e) {
+        } catch (org.springframework.mail.MailException e) {
             log.error("이메일 전송 실패: {}", e.getMessage());
             throw new CustomException(AcademyError.EMAIL_SEND_FAILED);
         }

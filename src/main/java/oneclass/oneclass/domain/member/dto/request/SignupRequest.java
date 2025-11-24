@@ -4,8 +4,6 @@ import jakarta.validation.constraints.*;
 import oneclass.oneclass.domain.member.entity.Role;
 import oneclass.oneclass.global.validation.PasswordMatches;
 
-import java.util.List;
-
 /**
  * username 기반 회원가입 요청 DTO
  * - 기존 phone 기반에서 username 기반으로 전환
