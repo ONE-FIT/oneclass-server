@@ -546,4 +546,5 @@ public class MemberServiceImpl implements MemberService {
             default -> throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
         }
     }
+
 }

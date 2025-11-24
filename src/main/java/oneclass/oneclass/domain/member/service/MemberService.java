@@ -36,4 +36,5 @@ public interface MemberService {
      * studentUsername의 담당 교사(username 리스트)를 반환한다.
      */
     List<String> listTeachersOfStudent(String requesterPhone, String studentPhone);
+    List<String> findMemberIdByUsername(String username);
 }
