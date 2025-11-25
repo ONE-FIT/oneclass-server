@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.request.*;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
+import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
@@ -159,9 +160,8 @@ public class MemberController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/search/{username}")
     public ResponseEntity<ApiResponse<Long>> findMemberIdByUsername(@PathVariable String username) {
-        return memberService.findMemberIdByUsername(username)
-                .map(ApiResponse::success)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.ok(ApiResponse.success(null))); // 혹은 404 Not Found
+        Long memberId = memberService.findMemberIdByUsername(username)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        return ResponseEntity.ok(ApiResponse.success(memberId));
     }
 }
