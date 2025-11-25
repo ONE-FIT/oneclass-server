@@ -122,6 +122,13 @@ public class MemberServiceImpl implements MemberService {
         refreshTokenRepository.deleteByUsernameAndToken(username, refreshToken);
     }
 
+    @Override
+    public List<String> findMemberIdByUsername(String username) {
+        return memberRepository.findByUsername(username)
+                .map(member -> List.of(String.valueOf(member.getId())))
+                .orElse(List.of());
+    }
+
     // 재발급: 1번 스타일 유지, subject = username
     @Override
     public ResponseToken reissue(String refreshToken) {

@@ -181,6 +181,7 @@ public class MemberController {
         memberService.addStudentsToParent(request.username(), request.password(), request.studentUsernames());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/search/{username}")
     public ResponseEntity<ApiResponse<List<String>>> searchUsers(@PathVariable String username) {
         List<String> result = memberService.findMemberIdByUsername(username);
