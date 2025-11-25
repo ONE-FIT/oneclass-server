@@ -122,6 +122,12 @@ public class MemberServiceImpl implements MemberService {
         refreshTokenRepository.deleteByUsernameAndToken(username, refreshToken);
     }
 
+    @Override
+    public Optional<Long> findMemberIdByUsername(String username) {
+        return memberRepository.findByUsername(username)
+                .map(Member::getId);
+    }
+
     // 재발급: 1번 스타일 유지, subject = username
     @Override
     public ResponseToken reissue(String refreshToken) {
@@ -470,4 +476,81 @@ public class MemberServiceImpl implements MemberService {
         }
         memberRepository.save(teacher);
     }
+
+    @Override
+    public List<String> listStudentsOfTeacher(String requesterPhone, String teacherPhone) {
+        Member teacher = memberRepository.findWithTeachingStudentsByPhone(teacherPhone)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
+
+        if (requesterPhone == null || requesterPhone.isBlank()) {
+            throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다. 로그인 후 시도하세요.");
+        }
+        Member requester = memberRepository.findByPhone(requesterPhone)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
+
+        var teacherStudents = teacher.getTeachingStudents().stream()
+                .map(Member::getPhone)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (requester.getRole() == Role.TEACHER && requesterPhone.equals(teacherPhone)) {
+            return teacherStudents.stream().sorted().toList();
+        }
+        if (requester.getRole() == Role.PARENT) {
+            var parentChildren = requester.getParentStudents().stream()
+                    .map(Member::getPhone)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            return parentChildren.stream()
+                    .filter(teacherStudents::contains)
+                    .sorted()
+                    .toList();
+        }
+        throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+    }
+
+    @Override
+    public List<String> listTeachersOfStudent(String requesterPhone, String studentPhone) {
+        Member student = memberRepository.findStudentWithTeachersAndParentsByPhoneFetchJoin(studentPhone)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다."));
+
+        if (requesterPhone == null || requesterPhone.isBlank()) {
+            throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다. 로그인 후 시도하세요.");
+        }
+
+        Member requester = memberRepository.findByPhone(requesterPhone)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "요청자 정보를 찾을 수 없습니다."));
+
+        Set<String> studentTeachersPhones = student.getTeachers().stream()
+                .map(Member::getPhone)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        switch (requester.getRole()) {
+            case STUDENT -> {
+                if (!requesterPhone.equals(studentPhone)) {
+                    throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+                }
+                return studentTeachersPhones.stream().sorted().toList();
+            }
+            case PARENT -> {
+                boolean isParentOf = student.getParents().stream()
+                        .map(Member::getPhone)
+                        .filter(Objects::nonNull)
+                        .anyMatch(p -> p.equals(requesterPhone));
+                if (!isParentOf) {
+                    throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+                }
+                return studentTeachersPhones.stream().sorted().toList();
+            }
+            case TEACHER -> {
+                if (!studentTeachersPhones.contains(requesterPhone)) {
+                    throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+                }
+                return studentTeachersPhones.stream().sorted().toList();
+            }
+            default -> throw new CustomException(MemberError.FORBIDDEN, "조회 권한이 없습니다.");
+        }
+    }
+
 }

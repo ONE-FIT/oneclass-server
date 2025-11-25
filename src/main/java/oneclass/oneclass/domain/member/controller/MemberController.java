@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
 @RestController
@@ -154,5 +155,13 @@ public class MemberController {
     public ResponseEntity<ApiResponse<Void>> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
         memberService.addStudentsToParent(request.username(), request.password(), request.studentUsernames());
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/search/{username}")
+    public ResponseEntity<ApiResponse<Long>> findMemberIdByUsername(@PathVariable String username) {
+        return memberService.findMemberIdByUsername(username)
+                .map(ApiResponse::success)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.ok(ApiResponse.success(null))); // 혹은 404 Not Found
     }
 }

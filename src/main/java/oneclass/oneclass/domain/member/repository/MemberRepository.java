@@ -61,4 +61,5 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
                                                   @Param("date") LocalDate date);
 
     List<Member> findAllByUsernameIn(Collection<String> usernames);
+
 }
