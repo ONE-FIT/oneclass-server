@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.request.*;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
-import oneclass.oneclass.domain.member.entity.Member;
-import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
@@ -23,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
 @RestController
@@ -183,8 +182,10 @@ public class MemberController {
     }
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/search/{username}")
-    public ResponseEntity<ApiResponse<List<String>>> searchUsers(@PathVariable String username) {
-        List<String> result = memberService.findMemberIdByUsername(username);
-        return ResponseEntity.ok(ApiResponse.success(result));
+    public ResponseEntity<ApiResponse<Long>> findMemberIdByUsername(@PathVariable String username) {
+        return memberService.findMemberIdByUsername(username)
+                .map(ApiResponse::success)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.ok(ApiResponse.success(null))); // 혹은 404 Not Found
     }
 }

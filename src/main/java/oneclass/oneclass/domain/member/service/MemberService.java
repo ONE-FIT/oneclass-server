@@ -6,6 +6,7 @@ import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MemberService {
     void signup(SignupRequest request);
@@ -36,5 +37,5 @@ public interface MemberService {
      * studentUsername의 담당 교사(username 리스트)를 반환한다.
      */
     List<String> listTeachersOfStudent(String requesterPhone, String studentPhone);
-    List<String> findMemberIdByUsername(String username);
+    Optional<Long> findMemberIdByUsername(String username);
 }

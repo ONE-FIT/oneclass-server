@@ -123,10 +123,9 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public List<String> findMemberIdByUsername(String username) {
+    public Optional<Long> findMemberIdByUsername(String username) {
         return memberRepository.findByUsername(username)
-                .map(member -> List.of(String.valueOf(member.getId())))
-                .orElse(List.of());
+                .map(Member::getId);
     }
 
     // 재발급: 1번 스타일 유지, subject = username
