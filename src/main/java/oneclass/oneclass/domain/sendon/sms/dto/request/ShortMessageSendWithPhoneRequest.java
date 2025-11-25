@@ -9,7 +9,7 @@ import java.util.List;
 
 @Setter
 @Getter
-public class MessageSendRequest {
+public class ShortMessageSendWithPhoneRequest {
     
     @NotBlank(message = "제목은 필수입니다.")
     private String title;
