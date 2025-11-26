@@ -32,6 +32,10 @@ spring:
           ssl.trust: smtp.gmail.com
 
 
+  app:
+    admin:
+      email: ${app.admin.email}
+
 server:
   port: 8080
 

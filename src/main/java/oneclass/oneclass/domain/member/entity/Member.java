@@ -8,7 +8,6 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -30,6 +29,10 @@ public class Member {
     @Column(nullable = false, unique = true, length = 100)
     @NotBlank
     private String username;
+
+    @Column(nullable = false, length = 100)
+    @NotBlank
+    private String email;
 
     @JsonIgnore
     @Column(nullable = false)

@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.academy.error;
 
 
 import oneclass.oneclass.global.exception.CustomError;
+import org.springframework.http.HttpStatus;
 
 public enum AcademyError implements CustomError {
 
@@ -35,7 +36,10 @@ public enum AcademyError implements CustomError {
     INVALID_PHONE_FORMAT(400, "유효하지 않은 전화번호 형식입니다."),
     PASSWORD_WEAK(400, "비밀번호가 너무 약합니다. 특수문자, 숫자를 포함하세요."),
 
-    INVALID_DATE_RANGE(400, "유효하지 않은 날짜 범위입니다.");
+    INVALID_DATE_RANGE(400, "유효하지 않은 날짜 범위입니다."),
+
+    ALREADY_APPROVED(409,"이미 승인된 학원입니다."),
+    NOT_APPROVED(403, "학원이 승인되지 않았습니다. 관리자 승인이 필요합니다.");
 
     private final int status;
     private final String message;

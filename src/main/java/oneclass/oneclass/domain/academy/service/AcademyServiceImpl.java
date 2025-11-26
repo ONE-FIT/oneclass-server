@@ -14,15 +14,21 @@ import oneclass.oneclass.domain.academy.repository.AcademyRefreshTokenRepository
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -41,6 +47,7 @@ public class AcademyServiceImpl implements AcademyService {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w-\\.]+@[\\w-\\.]+\\.\\w+$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^\\d{10,11}$");
+    private final MemberRepository memberRepository;
 
     public String generateRandomCode(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -51,11 +58,9 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
+    @Transactional
     public AcademySignupResponse academySignup(AcademySignupRequest request) {
         validateSignupRequest(request);
-
-        Role role = Role.ACADEMY;
-        String randomAcademyCode;
 
         if (academyRepository.findByEmail(request.email()).isPresent()) {
             throw new CustomException(AcademyError.DUPLICATE_EMAIL);
@@ -64,27 +69,84 @@ public class AcademyServiceImpl implements AcademyService {
             throw new CustomException(AcademyError.DUPLICATE_PHONE);
         }
 
+        String randomAcademyCode;
         do {
             randomAcademyCode = generateRandomCode(8);
         } while (academyRepository.findByAcademyCode(randomAcademyCode).isPresent());
 
         Academy academy = Academy.builder()
-                .role(role)
                 .academyCode(randomAcademyCode)
                 .academyName(request.academyName())
                 .email(request.email())
                 .phone(request.phone())
                 .password(passwordEncoder.encode(request.password()))
+                .role(Role.ACADEMY)
+                .status(Academy.Status.PENDING) // 대기 상태로 저장
                 .build();
 
         academyRepository.save(academy);
 
-        return new AcademySignupResponse(
-                randomAcademyCode,
-                request.academyName(),
-                request.email(),
-                request.phone()
-        );
+        // 커밋 후 관리자에게 알림 (메일 실패로 트랜잭션이 롤백되지 않도록)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                notifyAdminsOfNewAcademy(academy);
+            }
+        });
+
+        return new AcademySignupResponse(randomAcademyCode, request.academyName(), request.email(), request.phone());
+    }
+
+    private void notifyAdminsOfNewAcademy(Academy academy) {
+        List<Member> admins = memberRepository.findAllByRole(oneclass.oneclass.domain.member.entity.Role.ADMIN);
+        String subject = "[승인요청] 신규 학원 가입 요청: " + academy.getAcademyName();
+        String text = "학원 코드: " + academy.getAcademyCode() + "\n학원명: " + academy.getAcademyName() +
+                "\n이메일: " + academy.getEmail() + "\n관리자 포털에서 승인해주세요.";
+        for (Member admin : admins) {
+            try {
+                SimpleMailMessage msg = new SimpleMailMessage();
+                msg.setTo(admin.getEmail());
+                msg.setSubject(subject);
+                msg.setText(text);
+                javaMailSender.send(msg);
+            } catch (MailException e) {
+                // 실패 로깅/재시도 로직 추가 가능
+            }
+        }
+    }
+    @Override
+    @Transactional
+    public void approveAcademy(String adminUsername, String academyCode) {
+        Member admin = memberRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new CustomException(oneclass.oneclass.domain.member.error.MemberError.NOT_FOUND));
+        if (admin.getRole() != oneclass.oneclass.domain.member.entity.Role.ADMIN) {
+            throw new CustomException(oneclass.oneclass.domain.member.error.MemberError.FORBIDDEN);
+        }
+
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
+                .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
+
+        if (academy.getStatus() == Academy.Status.APPROVED) {
+            throw new CustomException(AcademyError.ALREADY_APPROVED);
+        }
+
+        academy.approve(admin.getUsername());
+        academyRepository.save(academy);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    SimpleMailMessage msg = new SimpleMailMessage();
+                    msg.setTo(academy.getEmail());
+                    msg.setSubject("[승인완료] 학원 가입이 승인되었습니다");
+                    msg.setText("학원 코드: " + academy.getAcademyCode() + "\n학원명: " + academy.getAcademyName() + "\n승인자: " + admin.getUsername());
+                    javaMailSender.send(msg);
+                } catch (MailException e) {
+                    // log
+                }
+            }
+        });
     }
 
     private void validateSignupRequest(AcademySignupRequest request) {

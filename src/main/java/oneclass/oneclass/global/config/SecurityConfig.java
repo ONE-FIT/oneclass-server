@@ -53,6 +53,8 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/swagger-ui/index.html",
             "/.well-known/acme-challenge/**",
+            "/member/admin/signup",
+            "/member/admin/signup-code"
     };
 
     @Bean
@@ -128,6 +130,16 @@ public class SecurityConfig {
                         //계정 탈퇴
                         .requestMatchers("/member/delete-user").hasAnyRole("STUDENT","TEACHER","PARENT")
 
+                        //ADMIN은 전부 권한 열기
+                        .requestMatchers("/member/**",
+                                "/lesson/**",
+                                "/consultations/**",
+                                "/academy/**",
+                                "/task/**",
+                                "/announce/**",
+                                "/attendance/**",
+                                "/lms/**").hasRole("ADMIN")
+
                         // 그 외 전부 인증 필요
                         .anyRequest().authenticated()
                 )
@@ -139,13 +151,19 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOriginPatterns(List.of("*")); // swagger는 다 허용
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/v3/api-docs/**", config);
+        source.registerCorsConfiguration("/swagger-ui/**", config);
+        source.registerCorsConfiguration("/swagger-ui.html", config);
+        source.registerCorsConfiguration("/swagger-ui/index.html", config);
+        source.registerCorsConfiguration("/.well-known/acme-challenge/**", config);
+
         return new CorsFilter(source);
     }
 }

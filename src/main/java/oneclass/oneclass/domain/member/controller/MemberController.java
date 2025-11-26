@@ -9,7 +9,6 @@ import oneclass.oneclass.domain.member.dto.request.*;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
 import oneclass.oneclass.domain.member.error.TokenError;
-import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
@@ -20,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
 @RestController
@@ -30,7 +28,6 @@ public class MemberController {
 
     private final MemberService memberService;
     private final JwtProvider jwtProvider;
-    private final MemberRepository memberRepository;
 
     @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
     @PostMapping("/signup-code")
@@ -43,6 +40,13 @@ public class MemberController {
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signup(@RequestBody @Valid SignupRequest request) {
         memberService.signup(request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "ADMIN계정 회원가입", description = "ADMIN계정을 생성합니다.")
+    @PostMapping("/admin/signup")
+    public ResponseEntity<ApiResponse<Void>> signupAdmin(@RequestBody @Valid AdminSignupRequest request) {
+        memberService.signupAdmin(request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
