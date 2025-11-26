@@ -13,4 +13,6 @@ public interface AcademyService {
 
     // 로그아웃: 특정 refresh 토큰만 폐기
     void logout(String academyCode, String refreshToken);
+
+    void approveAcademy(String adminUsername, String academyCode);
 }

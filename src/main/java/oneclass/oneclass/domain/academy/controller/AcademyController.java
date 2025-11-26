@@ -1,11 +1,14 @@
 package oneclass.oneclass.domain.academy.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.academy.dto.request.AcademyLoginRequest;
 import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
+import oneclass.oneclass.domain.academy.dto.request.SendResetPasswordRequest;
 import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
 import oneclass.oneclass.domain.academy.service.AcademyService;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
@@ -19,8 +22,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/academy")
 public class AcademyController {
     private final AcademyService academyService;
@@ -40,10 +46,19 @@ public class AcademyController {
         return ResponseEntity.ok(ApiResponse.success(token));
     }
 
+    @Operation(summary = "학원 승인", description = "승인되지 않은 학원을 승인합니다.")
+    @PostMapping("/{code}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> approveAcademy(@PathVariable String code, Principal principal, HttpServletRequest req) {
+        log.info("Approve requested by user={} code={} UA={}", principal.getName(), code, req.getHeader("User-Agent"));
+        academyService.approveAcademy(principal.getName(), code);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
     @PostMapping("/send-reset-password")
-    public ResponseEntity<ApiResponse<Void>> sendResetPasswordEmail(@RequestBody @Valid ResetAcademyPasswordRequest request) {
-        academyService.sendResetPasswordEmail(request.academyCode(), request.academyName());
+    public ResponseEntity<ApiResponse<Void>> sendResetPasswordEmail(@RequestBody @Valid SendResetPasswordRequest request) {
+        academyService.sendResetPasswordEmail(request.academyCode(),request.academyName());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

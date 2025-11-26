@@ -1,6 +1,7 @@
 package oneclass.oneclass.domain.member.repository;
 
 import oneclass.oneclass.domain.member.entity.Member;
+import oneclass.oneclass.domain.member.entity.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -61,5 +62,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
                                                   @Param("date") LocalDate date);
 
     List<Member> findAllByUsernameIn(Collection<String> usernames);
+
+    boolean existsByUsername(String username);
+
+    List<Member> findAllByRole(Role role);
 
 }

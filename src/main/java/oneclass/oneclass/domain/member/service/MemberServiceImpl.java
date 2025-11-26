@@ -1,19 +1,19 @@
 package oneclass.oneclass.domain.member.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
 import oneclass.oneclass.domain.academy.error.AcademyError;
 import oneclass.oneclass.domain.academy.repository.AcademyRepository;
 import oneclass.oneclass.domain.academy.repository.AcademyVerificationCodeRepository;
+import oneclass.oneclass.domain.member.dto.request.AdminSignupRequest;
 import oneclass.oneclass.domain.member.dto.request.LoginRequest;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.MemberDto;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
-import oneclass.oneclass.domain.member.entity.Member;
-import oneclass.oneclass.domain.member.entity.RefreshToken;
-import oneclass.oneclass.domain.member.entity.Role;
+import oneclass.oneclass.domain.member.entity.*;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
@@ -21,12 +21,18 @@ import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,6 +40,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class MemberServiceImpl implements MemberService {
 
     private final MemberRepository memberRepository;
@@ -44,6 +51,14 @@ public class MemberServiceImpl implements MemberService {
     private final AcademyRepository academyRepository;
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
     private final JavaMailSender javaMailSender;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+
+    @Value("${app.admin.email}")
+    private String serviceAdminEmail;
+
+    @Value("${app.admin.code-valid-minutes:10}")
+    private long codeValidityMinutes;
 
     // 1) 회원가입: 2번째(Username 기반 DTO) 형태를 유지하되, 예외/검증은 기존 스타일
     @Override
@@ -243,6 +258,105 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.CONFLICT);
         }
     }
+
+    @Override
+    @Transactional
+    public void signupAdmin(AdminSignupRequest request) {
+        if (request.password() == null || !request.password().equals(request.checkPassword())) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+        }
+        if (serviceAdminEmail == null || serviceAdminEmail.isBlank()) {
+            throw new CustomException(MemberError.BAD_REQUEST, "관리자 이메일이 설정되지 않았습니다.");
+        }
+
+        final String adminEmailKey = serviceAdminEmail.trim().toLowerCase();
+
+        // 전송 단계
+        if (request.verificationCode() == null || request.verificationCode().isBlank()) {
+            final String code = generateNumericCode(6);
+            final LocalDateTime now = LocalDateTime.now();
+            final LocalDateTime expiry = now.plusMinutes(codeValidityMinutes);
+
+            VerificationCode vc = VerificationCode.builder()
+                    .identifier(adminEmailKey)
+                    .type(VerificationCode.Type.ADMIN_EMAIL) // 관리자용 타입으로 구분
+                    .phone(request.phone())
+                    .code(code)
+                    .expiry(expiry)
+                    .used(false)
+                    .build();
+
+            verificationCodeRepository.save(vc);
+
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sendSimpleEmail(
+                            serviceAdminEmail,
+                            "[서비스 관리자 인증] 관리자 계정 생성 인증코드",
+                            "인증코드: " + code + "\n유효시간: " + codeValidityMinutes + "분"
+                    );
+                }
+            });
+
+            return;
+        }
+
+        // 검증 단계
+        VerificationCode stored = verificationCodeRepository
+                .findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfter(
+                        adminEmailKey, VerificationCode.Type.ADMIN_EMAIL, LocalDateTime.now())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
+
+        if (stored.getExpiry().isBefore(LocalDateTime.now())) {
+            verificationCodeRepository.deleteByIdentifierAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
+            throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
+        }
+        if (!normalizeCode(stored.getCode()).equals(normalizeCode(request.verificationCode()))) {
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
+        }
+
+        // 일회성 사용 처리
+        stored.setUsed(true);
+        verificationCodeRepository.save(stored);
+        // 또는 삭제로 관리:
+        // verificationCodeRepository.deleteByIdentifierAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
+
+        // 관리자 생성
+        if (memberRepository.existsByUsername(request.username())) {
+            throw new CustomException(MemberError.CONFLICT, "이미 사용중인 아이디입니다.");
+        }
+
+        Member admin = Member.builder()
+                .username(request.username())
+                .password(passwordEncoder.encode(request.password()))
+                .phone(request.phone())
+                .name(request.name())
+                .email(request.email())
+                .role(Role.ADMIN)
+                .build();
+
+        memberRepository.save(admin);
+    }
+
+    private void sendSimpleEmail(String to, String subject, String text) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(text);
+        // from 설정은 application.yml mail.username 이거나 여기서 직접 설정 가능
+        javaMailSender.send(message);
+    }
+    private String generateNumericCode(int length) {
+        if (length <= 0) throw new IllegalArgumentException("length must be positive");
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(SECURE_RANDOM.nextInt(10));
+        }
+        return sb.toString();
+    }
+
+
 
     @Override
     public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
