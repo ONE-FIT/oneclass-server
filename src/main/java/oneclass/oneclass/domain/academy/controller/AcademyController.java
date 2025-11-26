@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.academy.dto.request.AcademyLoginRequest;
 import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
+import oneclass.oneclass.domain.academy.dto.request.ApproveAcademyRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
 import oneclass.oneclass.domain.academy.service.AcademyService;
@@ -38,6 +39,13 @@ public class AcademyController {
     public ResponseEntity<ApiResponse<ResponseToken>> login(@RequestBody @Valid AcademyLoginRequest request) {
         ResponseToken token = academyService.login(request.academyCode(), request.academyName(), request.password());
         return ResponseEntity.ok(ApiResponse.success(token));
+    }
+
+    @Operation(summary = "학원 승인", description = "승인되지 않은 학원을 승인합니다.")
+    @PostMapping("/approve")
+    public ResponseEntity<ApiResponse<Void>> approveAcademy(@RequestBody @Valid ApproveAcademyRequest request) {
+        academyService.approveAcademy(request);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
