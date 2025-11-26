@@ -128,19 +128,16 @@ public class AcademyServiceImpl implements AcademyService {
         }
 
         academy.approve(admin.getUsername());
-        academyRepository.save(academy);
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             public void afterCommit() {
-                try {
+
                     SimpleMailMessage msg = new SimpleMailMessage();
                     msg.setTo(academy.getEmail());
                     msg.setSubject("[승인완료] 학원 가입이 승인되었습니다");
                     msg.setText("학원 코드: " + academy.getAcademyCode() + "\n학원명: " + academy.getAcademyName() + "\n승인자: " + admin.getUsername());
                     javaMailSender.send(msg);
-                } catch (MailException e) {
-                    // log
-                }
+
             }
         });
     }
@@ -168,7 +165,7 @@ public class AcademyServiceImpl implements AcademyService {
             throw new CustomException(AcademyError.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
         }
         if(academy.getStatus() != Academy.Status.APPROVED) {
-            throw new CustomException(AcademyError.NOT_APPROVED,"승인되지 않은 학원");
+            throw new CustomException(AcademyError.NOT_APPROVED);
         }
 
         if (!academy.getAcademyName().equalsIgnoreCase(academyName)) {

@@ -57,7 +57,7 @@ public class AcademyController {
 
     @Operation(summary = "비밀번호 재설정 이메일 발송", description = "비밀번호 재설정 인증코드를 발송합니다.")
     @PostMapping("/send-reset-password")
-    public ResponseEntity<ApiResponse<Void>> sendResetPasswordEmail(@RequestBody @Valid SendResetPasswordRequest request, Authentication authentication) {
+    public ResponseEntity<ApiResponse<Void>> sendResetPasswordEmail(@RequestBody @Valid SendResetPasswordRequest request) {
         academyService.sendResetPasswordEmail(request.academyCode(),request.academyName());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
