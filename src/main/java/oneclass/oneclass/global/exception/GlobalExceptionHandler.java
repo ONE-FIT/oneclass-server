@@ -1,8 +1,7 @@
 package oneclass.oneclass.global.exception;
 
-import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
-import oneclass.oneclass.domain.attendance.error.AttendanceError;
-import oneclass.oneclass.global.dto.ApiResponse;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -11,7 +10,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.util.stream.Collectors;
+import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
+import oneclass.oneclass.domain.attendance.error.AttendanceError;
+import oneclass.oneclass.global.dto.ApiResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -23,7 +24,7 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(e));
     }
 
-    // DTO 검증 실패 시
+    // DTO 검증 실패 시 - 모든 validation 에러 메시지를 한 번에 반환
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult()
@@ -32,12 +33,15 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining(", "));
 
-        CustomException customException =
-                new CustomException(CommonError.INVALID_INPUT_VALUE, errors);
+        ErrorResponse errorResponse = new ErrorResponse(
+            "VALIDATION_FAILED",
+            HttpStatus.BAD_REQUEST.value(),
+            errors.isEmpty() ? "유효하지 않은 입력입니다." : errors
+        );
 
         return ResponseEntity
-                .status(customException.getStatus())
-                .body(ApiResponse.error(customException));
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(errorResponse));
     }
 
     // Enum 타입 불일치 등 @RequestParam / @PathVariable 타입 오류 처리
