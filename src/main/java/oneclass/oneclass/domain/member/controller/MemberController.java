@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.request.*;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
+import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.service.MemberService;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
@@ -158,5 +159,13 @@ public class MemberController {
     public ResponseEntity<ApiResponse<Void>> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
         memberService.addStudentsToParent(request.username(), request.password(), request.studentUsernames());
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+    @Operation(summary = "멤버 검색", description = "멤버 네임으로 멤버 검색")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/search/{username}")
+    public ResponseEntity<ApiResponse<Long>> findMemberIdByUsername(@PathVariable String username) {
+        Long memberId = memberService.findMemberIdByUsername(username)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        return ResponseEntity.ok(ApiResponse.success(memberId));
     }
 }

@@ -66,4 +66,5 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     boolean existsByUsername(String username);
 
     List<Member> findAllByRole(Role role);
+
 }
