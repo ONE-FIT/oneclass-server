@@ -13,10 +13,7 @@ import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.MemberDto;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
-import oneclass.oneclass.domain.member.entity.Member;
-import oneclass.oneclass.domain.member.entity.RefreshToken;
-import oneclass.oneclass.domain.member.entity.Role;
-import oneclass.oneclass.domain.member.entity.VerificationCode;
+import oneclass.oneclass.domain.member.entity.*;
 import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
@@ -272,52 +269,60 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.BAD_REQUEST, "관리자 이메일이 설정되지 않았습니다.");
         }
 
-        // 전송 단계: verificationCode 미제공 -> 생성/저장 -> 커밋 후 전송
+        final String adminEmailKey = serviceAdminEmail.trim().toLowerCase();
+
+        // 전송 단계
         if (request.verificationCode() == null || request.verificationCode().isBlank()) {
             final String code = generateNumericCode(6);
-            final LocalDateTime expiry = LocalDateTime.now().plusMinutes(codeValidityMinutes);
+            final LocalDateTime now = LocalDateTime.now();
+            final LocalDateTime expiry = now.plusMinutes(codeValidityMinutes);
 
-            // VerificationCode 엔티티의 PK는 phone(귀하의 엔티티) 이므로 phone에 넣음
-            final VerificationCode vc = VerificationCode.builder()
-                    .phone(serviceAdminEmail.trim().toLowerCase())
+            VerificationCode vc = VerificationCode.builder()
+                    .identifier(adminEmailKey)
+                    .type(VerificationCode.Type.ADMIN_EMAIL) // 관리자용 타입으로 구분
+                    .phone(request.phone())
                     .code(code)
                     .expiry(expiry)
+                    .used(false)
                     .build();
 
             verificationCodeRepository.save(vc);
 
-            // 트랜잭션 커밋 후에 이메일 전송 (메일 실패로 트랜잭션이 롤백되지 않도록)
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    try {
-                        sendSimpleEmail(serviceAdminEmail,
-                                "[서비스 관리자 인증] 관리자 계정 생성 인증코드",
-                                "관리자 계정 생성을 위한 인증코드: " + code + "\n유효시간: " + codeValidityMinutes + "분");
-                    } catch (MailException me) {
-                        // 로그 찍고 재시도 큐에 넣는 등 처리
-                        log.error("메일 전송 실패: {}", me.getMessage(), me);
-                    }
+                    sendSimpleEmail(
+                            serviceAdminEmail,
+                            "[서비스 관리자 인증] 관리자 계정 생성 인증코드",
+                            "인증코드: " + code + "\n유효시간: " + codeValidityMinutes + "분"
+                    );
                 }
             });
 
-            return; // 전송단계 끝
+            return;
         }
 
-        // 검증 단계: DB에서 조회
-        String key = serviceAdminEmail.trim().toLowerCase();
-        VerificationCode stored = verificationCodeRepository.findById(key)
+        // 검증 단계
+        VerificationCode stored = verificationCodeRepository
+                .findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfter(
+                        adminEmailKey, VerificationCode.Type.ADMIN_EMAIL, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
         if (stored.getExpiry().isBefore(LocalDateTime.now())) {
-            verificationCodeRepository.deleteById(key);
+            verificationCodeRepository.deleteByIdentifierAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
             throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
         }
         if (!normalizeCode(stored.getCode()).equals(normalizeCode(request.verificationCode()))) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
-        verificationCodeRepository.deleteById(key);
 
+        // 일회성 사용 처리
+        stored.setUsed(true);
+        verificationCodeRepository.save(stored);
+        // 또는 삭제로 관리:
+        // verificationCodeRepository.deleteByIdentifierAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
+
+        // 관리자 생성
         if (memberRepository.existsByUsername(request.username())) {
             throw new CustomException(MemberError.CONFLICT, "이미 사용중인 아이디입니다.");
         }
@@ -331,12 +336,7 @@ public class MemberServiceImpl implements MemberService {
                 .role(Role.ADMIN)
                 .build();
 
-        try {
-            memberRepository.save(admin);
-        } catch (DataIntegrityViolationException ex) {
-            throw new CustomException(MemberError.CONFLICT, "계정 생성 중 데이터 무결성 오류가 발생했습니다.");
-        }
-        verificationCodeRepository.deleteById(key);
+        memberRepository.save(admin);
     }
 
     private void sendSimpleEmail(String to, String subject, String text) {

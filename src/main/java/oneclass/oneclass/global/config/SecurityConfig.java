@@ -53,8 +53,7 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/swagger-ui/index.html",
             "/.well-known/acme-challenge/**",
-            "/member/admin/signup",
-            "/member/admin/signup-code"
+            "/member/admin/signup"
     };
 
     @Bean
@@ -81,7 +80,7 @@ public class SecurityConfig {
 
 
                         // 멤버 로그아웃: 멤버(학생/부모/교사)
-                        .requestMatchers("/member/logout").hasAnyRole("STUDENT","PARENT","TEACHER")
+                        .requestMatchers("/member/logout").hasAnyRole("STUDENT","PARENT","TEACHER","ADMIN")
                       // 학원 로그아웃
                         // 역할별 접근 제어
 
@@ -96,9 +95,6 @@ public class SecurityConfig {
                         // 추가/삭제는 교사 본인 또는 학원에서만 가능 — 세부는 @PreAuthorize에서 teacherUsername 일치 검사
                         .requestMatchers(HttpMethod.POST,   "/member/teachers/*/students").hasAnyRole("TEACHER","ACADEMY")
                         .requestMatchers(HttpMethod.DELETE, "/member/teachers/*/students").hasAnyRole("TEACHER","ACADEMY")
-                        // 조회는 인증만 요구(권한 필터링은 서비스에서 처리)
-                        .requestMatchers(HttpMethod.GET, "/member/teachers/*/students").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/member/students/*/teachers").authenticated()
 
                         // 상담
                         .requestMatchers(HttpMethod.POST, "/consultations/change-status").hasAnyRole("TEACHER","ACADEMY")
@@ -125,20 +121,12 @@ public class SecurityConfig {
                         // 과제: 관리자성(교사/학원) 조회는 제한, 나머지 조회는 인증 사용자
                         .requestMatchers(HttpMethod.GET, "/task/*/members").hasAnyRole("TEACHER","ACADEMY")
                         .requestMatchers("/task/**").authenticated()
-                        .requestMatchers("/member/create-username").authenticated()
 
                         //계정 탈퇴
                         .requestMatchers("/member/delete-user").hasAnyRole("STUDENT","TEACHER","PARENT")
 
-                        //ADMIN은 전부 권한 열기
-                        .requestMatchers("/member/**",
-                                "/lesson/**",
-                                "/consultations/**",
-                                "/academy/**",
-                                "/task/**",
-                                "/announce/**",
-                                "/attendance/**",
-                                "/lms/**").hasRole("ADMIN")
+                        //ADMIN
+                        .requestMatchers("/academy/{code}/approve").hasRole("ADMIN")
 
                         // 그 외 전부 인증 필요
                         .anyRequest().authenticated()
@@ -151,19 +139,15 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*")); // swagger는 다 허용
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/v3/api-docs/**", config);
-        source.registerCorsConfiguration("/swagger-ui/**", config);
-        source.registerCorsConfiguration("/swagger-ui.html", config);
-        source.registerCorsConfiguration("/swagger-ui/index.html", config);
-        source.registerCorsConfiguration("/.well-known/acme-challenge/**", config);
-
+        source.registerCorsConfiguration("/**", config); // 모든 경로에 대해 CORS 설정 적용
         return new CorsFilter(source);
     }
+
 }

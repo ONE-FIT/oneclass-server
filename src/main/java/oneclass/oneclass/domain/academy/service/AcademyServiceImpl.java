@@ -3,7 +3,6 @@ package oneclass.oneclass.domain.academy.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
-import oneclass.oneclass.domain.academy.dto.request.ApproveAcademyRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
 import oneclass.oneclass.domain.academy.entity.Academy;
@@ -102,28 +101,26 @@ public class AcademyServiceImpl implements AcademyService {
         String text = "학원 코드: " + academy.getAcademyCode() + "\n학원명: " + academy.getAcademyName() +
                 "\n이메일: " + academy.getEmail() + "\n관리자 포털에서 승인해주세요.";
         for (Member admin : admins) {
-            try {
+
                 SimpleMailMessage msg = new SimpleMailMessage();
                 msg.setTo(admin.getEmail());
                 msg.setSubject(subject);
                 msg.setText(text);
                 javaMailSender.send(msg);
-            } catch (MailException e) {
-                // 실패 로깅/재시도 로직 추가 가능
-            }
+
         }
     }
 
     @Override
     @Transactional
-    public void approveAcademy(ApproveAcademyRequest request) {
-        Member admin = memberRepository.findByUsername(request.adminUsername())
+    public void approveAcademy(String adminUsername, String academyCode) {
+        Member admin = memberRepository.findByUsername(adminUsername)
                 .orElseThrow(() -> new CustomException(oneclass.oneclass.domain.member.error.MemberError.NOT_FOUND));
         if (admin.getRole() != oneclass.oneclass.domain.member.entity.Role.ADMIN) {
             throw new CustomException(oneclass.oneclass.domain.member.error.MemberError.FORBIDDEN);
         }
 
-        Academy academy = academyRepository.findByAcademyCode(request.academyCode())
+        Academy academy = academyRepository.findByAcademyCode(academyCode)
                 .orElseThrow(() -> new CustomException(AcademyError.NOT_FOUND));
 
         if (academy.getStatus() == Academy.Status.APPROVED) {
@@ -235,6 +232,7 @@ public class AcademyServiceImpl implements AcademyService {
     }
 
     @Override
+    @Transactional
     public void resetPassword(ResetAcademyPasswordRequest request) {
         AcademyVerificationCode codeEntity = academyVerificationCodeRepository.findByAcademyCode(request.academyCode())
                 .orElseThrow(() -> new CustomException(AcademyError.VERIFICATION_CODE_NOT_FOUND));
@@ -247,8 +245,8 @@ public class AcademyServiceImpl implements AcademyService {
             throw new CustomException(AcademyError.INVALID_ACADEMY_NAME, "학원 이름이 일치하지 않습니다.");
         }
 
-        academy.setPassword(passwordEncoder.encode(request.newPassword()));
-        academyRepository.save(academy);
+        String encoded = passwordEncoder.encode(request.newPassword());
+        academy.resetPassword(encoded);
     }
 
     private void verifyCodeExpirationAndMatch(AcademyVerificationCode entity, String verificationCode) {

@@ -11,8 +11,6 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 프록시용
 @Getter
 @Entity
-@Setter
-@Builder
 public class Academy {
     @Id
     private String academyCode;
@@ -78,5 +76,12 @@ public class Academy {
         this.status = Status.REJECTED;
         this.approvedBy = adminUsername;
         this.approvedAt = LocalDateTime.now();
+    }
+
+    public void resetPassword(String encodedPassword) {
+        if (encodedPassword == null || encodedPassword.isBlank()) {
+            throw new IllegalArgumentException("encodedPassword must not be blank");
+        }
+        this.password = encodedPassword;
     }
 }
