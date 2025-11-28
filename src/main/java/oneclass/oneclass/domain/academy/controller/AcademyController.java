@@ -10,6 +10,8 @@ import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.dto.request.SendResetPasswordRequest;
 import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
+import oneclass.oneclass.domain.academy.dto.response.PendingAcademyResponse;
+import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.service.AcademyService;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.error.TokenError;
@@ -23,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -98,5 +101,13 @@ public class AcademyController {
         // 4) 해당 Refresh만 폐기
         academyService.logout(academyCode, rt);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "비승인 학원 조회",description = "승인되지 않은 학원들을 조회합니다.")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/not-approve")
+    public ResponseEntity<ApiResponse<List<PendingAcademyResponse>>> getNotApproveAcademy(Authentication authentication) {
+        List<PendingAcademyResponse> pendingAcademies = academyService.getPendingAcademies();
+        return ResponseEntity.ok(ApiResponse.success(pendingAcademies));
     }
 }
