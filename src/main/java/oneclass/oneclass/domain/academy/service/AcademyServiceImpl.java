@@ -267,6 +267,6 @@ public class AcademyServiceImpl implements AcademyService {
     @Transactional(readOnly = true)
     @Override
     public List<PendingAcademyResponse> getPendingAcademies() {
-        return academyRepository.findPendingAsDto(Academy.Status.PENDING);
+        return academyRepository.findStatusAsDto(Academy.Status.PENDING);
     }
 }

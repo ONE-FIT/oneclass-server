@@ -21,5 +21,5 @@ public interface AcademyRepository extends JpaRepository<Academy, String> {
            from Academy a
            where a.status = :status
            """)
-    List<PendingAcademyResponse> findPendingAsDto(@Param("status") Academy.Status status);
+    List<PendingAcademyResponse> findStatusAsDto(@Param("status") Academy.Status status);
 }
