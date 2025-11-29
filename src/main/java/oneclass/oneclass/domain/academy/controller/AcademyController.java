@@ -105,8 +105,8 @@ public class AcademyController {
 
     @Operation(summary = "비승인 학원 조회",description = "승인되지 않은 학원들을 조회합니다.")
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/not-approve")
-    public ResponseEntity<ApiResponse<List<PendingAcademyResponse>>> getNotApproveAcademy() {
+    @GetMapping("/pending-academies")
+    public ResponseEntity<ApiResponse<List<PendingAcademyResponse>>> pendingAcademies() {
         List<PendingAcademyResponse> pendingAcademies = academyService.getPendingAcademies();
         return ResponseEntity.ok(ApiResponse.success(pendingAcademies));
     }
