@@ -34,6 +34,6 @@ public class TaskMessageWithPhoneController {
                 request.getPhoneNumbers()
         );
         
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.accepted().body(ApiResponse.success(response));
     }
 }
