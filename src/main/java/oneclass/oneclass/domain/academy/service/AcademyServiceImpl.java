@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
+import oneclass.oneclass.domain.academy.dto.response.PendingAcademyResponse;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.academy.entity.AcademyRefreshToken;
 import oneclass.oneclass.domain.academy.entity.AcademyVerificationCode;
@@ -18,7 +19,6 @@ import oneclass.oneclass.domain.member.entity.Member;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.exception.CustomException;
-import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -262,5 +262,11 @@ public class AcademyServiceImpl implements AcademyService {
             throw new CustomException(AcademyError.ALREADY_LOGGED_OUT, "이미 로그아웃된 토큰입니다.");
         }
         academyRefreshTokenRepository.deleteByAcademyCodeAndToken(academyCode, refreshToken);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<PendingAcademyResponse> getPendingAcademies() {
+        return academyRepository.findPendingAcademiesByStatus(Academy.Status.PENDING);
     }
 }

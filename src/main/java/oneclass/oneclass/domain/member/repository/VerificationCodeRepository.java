@@ -6,7 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public interface VerificationCodeRepository extends CrudRepository<VerificationCode, Long> {
+public interface VerificationCodeRepository extends CrudRepository<VerificationCode, String> {
     Optional<VerificationCode> findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfter(
             String identifier, VerificationCode.Type type, LocalDateTime now);
 
