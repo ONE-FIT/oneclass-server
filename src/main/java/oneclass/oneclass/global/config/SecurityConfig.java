@@ -53,7 +53,8 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/swagger-ui/index.html",
             "/.well-known/acme-challenge/**",
-            "/member/admin/signup"
+            "/member/admin/signup",
+
     };
 
     @Bean
@@ -124,6 +125,9 @@ public class SecurityConfig {
 
                         //계정 탈퇴
                         .requestMatchers("/member/delete-user").hasAnyRole("STUDENT","TEACHER","PARENT")
+                                       
+                        .requestMatchers(HttpMethod.POST, "/task/sms/send").hasAnyRole("TEACHER", "PARENT")
+                        .requestMatchers(HttpMethod.POST, "/lms/schedule").hasAnyRole("TEACHER", "PARENT")
 
                         //ADMIN
                         .requestMatchers("/academy/{code}/approve").hasRole("ADMIN")
