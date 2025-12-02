@@ -20,6 +20,7 @@ import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.jwt.TokenUtils;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -271,7 +272,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 전송 단계
         if (request.verificationCode() == null || request.verificationCode().isBlank()) {
-            final String code = generateNumericCode(6);
+            final String code = generateNumericCode();
             final LocalDateTime now = LocalDateTime.now();
             final LocalDateTime expiry = now.plusMinutes(codeValidityMinutes);
 
@@ -291,7 +292,6 @@ public class MemberServiceImpl implements MemberService {
                 public void afterCommit() {
                     sendSimpleEmail(
                             serviceAdminEmail,
-                            "[서비스 관리자 인증] 관리자 계정 생성 인증코드",
                             "인증코드: " + code + "\n유효시간: " + codeValidityMinutes + "분"
                     );
                 }
@@ -337,18 +337,17 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(admin);
     }
 
-    private void sendSimpleEmail(String to, String subject, String text) {
+    private void sendSimpleEmail(String to, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
-        message.setSubject(subject);
+        message.setSubject("[서비스 관리자 인증] 관리자 계정 생성 인증코드");
         message.setText(text);
         // from 설정은 application.yml mail.username 이거나 여기서 직접 설정 가능
         javaMailSender.send(message);
     }
-    private String generateNumericCode(int length) {
-        if (length <= 0) throw new IllegalArgumentException("length must be positive");
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
+    private String generateNumericCode() {
+        StringBuilder sb = new StringBuilder(6);
+        for (int i = 0; i < 6; i++) {
             sb.append(SECURE_RANDOM.nextInt(10));
         }
         return sb.toString();
@@ -396,11 +395,7 @@ public class MemberServiceImpl implements MemberService {
     }
     @Override
     public String cleanupToken(String token) {
-        if (token == null) return null;
-        String v = token.trim();
-        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
-        if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
-        return v;
+        return TokenUtils.cleanup(token);
     }
 
     private void validatePhoneDuplication(String phone) {
@@ -501,11 +496,9 @@ public class MemberServiceImpl implements MemberService {
         // 이미 연결된 자녀는 건너뛰어 멱등성 보장
         //    parent.getParentStudents()가 Set이라면 contains가 잘 동작하도록 equals/hashCode 구현 확인(보통 id 기반)
         Set<Member> already = parent.getParentStudents() == null ? Set.of() : parent.getParentStudents();
-        int added = 0;
         for (Member child : children) {
             if (already.contains(child)) continue; // 이미 연결된 경우 무시
             parent.addParentStudent(child);
-            added++;
         }
 
 
