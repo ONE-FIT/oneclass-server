@@ -369,7 +369,7 @@ public class MemberServiceImpl implements MemberService {
 
         String provided = normalizeCode(verificationCode);
 
-        var codeEntry = verificationCodeRepository.findById(phone)
+        var codeEntry = verificationCodeRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
         String saved = normalizeCode(codeEntry.getCode());
@@ -380,7 +380,7 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
         }
 
-        verificationCodeRepository.deleteById(phone);
+        verificationCodeRepository.deleteByPhone(phone);
 
         Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
