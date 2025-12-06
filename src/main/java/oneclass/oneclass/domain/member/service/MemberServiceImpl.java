@@ -354,11 +354,11 @@ public class MemberServiceImpl implements MemberService {
     }
 
 
-
     @Override
+    @Transactional
     public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
         if (newPassword == null || !newPassword.equals(checkPassword)) {
-            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+            throw new CustomException(MemberError.PASSWORD_REQUEST);
         }
         if (phone == null || phone.isBlank()) {
             throw new CustomException(MemberError.PHONE_REQUIRED);
@@ -367,26 +367,29 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
         }
 
-        String provided = normalizeCode(verificationCode);
-
-        var codeEntry = verificationCodeRepository.findByPhone(phone)
+        // 현재 미사용 중인 최신 코드 조회
+        var codeEntry = verificationCodeRepository
+                .findTopByPhoneAndUsedFalseOrderByExpiryDesc(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
-        String saved = normalizeCode(codeEntry.getCode());
-        if (!saved.equals(provided)) {
-            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
-        }
+        // 만료 체크
         if (codeEntry.getExpiry().isBefore(LocalDateTime.now())) {
             throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
         }
 
-        verificationCodeRepository.deleteByPhone(phone);
+        // 코드 비교
+        if (!normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
+        }
 
+        // 일회성 처리(감사 목적): 사용 표시
+        codeEntry.setUsed(true);
+        verificationCodeRepository.save(codeEntry);
+
+        // 비밀번호 변경
         Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-
         member.setPassword(passwordEncoder.encode(newPassword));
-        memberRepository.save(member);
     }
 
     private String normalizeCode(String code) {
