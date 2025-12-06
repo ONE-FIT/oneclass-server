@@ -1,6 +1,8 @@
 package oneclass.oneclass.domain.member.repository;
 
+import jakarta.persistence.LockModeType;
 import oneclass.oneclass.domain.member.entity.VerificationCode;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.CrudRepository;
 
 import java.time.LocalDateTime;
@@ -10,6 +12,7 @@ public interface VerificationCodeRepository extends CrudRepository<VerificationC
     Optional<VerificationCode> findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfter(
             String identifier, VerificationCode.Type type, LocalDateTime now);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<VerificationCode> findTopByPhoneAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
             String phone, LocalDateTime now);
     void deleteByIdentifierAndType(String identifier, VerificationCode.Type type);
