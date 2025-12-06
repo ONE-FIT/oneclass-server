@@ -2,7 +2,6 @@ package oneclass.oneclass.domain.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.request.*;
@@ -67,7 +66,6 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
     public ResponseEntity<ApiResponse<Void>> logout(
             Authentication authentication,
-            HttpServletRequest request,
             @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
     ) {
         if (authentication == null) throw new CustomException(TokenError.UNAUTHORIZED);
@@ -92,7 +90,7 @@ public class MemberController {
         String usernameFromRefresh = jwtProvider.getUsername(rt);
 
         // 5) 인증 주체 username
-        String usernameFromAuth = resolveAuthenticatedUsername(authentication, request);
+        String usernameFromAuth = resolveAuthenticatedUsername(authentication);
 
         // 6) 주체 일치 확인
         if (!usernameFromAuth.equals(usernameFromRefresh)) {
@@ -104,8 +102,7 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    private String resolveAuthenticatedUsername(Authentication authentication, HttpServletRequest request) {
-        // 기본: SecurityContext의 principal 사용
+    private String resolveAuthenticatedUsername(Authentication authentication) {
         return authentication.getName();
     }
 
@@ -130,8 +127,7 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('TEACHER')")
     public ResponseEntity<ApiResponse<TeacherStudentsResponse>> addStudentsToTeacher(
             @PathVariable String teacherPhone,
-            @RequestBody @Valid TeacherStudentsRequest request,
-            Authentication authentication
+            @RequestBody @Valid TeacherStudentsRequest request
     ) {
         TeacherStudentsResponse response = memberService.addStudentsToTeacher(
                 teacherPhone,
@@ -146,9 +142,7 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('TEACHER')")
     public ResponseEntity<ApiResponse<Void>> removeStudentsFromTeacher(
             @PathVariable String teacherPhone,
-            @RequestBody @Valid TeacherStudentsRequest request,
-            Authentication authentication
-    ) {
+            @RequestBody @Valid TeacherStudentsRequest request) {
         memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones());
         return ResponseEntity.ok(ApiResponse.success(null));
     }

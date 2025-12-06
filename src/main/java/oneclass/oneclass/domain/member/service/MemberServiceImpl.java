@@ -290,7 +290,7 @@ public class MemberServiceImpl implements MemberService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    sendSimpleEmail(
+                    sendAdminVerificationEmail(
                             serviceAdminEmail,
                             "인증코드: " + code + "\n유효시간: " + codeValidityMinutes + "분"
                     );
@@ -337,7 +337,7 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(admin);
     }
 
-    private void sendSimpleEmail(String to, String text) {
+    private void sendAdminVerificationEmail(String to, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject("[서비스 관리자 인증] 관리자 계정 생성 인증코드");
@@ -358,7 +358,7 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
         if (newPassword == null || !newPassword.equals(checkPassword)) {
-            throw new CustomException(MemberError.PASSWORD_REQUEST);
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
         if (phone == null || phone.isBlank()) {
             throw new CustomException(MemberError.PHONE_REQUIRED);

@@ -1,6 +1,5 @@
 package oneclass.oneclass.domain.member.repository;
 
-import jakarta.validation.constraints.NotBlank;
 import oneclass.oneclass.domain.member.entity.VerificationCode;
 import org.springframework.data.repository.CrudRepository;
 
