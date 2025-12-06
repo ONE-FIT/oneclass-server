@@ -2,14 +2,13 @@ package oneclass.oneclass.domain.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.member.dto.request.*;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
+import oneclass.oneclass.domain.member.error.MemberError;
 import oneclass.oneclass.domain.member.error.TokenError;
-import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.service.MemberService;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
@@ -20,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Tag(name = "회원 인증 API", description = "회원가입, 로그인, 비밀번호 찾기 등 인증 관련 API")
 @RestController
@@ -30,7 +28,6 @@ public class MemberController {
 
     private final MemberService memberService;
     private final JwtProvider jwtProvider;
-    private final MemberRepository memberRepository;
 
     @Operation(summary = "회원가입 코드보내기(선생님)", description = "학원메일로 선생님 회원가입 코드를 보냅니다.")
     @PostMapping("/signup-code")
@@ -43,6 +40,13 @@ public class MemberController {
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signup(@RequestBody @Valid SignupRequest request) {
         memberService.signup(request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "ADMIN계정 회원가입", description = "ADMIN계정을 생성합니다.")
+    @PostMapping("/admin/signup")
+    public ResponseEntity<ApiResponse<Void>> signupAdmin(@RequestBody @Valid AdminSignupRequest request) {
+        memberService.signupAdmin(request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -62,7 +66,6 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
     public ResponseEntity<ApiResponse<Void>> logout(
             Authentication authentication,
-            HttpServletRequest request,
             @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
     ) {
         if (authentication == null) throw new CustomException(TokenError.UNAUTHORIZED);
@@ -87,7 +90,7 @@ public class MemberController {
         String usernameFromRefresh = jwtProvider.getUsername(rt);
 
         // 5) 인증 주체 username
-        String usernameFromAuth = resolveAuthenticatedUsername(authentication, request);
+        String usernameFromAuth = resolveAuthenticatedUsername(authentication);
 
         // 6) 주체 일치 확인
         if (!usernameFromAuth.equals(usernameFromRefresh)) {
@@ -99,8 +102,7 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    private String resolveAuthenticatedUsername(Authentication authentication, HttpServletRequest request) {
-        // 기본: SecurityContext의 principal 사용
+    private String resolveAuthenticatedUsername(Authentication authentication) {
         return authentication.getName();
     }
 
@@ -125,8 +127,7 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('TEACHER')")
     public ResponseEntity<ApiResponse<TeacherStudentsResponse>> addStudentsToTeacher(
             @PathVariable String teacherPhone,
-            @RequestBody @Valid TeacherStudentsRequest request,
-            Authentication authentication
+            @RequestBody @Valid TeacherStudentsRequest request
     ) {
         TeacherStudentsResponse response = memberService.addStudentsToTeacher(
                 teacherPhone,
@@ -138,38 +139,15 @@ public class MemberController {
 
     @Operation(summary = "선생님 계정에 학생 제거", description = "학생을 제거합니다.")
     @DeleteMapping("/teachers/{teacherPhone}/students")
-    @PreAuthorize("hasAnyRole('TEACHER')")
+    @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<ApiResponse<Void>> removeStudentsFromTeacher(
             @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request,
-            Authentication authentication
+            Authentication authentication // 인증 주입
     ) {
-        memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones());
+        // 서비스 계층에서 본인 확인(authentication.getName() == teacher.username) 수행
+        memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones(), authentication);
         return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
-    @Operation(summary = "특정 선생님 맡고있는 학생 리스트조회", description = "학생을 조회합니다.")
-    @GetMapping("/teachers/{teacherPhone}/students")
-    @PreAuthorize("hasAnyRole('TEACHER','PARENT','STUDENT')")
-    public ResponseEntity<ApiResponse<List<String>>> listStudentsOfTeacher(
-            @PathVariable String teacherPhone,
-            Authentication authentication
-    ) {
-        String requester = (authentication != null) ? authentication.getName() : null;
-        List<String> students = memberService.listStudentsOfTeacher(requester, teacherPhone);
-        return ResponseEntity.ok(ApiResponse.success(students));
-    }
-
-    @Operation(summary = "특정 학생의 선생님 조회", description = "선생님을 조회합니다.")
-    @GetMapping("/students/{studentPhone}/teachers")
-    @PreAuthorize("hasAnyRole('TEACHER','PARENT','STUDENT')")
-    public ResponseEntity<ApiResponse<List<String>>> listTeachersOfStudent(
-            @PathVariable String studentPhone,
-            Authentication authentication
-    ) {
-        String requester = (authentication != null) ? authentication.getName() : null;
-        List<String> teachers = memberService.listTeachersOfStudent(requester, studentPhone);
-        return ResponseEntity.ok(ApiResponse.success(teachers));
     }
 
     @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
@@ -178,5 +156,13 @@ public class MemberController {
     public ResponseEntity<ApiResponse<Void>> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
         memberService.addStudentsToParent(request.username(), request.password(), request.studentUsernames());
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+    @Operation(summary = "멤버 검색", description = "멤버 네임으로 멤버 검색")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/search/{username}")
+    public ResponseEntity<ApiResponse<Long>> findMemberIdByUsername(@PathVariable String username) {
+        Long memberId = memberService.findMemberIdByUsername(username)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        return ResponseEntity.ok(ApiResponse.success(memberId));
     }
 }
