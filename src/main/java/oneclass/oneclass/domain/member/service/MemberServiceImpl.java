@@ -609,6 +609,5 @@ public class MemberServiceImpl implements MemberService {
             teacher.removeStudent(student);
         }
 
-        memberRepository.save(teacher);
     }
 }
