@@ -20,10 +20,12 @@ import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
+import oneclass.oneclass.global.auth.jwt.TokenUtils;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -271,7 +273,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 전송 단계
         if (request.verificationCode() == null || request.verificationCode().isBlank()) {
-            final String code = generateNumericCode(6);
+            final String code = generateNumericCode();
             final LocalDateTime now = LocalDateTime.now();
             final LocalDateTime expiry = now.plusMinutes(codeValidityMinutes);
 
@@ -289,9 +291,8 @@ public class MemberServiceImpl implements MemberService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    sendSimpleEmail(
+                    sendAdminVerificationEmail(
                             serviceAdminEmail,
-                            "[서비스 관리자 인증] 관리자 계정 생성 인증코드",
                             "인증코드: " + code + "\n유효시간: " + codeValidityMinutes + "분"
                     );
                 }
@@ -302,7 +303,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 검증 단계
         VerificationCode stored = verificationCodeRepository
-                .findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfter(
+                .findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
                         adminEmailKey, VerificationCode.Type.ADMIN_EMAIL, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
@@ -337,26 +338,26 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(admin);
     }
 
-    private void sendSimpleEmail(String to, String subject, String text) {
+    private void sendAdminVerificationEmail(String to, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
-        message.setSubject(subject);
+        message.setSubject("[서비스 관리자 인증] 관리자 계정 생성 인증코드");
         message.setText(text);
         // from 설정은 application.yml mail.username 이거나 여기서 직접 설정 가능
         javaMailSender.send(message);
     }
-    private String generateNumericCode(int length) {
-        if (length <= 0) throw new IllegalArgumentException("length must be positive");
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
+    private String generateNumericCode() {
+        final int VERIFICATION_CODE_LENGTH = 6;
+        StringBuilder sb = new StringBuilder(VERIFICATION_CODE_LENGTH);
+        for (int i = 0; i < VERIFICATION_CODE_LENGTH; i++) {
             sb.append(SECURE_RANDOM.nextInt(10));
         }
         return sb.toString();
     }
 
 
-
     @Override
+    @Transactional
     public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
         if (newPassword == null || !newPassword.equals(checkPassword)) {
             throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
@@ -368,26 +369,38 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
         }
 
-        String provided = normalizeCode(verificationCode);
-
-        var codeEntry = verificationCodeRepository.findById(phone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
-
-        String saved = normalizeCode(codeEntry.getCode());
-        if (!saved.equals(provided)) {
-            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
-        }
-        if (codeEntry.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
-        }
-
-        verificationCodeRepository.deleteById(phone);
-
+        // 1) 회원 존재 확인(유효 코드 소모 방지)
         Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
+        // 2) 현재 유효(미사용 + 만료 전) + 비번 재설정 타입의 최신 코드 조회
+        var codeEntry = verificationCodeRepository
+                .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+                        phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
+
+
+        // 3) 코드 비교
+        if (!normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
+        }
+
+        // 4) 일회성 처리
+        codeEntry.setUsed(true);
+        // codeEntry.setUsedAt(LocalDateTime.now()); // 필드가 있다면 사용
+        verificationCodeRepository.save(codeEntry);
+
+        // 5) 비밀번호 변경
         member.setPassword(passwordEncoder.encode(newPassword));
-        memberRepository.save(member);
+        // 영속 상태이므로 @Transactional 커밋 시 반영
+
+        // 6) 커밋 후 SMS 안내 발송(원하면 사용)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                // smsResetPasswordCode.send("비밀번호가 성공적으로 재설정되었습니다.", phone);
+            }
+        });
     }
 
     private String normalizeCode(String code) {
@@ -396,11 +409,7 @@ public class MemberServiceImpl implements MemberService {
     }
     @Override
     public String cleanupToken(String token) {
-        if (token == null) return null;
-        String v = token.trim();
-        if (v.regionMatches(true, 0, "Bearer ", 0, 7)) v = v.substring(7).trim();
-        if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
-        return v;
+        return TokenUtils.cleanup(token);
     }
 
     private void validatePhoneDuplication(String phone) {
@@ -501,11 +510,9 @@ public class MemberServiceImpl implements MemberService {
         // 이미 연결된 자녀는 건너뛰어 멱등성 보장
         //    parent.getParentStudents()가 Set이라면 contains가 잘 동작하도록 equals/hashCode 구현 확인(보통 id 기반)
         Set<Member> already = parent.getParentStudents() == null ? Set.of() : parent.getParentStudents();
-        int added = 0;
         for (Member child : children) {
             if (already.contains(child)) continue; // 이미 연결된 경우 무시
             parent.addParentStudent(child);
-            added++;
         }
 
 
@@ -564,28 +571,43 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones) {
+    @Transactional
+    public void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones, Authentication authentication) {
         if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty()) {
             throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
         }
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new CustomException(MemberError.UNAUTHORIZED, "인증 정보가 없습니다.");
+        }
 
+        // 교사 조회
         Member teacher = memberRepository.findByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
 
+        // 본인 확인: 인증된 사용자만 자신의 학생 목록을 수정 가능
+        // 인증 주체는 일반적으로 username(로그인 ID)입니다.
+        if (!teacher.getUsername().equals(authentication.getName())) {
+            throw new CustomException(MemberError.FORBIDDEN, "자신의 학생 목록만 수정할 수 있습니다.");
+        }
+
+        // 역할 확인
         if (teacher.getRole() != Role.TEACHER) {
             throw new CustomException(MemberError.BAD_REQUEST, "해당 사용자는 선생님이 아닙니다.");
         }
 
+        // 학생 조회 맵 구성
         List<Member> students = memberRepository.findAllByPhoneIn(studentPhones);
         Map<String, Member> byPhone = students.stream()
-                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
-                        (existing, replacement) -> existing));
+                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m, (existing, replacement) -> existing));
 
+        // 제거 처리
         for (String phone : studentPhones) {
             Member student = byPhone.get(phone);
-            if (student == null) throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + phone);
+            if (student == null) {
+                throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + phone);
+            }
             teacher.removeStudent(student);
         }
-        memberRepository.save(teacher);
+
     }
 }

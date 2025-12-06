@@ -16,9 +16,9 @@ import java.time.LocalDateTime;
 public class VerificationCode {
 
     public enum Type {
-        PHONE,
         EMAIL,
-        ADMIN_EMAIL // 필요하면 추가
+        ADMIN_EMAIL, // 필요하면 추가
+        RESET_PASSWORD
     }
 
     @Id
