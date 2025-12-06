@@ -346,8 +346,9 @@ public class MemberServiceImpl implements MemberService {
         javaMailSender.send(message);
     }
     private String generateNumericCode() {
-        StringBuilder sb = new StringBuilder(6);
-        for (int i = 0; i < 6; i++) {
+        final int VERIFICATION_CODE_LENGTH = 6;
+        StringBuilder sb = new StringBuilder(VERIFICATION_CODE_LENGTH);
+        for (int i = 0; i < VERIFICATION_CODE_LENGTH; i++) {
             sb.append(SECURE_RANDOM.nextInt(10));
         }
         return sb.toString();
@@ -367,29 +368,22 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
         }
 
-        // 현재 미사용 중인 최신 코드 조회
+        // 회원 존재 여부 우선 확인
+        Member member = memberRepository.findByPhone(phone)
+                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        // 현재 유효한 최신 코드 조회 (DB에서 만료된 코드 필터링)
         var codeEntry = verificationCodeRepository
-                .findTopByPhoneAndUsedFalseOrderByExpiryDesc(phone)
+                .findTopByPhoneAndUsedFalseAndExpiryAfterOrderByExpiryDesc(phone, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
-
-        // 만료 체크
-        if (codeEntry.getExpiry().isBefore(LocalDateTime.now())) {
-            throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
-        }
-
         // 코드 비교
         if (!normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
-
-        // 일회성 처리(감사 목적): 사용 표시
+        // 일회성 처리(감사 목적): 사용 표시. @Transactional에 의해 자동 저장됩니다.
         codeEntry.setUsed(true);
-        verificationCodeRepository.save(codeEntry);
-
         // 비밀번호 변경
-        Member member = memberRepository.findByPhone(phone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
         member.setPassword(passwordEncoder.encode(newPassword));
+
     }
 
     private String normalizeCode(String code) {

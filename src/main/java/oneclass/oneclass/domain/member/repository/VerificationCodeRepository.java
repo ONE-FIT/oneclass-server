@@ -10,8 +10,8 @@ public interface VerificationCodeRepository extends CrudRepository<VerificationC
     Optional<VerificationCode> findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfter(
             String identifier, VerificationCode.Type type, LocalDateTime now);
 
-    Optional<VerificationCode> findTopByPhoneAndUsedFalseOrderByExpiryDesc(String phone);
-
+    Optional<VerificationCode> findTopByPhoneAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+            String phone, LocalDateTime now);
     void deleteByIdentifierAndType(String identifier, VerificationCode.Type type);
 
     void deleteByPhone(String phone);
