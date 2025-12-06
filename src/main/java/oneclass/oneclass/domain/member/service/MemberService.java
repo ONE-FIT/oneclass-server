@@ -5,6 +5,8 @@ import oneclass.oneclass.domain.member.dto.request.LoginRequest;
 import oneclass.oneclass.domain.member.dto.request.SignupRequest;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
 import oneclass.oneclass.domain.member.dto.response.TeacherStudentsResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +21,7 @@ public interface MemberService {
 
     void sendSignupVerificationCode(String academyCode, String name);
     void addStudentsToParent(String parentUsername, String password, List<String> studentUsernames);
-    void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones);
+    void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones, Authentication authentication);
     TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password);
     String cleanupToken(String token);
     //refreshToken 검증

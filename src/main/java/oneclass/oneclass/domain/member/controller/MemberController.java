@@ -142,8 +142,10 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('TEACHER')")
     public ResponseEntity<ApiResponse<Void>> removeStudentsFromTeacher(
             @PathVariable String teacherPhone,
-            @RequestBody @Valid TeacherStudentsRequest request) {
-        memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones());
+            @RequestBody @Valid TeacherStudentsRequest request,
+            Authentication authentication) { // Authentication 주입
+        // 서비스 계층에서 authentication 객체를 사용해 본인 확인
+        memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones(), authentication);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

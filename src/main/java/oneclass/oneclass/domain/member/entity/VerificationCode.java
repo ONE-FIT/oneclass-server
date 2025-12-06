@@ -17,7 +17,8 @@ public class VerificationCode {
 
     public enum Type {
         EMAIL,
-        ADMIN_EMAIL // 필요하면 추가
+        ADMIN_EMAIL, // 필요하면 추가
+        RESET_PASSWORD
     }
 
     @Id

@@ -25,6 +25,7 @@ import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -302,7 +303,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 검증 단계
         VerificationCode stored = verificationCodeRepository
-                .findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfter(
+                .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
                         adminEmailKey, VerificationCode.Type.ADMIN_EMAIL, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
@@ -368,22 +369,38 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
         }
 
-        // 회원 존재 여부 우선 확인
+        // 1) 회원 존재 확인(유효 코드 소모 방지)
         Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-        // 현재 유효한 최신 코드 조회 (DB에서 만료된 코드 필터링)
+
+        // 2) 현재 유효(미사용 + 만료 전) + 비번 재설정 타입의 최신 코드 조회
         var codeEntry = verificationCodeRepository
-                .findTopByPhoneAndUsedFalseAndExpiryAfterOrderByExpiryDesc(phone, LocalDateTime.now())
+                .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+                        phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
-        // 코드 비교
+
+
+        // 3) 코드 비교
         if (!normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
-        // 일회성 처리(감사 목적): 사용 표시. @Transactional에 의해 자동 저장됩니다.
-        codeEntry.setUsed(true);
-        // 비밀번호 변경
-        member.setPassword(passwordEncoder.encode(newPassword));
 
+        // 4) 일회성 처리
+        codeEntry.setUsed(true);
+        // codeEntry.setUsedAt(LocalDateTime.now()); // 필드가 있다면 사용
+        verificationCodeRepository.save(codeEntry);
+
+        // 5) 비밀번호 변경
+        member.setPassword(passwordEncoder.encode(newPassword));
+        // 영속 상태이므로 @Transactional 커밋 시 반영
+
+        // 6) 커밋 후 SMS 안내 발송(원하면 사용)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                // smsResetPasswordCode.send("비밀번호가 성공적으로 재설정되었습니다.", phone);
+            }
+        });
     }
 
     private String normalizeCode(String code) {
@@ -554,7 +571,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones) {
+    public void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones, Authentication authentication) {
         if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty()) {
             throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
         }
