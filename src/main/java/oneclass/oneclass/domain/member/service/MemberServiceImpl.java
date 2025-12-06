@@ -303,7 +303,7 @@ public class MemberServiceImpl implements MemberService {
 
         // 검증 단계
         VerificationCode stored = verificationCodeRepository
-                .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+                .findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
                         adminEmailKey, VerificationCode.Type.ADMIN_EMAIL, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
@@ -571,28 +571,44 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
     public void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones, Authentication authentication) {
         if (teacherPhone == null || teacherPhone.isBlank() || studentPhones == null || studentPhones.isEmpty()) {
             throw new CustomException(MemberError.BAD_REQUEST, "교사/학생 정보가 필요합니다.");
         }
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            throw new CustomException(MemberError.UNAUTHORIZED, "인증 정보가 없습니다.");
+        }
 
+        // 교사 조회
         Member teacher = memberRepository.findByPhone(teacherPhone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND, "선생님을 찾을 수 없습니다."));
 
+        // 본인 확인: 인증된 사용자만 자신의 학생 목록을 수정 가능
+        // 인증 주체는 일반적으로 username(로그인 ID)입니다.
+        if (!teacher.getUsername().equals(authentication.getName())) {
+            throw new CustomException(MemberError.FORBIDDEN, "자신의 학생 목록만 수정할 수 있습니다.");
+        }
+
+        // 역할 확인
         if (teacher.getRole() != Role.TEACHER) {
             throw new CustomException(MemberError.BAD_REQUEST, "해당 사용자는 선생님이 아닙니다.");
         }
 
+        // 학생 조회 맵 구성
         List<Member> students = memberRepository.findAllByPhoneIn(studentPhones);
         Map<String, Member> byPhone = students.stream()
-                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m,
-                        (existing, replacement) -> existing));
+                .collect(java.util.stream.Collectors.toMap(Member::getPhone, m -> m, (existing, replacement) -> existing));
 
+        // 제거 처리
         for (String phone : studentPhones) {
             Member student = byPhone.get(phone);
-            if (student == null) throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + phone);
+            if (student == null) {
+                throw new CustomException(MemberError.NOT_FOUND, "학생을 찾을 수 없습니다: " + phone);
+            }
             teacher.removeStudent(student);
         }
+
         memberRepository.save(teacher);
     }
 }

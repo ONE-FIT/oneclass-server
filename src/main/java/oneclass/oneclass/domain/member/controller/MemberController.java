@@ -139,12 +139,13 @@ public class MemberController {
 
     @Operation(summary = "선생님 계정에 학생 제거", description = "학생을 제거합니다.")
     @DeleteMapping("/teachers/{teacherPhone}/students")
-    @PreAuthorize("hasAnyRole('TEACHER')")
+    @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<ApiResponse<Void>> removeStudentsFromTeacher(
             @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request,
-            Authentication authentication) { // Authentication 주입
-        // 서비스 계층에서 authentication 객체를 사용해 본인 확인
+            Authentication authentication // 인증 주입
+    ) {
+        // 서비스 계층에서 본인 확인(authentication.getName() == teacher.username) 수행
         memberService.removeStudentsFromTeacher(teacherPhone, request.studentPhones(), authentication);
         return ResponseEntity.ok(ApiResponse.success(null));
     }

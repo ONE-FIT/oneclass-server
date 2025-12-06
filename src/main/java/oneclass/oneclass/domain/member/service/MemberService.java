@@ -21,7 +21,7 @@ public interface MemberService {
 
     void sendSignupVerificationCode(String academyCode, String name);
     void addStudentsToParent(String parentUsername, String password, List<String> studentUsernames);
-    void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones, Authentication authentication);
+    void removeStudentsFromTeacher(String teacherPhone, List<String> studentPhones,Authentication authentication);
     TeacherStudentsResponse addStudentsToTeacher(String teacherPhone, List<String> studentPhones, String password);
     String cleanupToken(String token);
     //refreshToken 검증
