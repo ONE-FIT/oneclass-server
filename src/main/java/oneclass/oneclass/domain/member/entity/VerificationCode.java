@@ -44,4 +44,9 @@ public class VerificationCode {
 
     @Column(nullable = false)
     private boolean used = false;
+
+    @AssertTrue(message = "email 또는 phone 중 하나는 반드시 존재해야 합니다.")
+    private boolean isIdentifierPresent() {
+        return email != null || phone != null;
+    }
 }

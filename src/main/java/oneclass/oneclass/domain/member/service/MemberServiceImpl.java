@@ -382,7 +382,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional
-    public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
+    public void resetPassword(String phone, String verificationCode, String newPassword, String checkPassword) {
         if (phone == null || phone.isBlank()) {
             throw new CustomException(MemberError.PHONE_REQUIRED);
         }
@@ -414,7 +414,7 @@ public class MemberServiceImpl implements MemberService {
                         phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
                 .orElse(null);
 
-        if (member == null || codeEntry == null || !normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
+        if (member == null || codeEntry == null || !java.security.MessageDigest.isEqual(normalizeCode(codeEntry.getCode()).getBytes(java.nio.charset.StandardCharsets.UTF_8), normalizeCode(verificationCode).getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
         codeEntry.setUsed(true);
