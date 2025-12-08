@@ -366,33 +366,35 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.PHONE_REQUIRED);
         }
 
-        // 회원 존재 확인 (발급/검증 모두에서 필요)
-        Member member = memberRepository.findByPhone(phone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        // 먼저 Optional로 조회해 두고, 분기에서 활용
+        Optional<Member> optMember = memberRepository.findByPhone(phone);
 
         boolean issue = (verificationCode == null || verificationCode.isBlank());
-
         if (issue) {
-            // 발급 단계: 코드 생성/저장/커밋 후 SMS 발송
-            String code = generateNumericCode();
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime expiry = now.plusMinutes(10);
+            // 사용자 열거 방지: 존재하면 내부적으로만 발급/발송, 존재하지 않아도 200 응답
+            optMember.ifPresent(m -> {
+                String code = generateNumericCode();
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime expiry = now.plusMinutes(10);
 
-            VerificationCode vc = VerificationCode.builder()
-                    .phone(phone)
-                    .identifier(null)
-                    .type(VerificationCode.Type.RESET_PASSWORD)
-                    .code(code)
-                    .expiry(expiry)
-                    .used(false)
-                    .build();
-            verificationCodeRepository.save(vc);
+                VerificationCode vc = VerificationCode.builder()
+                        .phone(phone)
+                        .identifier(null)
+                        .type(VerificationCode.Type.RESET_PASSWORD)
+                        .code(code)
+                        .expiry(expiry)
+                        .used(false)
+                        .build();
+                verificationCodeRepository.save(vc);
 
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                public void afterCommit() {
-                    smsResetPasswordCode.send("비밀번호 재설정 코드: " + code, phone);
-                }
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        smsResetPasswordCode.send("비밀번호 재설정 코드: " + code, phone);
+                    }
+                });
             });
+            // 존재하지 않아도 성공처럼 응답하여 사용자 열거 방지
             return;
         }
 
@@ -400,6 +402,9 @@ public class MemberServiceImpl implements MemberService {
         if (newPassword == null || !newPassword.equals(checkPassword)) {
             throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
+
+        // 여기서 멤버를 확정 (검증/변경은 실제 대상이 있어야 함)
+        Member member = optMember.orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         VerificationCode codeEntry = verificationCodeRepository
                 .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
@@ -414,8 +419,6 @@ public class MemberServiceImpl implements MemberService {
         verificationCodeRepository.save(codeEntry);
 
         member.setPassword(passwordEncoder.encode(newPassword));
-        // 영속 상태이므로 @Transactional 커밋 시 반영
-
     }
 
     private String normalizeCode(String code) {

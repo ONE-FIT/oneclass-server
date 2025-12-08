@@ -25,7 +25,7 @@ public class VerificationCode {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 255)
     private String identifier; // 전화번호 또는 이메일, 혹은 기타 키
 
     @Enumerated(EnumType.STRING)
