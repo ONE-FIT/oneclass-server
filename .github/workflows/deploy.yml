@@ -37,6 +37,7 @@ jobs:
           USER_APIKEY=${{ secrets.USER_APIKEY }}
           SSL_PASSWORD=${{ secrets.SSL_PASSWORD }}
           EC2_PORT=${{ secrets.EC2_PORT }}
+          APP_ADMIN_EMAIL=${{ secrets.APP_ADMIN_EMAIL }}
           ENV_EOF
 
       - name: Build with Gradle
