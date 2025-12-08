@@ -404,7 +404,7 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.PASSWORD_REQUEST);
         }
 
-        if (!newPassword.equals(checkPassword)) {
+        if (!java.util.Objects.equals(newPassword, checkPassword)) {
             throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
 
