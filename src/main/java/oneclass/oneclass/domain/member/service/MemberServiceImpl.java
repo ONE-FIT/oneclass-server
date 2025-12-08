@@ -382,7 +382,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional
-    public void resetPassword(String phone, String verificationCode, String newPassword, String checkPassword) {
+    public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
         if (phone == null || phone.isBlank()) {
             throw new CustomException(MemberError.PHONE_REQUIRED);
         }
@@ -418,6 +418,7 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
         codeEntry.setUsed(true);
+        verificationCodeRepository.save(codeEntry);
         member.setPassword(passwordEncoder.encode(newPassword));
     }
 
