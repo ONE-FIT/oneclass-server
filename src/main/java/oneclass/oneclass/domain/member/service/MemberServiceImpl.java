@@ -414,7 +414,20 @@ public class MemberServiceImpl implements MemberService {
                         phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
                 .orElse(null);
 
-        if (member == null || codeEntry == null || !java.security.MessageDigest.isEqual(normalizeCode(codeEntry.getCode()).getBytes(java.nio.charset.StandardCharsets.UTF_8), normalizeCode(verificationCode).getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+        boolean codesMatch;
+        try {
+            java.security.MessageDigest sha256 = java.security.MessageDigest.getInstance("SHA-256");
+            // codeEntry가 null일 경우에도 타이밍 공격을 방지하기 위해 더미 값을 해시합니다.
+            String storedCode = (codeEntry != null) ? codeEntry.getCode() : "";
+            byte[] storedHash = sha256.digest(normalizeCode(storedCode).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] userHash = sha256.digest(normalizeCode(verificationCode).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            codesMatch = java.security.MessageDigest.isEqual(storedHash, userHash);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            // SHA-256은 표준 알고리즘이므로 이 예외는 거의 발생하지 않습니다.
+            throw new IllegalStateException("Could not get SHA-256 message digest", e);
+        }
+
+        if (member == null || codeEntry == null || !codesMatch) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
         codeEntry.setUsed(true);
