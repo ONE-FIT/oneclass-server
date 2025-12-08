@@ -281,7 +281,7 @@ public class MemberServiceImpl implements MemberService {
             final LocalDateTime expiry = now.plusMinutes(codeValidityMinutes);
 
             VerificationCode vc = VerificationCode.builder()
-                    .identifier(adminEmailKey)
+                    .email(adminEmailKey)
                     .type(VerificationCode.Type.ADMIN_EMAIL) // 관리자용 타입으로 구분
                     .phone(request.phone())
                     .code(code)
@@ -306,12 +306,12 @@ public class MemberServiceImpl implements MemberService {
 
         // 검증 단계
         VerificationCode stored = verificationCodeRepository
-                .findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+                .findTopByEmailAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
                         adminEmailKey, VerificationCode.Type.ADMIN_EMAIL, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
         if (stored.getExpiry().isBefore(LocalDateTime.now())) {
-            verificationCodeRepository.deleteByIdentifierAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
+            verificationCodeRepository.deleteByEmailAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
             throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
         }
         if (!normalizeCode(stored.getCode()).equals(normalizeCode(request.verificationCode()))) {
@@ -365,7 +365,6 @@ public class MemberServiceImpl implements MemberService {
 
         VerificationCode vc = VerificationCode.builder()
                 .phone(phone)
-                .identifier(null)
                 .type(VerificationCode.Type.RESET_PASSWORD)
                 .code(code)
                 .expiry(expiry)

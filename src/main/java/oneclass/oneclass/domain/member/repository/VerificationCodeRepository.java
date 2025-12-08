@@ -18,12 +18,12 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
     Optional<VerificationCode> findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
             String phone, VerificationCode.Type type, LocalDateTime now);
 
-    // 만료 + 타입 필터 포함: identifier + type 기준 (ADMIN_EMAIL 등)
+    // 만료 + 타입 필터 포함: email + type 기준 (ADMIN_EMAIL 등)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<VerificationCode> findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
-            String identifier, VerificationCode.Type type, LocalDateTime now);
+    Optional<VerificationCode> findTopByEmailAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+            String email, VerificationCode.Type type, LocalDateTime now);
 
     // 식별자+타입으로 일괄 삭제(필요 시)
-    void deleteByIdentifierAndType(String identifier, VerificationCode.Type type);
+    void deleteByEmailAndType(String email, VerificationCode.Type type);
 
 }

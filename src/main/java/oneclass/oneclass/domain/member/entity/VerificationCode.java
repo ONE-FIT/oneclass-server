@@ -26,7 +26,7 @@ public class VerificationCode {
     private Long id;
 
     @Column(length = 255)
-    private String identifier; // 전화번호 또는 이메일, 혹은 기타 키
+    private String email; //이메일
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
