@@ -405,6 +405,9 @@ public class MemberServiceImpl implements MemberService {
         if (newPassword == null || newPassword.isBlank()) {
             throw new CustomException(MemberError.PASSWORD_REQUEST);
         }
+        if (!java.util.Objects.equals(newPassword, checkPassword)) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+        }
 
         // 여기서 멤버를 확정 (검증/변경은 실제 대상이 있어야 함)
         Member member = optMember.orElse(null);
