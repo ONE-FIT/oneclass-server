@@ -418,7 +418,6 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
         codeEntry.setUsed(true);
-        verificationCodeRepository.save(codeEntry);
         member.setPassword(passwordEncoder.encode(newPassword));
     }
 
