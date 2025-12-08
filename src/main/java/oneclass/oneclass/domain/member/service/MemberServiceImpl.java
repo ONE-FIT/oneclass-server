@@ -399,25 +399,26 @@ public class MemberServiceImpl implements MemberService {
         }
 
         // 검증/변경 단계
-        if (newPassword == null || !newPassword.equals(checkPassword)) {
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new CustomException(MemberError.PASSWORD_REQUEST);
+        } else if (!newPassword.equals(checkPassword)) {
             throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
 
         // 여기서 멤버를 확정 (검증/변경은 실제 대상이 있어야 함)
-        Member member = optMember.orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
-
-        VerificationCode codeEntry = verificationCodeRepository
-                .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
-                        phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
-
-        if (!normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
+        Member member = optMember.orElse(null);
+        VerificationCode codeEntry = null;
+        if (member != null) {
+            codeEntry = verificationCodeRepository
+                    .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+                            phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
+                    .orElse(null);
+        }
+        if (member == null || codeEntry == null || !normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
-
         codeEntry.setUsed(true);
         verificationCodeRepository.save(codeEntry);
-
         member.setPassword(passwordEncoder.encode(newPassword));
     }
 
