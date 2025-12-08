@@ -358,6 +358,28 @@ public class MemberServiceImpl implements MemberService {
         return sb.toString();
     }
 
+    private void issuePasswordResetCode(String phone) {
+        String code = generateNumericCode();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiry = now.plusMinutes(10);
+
+        VerificationCode vc = VerificationCode.builder()
+                .phone(phone)
+                .identifier(null)
+                .type(VerificationCode.Type.RESET_PASSWORD)
+                .code(code)
+                .expiry(expiry)
+                .used(false)
+                .build();
+        verificationCodeRepository.save(vc);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                smsResetPasswordCode.send("비밀번호 재설정 코드: " + code, phone);
+            }
+        });
+    }
 
     @Override
     @Transactional
@@ -372,28 +394,7 @@ public class MemberServiceImpl implements MemberService {
         boolean issue = (verificationCode == null || verificationCode.isBlank());
         if (issue) {
             // 사용자 열거 방지: 존재하면 내부적으로만 발급/발송, 존재하지 않아도 200 응답
-            optMember.ifPresent(m -> {
-                String code = generateNumericCode();
-                LocalDateTime now = LocalDateTime.now();
-                LocalDateTime expiry = now.plusMinutes(10);
-
-                VerificationCode vc = VerificationCode.builder()
-                        .phone(phone)
-                        .identifier(null)
-                        .type(VerificationCode.Type.RESET_PASSWORD)
-                        .code(code)
-                        .expiry(expiry)
-                        .used(false)
-                        .build();
-                verificationCodeRepository.save(vc);
-
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        smsResetPasswordCode.send("비밀번호 재설정 코드: " + code, phone);
-                    }
-                });
-            });
+            optMember.ifPresent(member -> issuePasswordResetCode(phone));
             // 존재하지 않아도 성공처럼 응답하여 사용자 열거 방지
             return;
         }
