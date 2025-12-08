@@ -102,11 +102,15 @@ public class AcademyServiceImpl implements AcademyService {
                 "\n이메일: " + academy.getEmail() + "\n관리자 포털에서 승인해주세요.";
         for (Member admin : admins) {
 
+            try {
                 SimpleMailMessage msg = new SimpleMailMessage();
                 msg.setTo(admin.getEmail());
                 msg.setSubject(subject);
                 msg.setText(text);
                 javaMailSender.send(msg);
+            } catch (org.springframework.mail.MailException e) {
+                log.error("관리자에게 새로운 학원 알림 발송에 실패했습니다. {}: {}", admin.getUsername(), e.getMessage());
+            }
 
         }
     }
