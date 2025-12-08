@@ -2,6 +2,7 @@ package oneclass.oneclass.domain.member.entity;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -25,14 +26,14 @@ public class VerificationCode {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 255)
-    private String identifier; // 전화번호 또는 이메일, 혹은 기타 키
+    @Column(nullable = true,length = 255)
+    private String email; //이메일
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private Type type;
 
-    @Column(nullable = false, length = 13)
+    @Column(nullable = true, length = 13)
     private String phone;
 
     @Column(nullable = false, length = 16)
@@ -43,4 +44,9 @@ public class VerificationCode {
 
     @Column(nullable = false)
     private boolean used = false;
+
+    @AssertTrue(message = "email 또는 phone 중 하나는 반드시 존재해야 합니다.")
+    private boolean isIdentifierPresent() {
+        return email != null || phone != null;
+    }
 }

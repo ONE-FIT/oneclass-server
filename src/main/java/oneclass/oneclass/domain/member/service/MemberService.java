@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface MemberService {
     void signup(SignupRequest request);
     ResponseToken login(LoginRequest request);
-    void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode);
+    void resetPassword(String phone, String verificationCode, String newPassword, String checkPassword);
     void signupAdmin(AdminSignupRequest request); //관리자 회원가입
     // 로그아웃
     void logout(String username, String refreshToken); // 특정 refreshToken만 폐기(다중 세션)
