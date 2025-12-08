@@ -19,6 +19,7 @@ import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
+import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsResetPasswordCode;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
 import oneclass.oneclass.global.exception.CustomException;
@@ -52,6 +53,8 @@ public class MemberServiceImpl implements MemberService {
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
     private final JavaMailSender javaMailSender;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private final SmsResetPasswordCode smsResetPasswordCode;
+
 
 
     @Value("${app.admin.email}")
@@ -358,49 +361,61 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional
-    public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
-        if (newPassword == null || !newPassword.equals(checkPassword)) {
-            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
-        }
+    public void resetPassword(String phone, String verificationCode, String newPassword, String checkPassword) {
         if (phone == null || phone.isBlank()) {
             throw new CustomException(MemberError.PHONE_REQUIRED);
         }
-        if (verificationCode == null || verificationCode.isBlank()) {
-            throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
-        }
 
-        // 1) 회원 존재 확인(유효 코드 소모 방지)
+        // 회원 존재 확인 (발급/검증 모두에서 필요)
         Member member = memberRepository.findByPhone(phone)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
-        // 2) 현재 유효(미사용 + 만료 전) + 비번 재설정 타입의 최신 코드 조회
-        var codeEntry = verificationCodeRepository
+        boolean issue = (verificationCode == null || verificationCode.isBlank());
+
+        if (issue) {
+            // 발급 단계: 코드 생성/저장/커밋 후 SMS 발송
+            String code = generateNumericCode();
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime expiry = now.plusMinutes(10);
+
+            VerificationCode vc = VerificationCode.builder()
+                    .phone(phone)
+                    .identifier(null)
+                    .type(VerificationCode.Type.RESET_PASSWORD)
+                    .code(code)
+                    .expiry(expiry)
+                    .used(false)
+                    .build();
+            verificationCodeRepository.save(vc);
+
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                public void afterCommit() {
+                    smsResetPasswordCode.send("비밀번호 재설정 코드: " + code, phone);
+                }
+            });
+            return;
+        }
+
+        // 검증/변경 단계
+        if (newPassword == null || !newPassword.equals(checkPassword)) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+        }
+
+        VerificationCode codeEntry = verificationCodeRepository
                 .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
                         phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
-
-        // 3) 코드 비교
         if (!normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
         }
 
-        // 4) 일회성 처리
         codeEntry.setUsed(true);
-        // codeEntry.setUsedAt(LocalDateTime.now()); // 필드가 있다면 사용
         verificationCodeRepository.save(codeEntry);
 
-        // 5) 비밀번호 변경
         member.setPassword(passwordEncoder.encode(newPassword));
         // 영속 상태이므로 @Transactional 커밋 시 반영
 
-        // 6) 커밋 후 SMS 안내 발송(원하면 사용)
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // smsResetPasswordCode.send("비밀번호가 성공적으로 재설정되었습니다.", phone);
-            }
-        });
     }
 
     private String normalizeCode(String code) {

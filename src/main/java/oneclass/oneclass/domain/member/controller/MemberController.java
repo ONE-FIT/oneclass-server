@@ -108,12 +108,12 @@ public class MemberController {
 
     @Operation(summary = "비밀번호 재설정", description = "비밀번호를 변경합니다.")
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Void>> resetPasswordUnified(@RequestBody @Valid ResetPasswordRequest request) {
         memberService.resetPassword(
                 request.phone(),
+                request.verificationCode(), // 없으면 발급, 있으면 검증/변경
                 request.newPassword(),
-                request.checkPassword(),
-                request.verificationCode()
+                request.checkPassword()
         );
         return ResponseEntity.ok(ApiResponse.success(null));
     }
