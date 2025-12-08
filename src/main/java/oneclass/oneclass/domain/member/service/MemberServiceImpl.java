@@ -361,7 +361,7 @@ public class MemberServiceImpl implements MemberService {
     private void issuePasswordResetCode(String phone) {
         String code = generateNumericCode();
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiry = now.plusMinutes(10);
+        LocalDateTime expiry = now.plusMinutes(codeValidityMinutes);
 
         VerificationCode vc = VerificationCode.builder()
                 .phone(phone)
@@ -402,6 +402,10 @@ public class MemberServiceImpl implements MemberService {
         // 검증/변경 단계
         if (newPassword == null || newPassword.isBlank()) {
             throw new CustomException(MemberError.PASSWORD_REQUEST);
+        }
+
+        if (!newPassword.equals(checkPassword)) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
         }
 
         // 여기서 멤버를 확정 (검증/변경은 실제 대상이 있어야 함)
