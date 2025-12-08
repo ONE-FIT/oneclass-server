@@ -32,6 +32,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -403,10 +406,6 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.PASSWORD_REQUEST);
         }
 
-        if (!java.util.Objects.equals(newPassword, checkPassword)) {
-            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
-        }
-
         // 여기서 멤버를 확정 (검증/변경은 실제 대상이 있어야 함)
         Member member = optMember.orElse(null);
         VerificationCode codeEntry = verificationCodeRepository
@@ -416,13 +415,13 @@ public class MemberServiceImpl implements MemberService {
 
         boolean codesMatch;
         try {
-            java.security.MessageDigest sha256 = java.security.MessageDigest.getInstance("SHA-256");
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
             // codeEntry가 null일 경우에도 타이밍 공격을 방지하기 위해 더미 값을 해시합니다.
             String storedCode = (codeEntry != null) ? codeEntry.getCode() : "";
-            byte[] storedHash = sha256.digest(normalizeCode(storedCode).getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            byte[] userHash = sha256.digest(normalizeCode(verificationCode).getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            codesMatch = java.security.MessageDigest.isEqual(storedHash, userHash);
-        } catch (java.security.NoSuchAlgorithmException e) {
+            byte[] storedHash = sha256.digest(normalizeCode(storedCode).getBytes(StandardCharsets.UTF_8));
+            byte[] userHash = sha256.digest(normalizeCode(verificationCode).getBytes(StandardCharsets.UTF_8));
+            codesMatch = MessageDigest.isEqual(storedHash, userHash);
+        } catch (NoSuchAlgorithmException e) {
             // SHA-256은 표준 알고리즘이므로 이 예외는 거의 발생하지 않습니다.
             throw new IllegalStateException("Could not get SHA-256 message digest", e);
         }
