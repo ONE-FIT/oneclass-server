@@ -409,10 +409,10 @@ public class MemberServiceImpl implements MemberService {
 
         // 여기서 멤버를 확정 (검증/변경은 실제 대상이 있어야 함)
         Member member = optMember.orElse(null);
-        VerificationCode codeEntry = optMember.flatMap(m ->
-                verificationCodeRepository.findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+        VerificationCode codeEntry = verificationCodeRepository
+                .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
                         phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
-        ).orElse(null);
+                .orElse(null);
 
         if (member == null || codeEntry == null || !normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
             throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
