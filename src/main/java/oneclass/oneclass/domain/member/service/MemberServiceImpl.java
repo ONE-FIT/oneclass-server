@@ -59,8 +59,6 @@ public class MemberServiceImpl implements MemberService {
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
     private final JavaMailSender javaMailSender;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-    private final SmsResetPasswordCode smsResetPasswordCode;
-    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     @Value("${app.admin.email}")
