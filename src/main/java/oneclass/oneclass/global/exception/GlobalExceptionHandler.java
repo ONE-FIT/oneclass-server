@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 import oneclass.oneclass.domain.attendance.error.AttendanceError;
 import oneclass.oneclass.global.dto.ApiResponse;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -65,6 +66,11 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(errorResponse));
+    }
+
+    @ExceptionHandler(ClientAbortException.class)
+    public void handleClientAbort(ClientAbortException ex) {
+        log.info("Client Abort Exception: {}", ex.getMessage());
     }
 
     // 그 외 모든 예외 처리
