@@ -42,8 +42,7 @@ public class Member {
     @NotBlank
     private String name;
 
-    @Column(nullable = false, unique = true, length = 11)
-    @Pattern(regexp = "^\\d{10,11}$")
+    @Column(nullable = false, unique = true, length = 13)
     @NotBlank
     private String phone;
 
