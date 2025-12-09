@@ -30,8 +30,7 @@ public class Member {
     @NotBlank
     private String username;
 
-    @Column(nullable = false, length = 100)
-    @NotBlank
+    @Column(length = 100)
     private String email;
 
     @JsonIgnore
