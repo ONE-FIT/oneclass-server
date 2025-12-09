@@ -37,6 +37,7 @@ jobs:
           USER_APIKEY=${{ secrets.USER_APIKEY }}
           SSL_PASSWORD=${{ secrets.SSL_PASSWORD }}
           EC2_PORT=${{ secrets.EC2_PORT }}
+          APP_ADMIN_EMAIL=${{ secrets.APP_ADMIN_EMAIL }}
           ENV_EOF
 
       - name: Build with Gradle
@@ -107,7 +108,7 @@ jobs:
 
           # 5️⃣ Start Spring Boot on HTTPS port
           echo "=== Launching Spring Boot on port $EC2_PORT ==="
-          nohup sudo java -jar -Dspring.profiles.active=prod $JAR_PATH > /home/ubuntu/app.log 2>&1 &
+          nohup sudo -E java -jar -Dspring.profiles.active=prod $JAR_PATH > /dev/null 2>> /home/ubuntu/error.log &
 
           sleep 5
 
