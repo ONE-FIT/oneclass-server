@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
     // 그 외 모든 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
-        log.error("🚨 Unhandled Exception occurred: ", e);
+        log.error("🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨 Unhandled Exception occurred: ", e);
         ErrorResponse errorResponse = new ErrorResponse(
                 "INTERNAL_SERVER_ERROR",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

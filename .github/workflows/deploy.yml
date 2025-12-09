@@ -108,7 +108,7 @@ jobs:
 
           # 5️⃣ Start Spring Boot on HTTPS port
           echo "=== Launching Spring Boot on port $EC2_PORT ==="
-          nohup sudo -E java -jar -Dspring.profiles.active=prod $JAR_PATH > /home/ubuntu/app.log 2>&1 &
+          nohup sudo -E java -jar -Dspring.profiles.active=prod $JAR_PATH >> /home/ubuntu/app.log 2>&1 &
 
           sleep 5
 
