@@ -19,11 +19,13 @@ import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
+import oneclass.oneclass.domain.sendon.event.VerificationCodeSavedEvent;
 import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsResetPasswordCode;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.Authentication;
@@ -47,6 +49,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MemberServiceImpl implements MemberService {
 
+    private final ApplicationEventPublisher eventPublisher;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
@@ -56,8 +59,6 @@ public class MemberServiceImpl implements MemberService {
     private final AcademyVerificationCodeRepository academyVerificationCodeRepository;
     private final JavaMailSender javaMailSender;
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-    private final SmsResetPasswordCode smsResetPasswordCode;
-
 
 
     @Value("${app.admin.email}")
@@ -369,12 +370,7 @@ public class MemberServiceImpl implements MemberService {
                 .build();
         verificationCodeRepository.save(vc);
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                smsResetPasswordCode.send("비밀번호 재설정 코드: " + code, phone);
-            }
-        });
+        eventPublisher.publishEvent(new VerificationCodeSavedEvent(code, phone));
     }
 
     @Override

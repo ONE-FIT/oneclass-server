@@ -31,7 +31,6 @@ public class Member {
     private String username;
 
     @Column(nullable = false, length = 100, unique = true)
-    @NotBlank
     private String email;
 
     @JsonIgnore
