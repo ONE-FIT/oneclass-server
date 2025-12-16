@@ -41,7 +41,7 @@ public class Member {
     @NotBlank
     private String name;
 
-    @Column(nullable = false, unique = true, length = 13)
+    @Column(nullable = false, unique = true, length = 11)
     @NotBlank
     private String phone;
 

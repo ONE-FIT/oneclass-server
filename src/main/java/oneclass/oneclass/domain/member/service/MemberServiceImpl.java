@@ -86,7 +86,7 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.DUPLICATE_USERNAME);
         }
 
-        // 이메일/전화 중복(필요 시 구현)
+        // 전화 중복(필요 시 구현)
         validatePhoneDuplication(request.phone());
 
         // 역할별 처리
