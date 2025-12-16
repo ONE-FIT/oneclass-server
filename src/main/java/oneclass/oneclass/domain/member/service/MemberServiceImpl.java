@@ -19,10 +19,13 @@ import oneclass.oneclass.domain.member.error.TokenError;
 import oneclass.oneclass.domain.member.repository.MemberRepository;
 import oneclass.oneclass.domain.member.repository.RefreshTokenRepository;
 import oneclass.oneclass.domain.member.repository.VerificationCodeRepository;
+import oneclass.oneclass.domain.sendon.event.VerificationCodeSavedEvent;
+import oneclass.oneclass.domain.sendon.sms.shortmessage.SmsResetPasswordCode;
 import oneclass.oneclass.global.auth.jwt.JwtProvider;
 import oneclass.oneclass.global.auth.jwt.TokenUtils;
 import oneclass.oneclass.global.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.Authentication;
@@ -31,6 +34,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -43,6 +49,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MemberServiceImpl implements MemberService {
 
+    private final ApplicationEventPublisher eventPublisher;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
@@ -79,7 +86,7 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.DUPLICATE_USERNAME);
         }
 
-        // 이메일/전화 중복(필요 시 구현)
+        // 전화 중복(필요 시 구현)
         validatePhoneDuplication(request.phone());
 
         // 역할별 처리
@@ -278,7 +285,7 @@ public class MemberServiceImpl implements MemberService {
             final LocalDateTime expiry = now.plusMinutes(codeValidityMinutes);
 
             VerificationCode vc = VerificationCode.builder()
-                    .identifier(adminEmailKey)
+                    .email(adminEmailKey)
                     .type(VerificationCode.Type.ADMIN_EMAIL) // 관리자용 타입으로 구분
                     .phone(request.phone())
                     .code(code)
@@ -303,12 +310,12 @@ public class MemberServiceImpl implements MemberService {
 
         // 검증 단계
         VerificationCode stored = verificationCodeRepository
-                .findTopByIdentifierAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
+                .findTopByEmailAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
                         adminEmailKey, VerificationCode.Type.ADMIN_EMAIL, LocalDateTime.now())
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
 
         if (stored.getExpiry().isBefore(LocalDateTime.now())) {
-            verificationCodeRepository.deleteByIdentifierAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
+            verificationCodeRepository.deleteByEmailAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
             throw new CustomException(MemberError.EXPIRED_VERIFICATION_CODE);
         }
         if (!normalizeCode(stored.getCode()).equals(normalizeCode(request.verificationCode()))) {
@@ -318,13 +325,7 @@ public class MemberServiceImpl implements MemberService {
         // 일회성 사용 처리
         stored.setUsed(true);
         verificationCodeRepository.save(stored);
-        // 또는 삭제로 관리:
-        // verificationCodeRepository.deleteByIdentifierAndType(adminEmailKey, VerificationCode.Type.ADMIN_EMAIL);
 
-        // 관리자 생성
-        if (memberRepository.existsByUsername(request.username())) {
-            throw new CustomException(MemberError.CONFLICT, "이미 사용중인 아이디입니다.");
-        }
 
         Member admin = Member.builder()
                 .username(request.username())
@@ -355,52 +356,75 @@ public class MemberServiceImpl implements MemberService {
         return sb.toString();
     }
 
+    private void issuePasswordResetCode(String phone) {
+        String code = generateNumericCode();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiry = now.plusMinutes(codeValidityMinutes);
+
+        VerificationCode vc = VerificationCode.builder()
+                .phone(phone)
+                .type(VerificationCode.Type.RESET_PASSWORD)
+                .code(code)
+                .expiry(expiry)
+                .used(false)
+                .build();
+        verificationCodeRepository.save(vc);
+
+        eventPublisher.publishEvent(new VerificationCodeSavedEvent(code, phone));
+    }
 
     @Override
     @Transactional
-    public void resetPassword(String phone, String newPassword, String checkPassword, String verificationCode) {
-        if (newPassword == null || !newPassword.equals(checkPassword)) {
-            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
-        }
+    public void resetPassword(String phone, String verificationCode, String newPassword, String checkPassword) {
         if (phone == null || phone.isBlank()) {
             throw new CustomException(MemberError.PHONE_REQUIRED);
         }
-        if (verificationCode == null || verificationCode.isBlank()) {
-            throw new CustomException(MemberError.VERIFICATION_CODE_REQUIRED);
+
+        // 먼저 Optional로 조회해 두고, 분기에서 활용
+        Optional<Member> optMember = memberRepository.findByPhone(phone);
+
+        boolean issue = (verificationCode == null || verificationCode.isBlank());
+        if (issue) {
+            // 사용자 열거 방지: 존재하면 내부적으로만 발급/발송, 존재하지 않아도 200 응답
+            optMember.ifPresent(member -> issuePasswordResetCode(phone));
+            // 존재하지 않아도 성공처럼 응답하여 사용자 열거 방지
+            return;
         }
 
-        // 1) 회원 존재 확인(유효 코드 소모 방지)
-        Member member = memberRepository.findByPhone(phone)
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
+        // 검증/변경 단계
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new CustomException(MemberError.PASSWORD_REQUEST);
+        }
+        if (!java.util.Objects.equals(newPassword, checkPassword)) {
+            throw new CustomException(MemberError.PASSWORD_CONFIRM_MISMATCH);
+        }
 
-        // 2) 현재 유효(미사용 + 만료 전) + 비번 재설정 타입의 최신 코드 조회
-        var codeEntry = verificationCodeRepository
+        // 여기서 멤버를 확정 (검증/변경은 실제 대상이 있어야 함)
+        Member member = optMember.orElse(null);
+        VerificationCode codeEntry = verificationCodeRepository
                 .findTopByPhoneAndTypeAndUsedFalseAndExpiryAfterOrderByExpiryDesc(
                         phone, VerificationCode.Type.RESET_PASSWORD, LocalDateTime.now())
-                .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND_VERIFICATION_CODE));
+                .orElse(null);
 
-
-        // 3) 코드 비교
-        if (!normalizeCode(codeEntry.getCode()).equals(normalizeCode(verificationCode))) {
-            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
+        boolean codesMatch;
+        try {
+            MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            // codeEntry가 null일 경우에도 타이밍 공격을 방지하기 위해 더미 값을 해시합니다.
+            String storedCode = (codeEntry != null) ? codeEntry.getCode() : "";
+            byte[] storedHash = sha256.digest(normalizeCode(storedCode).getBytes(StandardCharsets.UTF_8));
+            byte[] userHash = sha256.digest(normalizeCode(verificationCode).getBytes(StandardCharsets.UTF_8));
+            codesMatch = MessageDigest.isEqual(storedHash, userHash);
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256은 표준 알고리즘이므로 이 예외는 거의 발생하지 않습니다.
+            throw new IllegalStateException("Could not get SHA-256 message digest", e);
         }
 
-        // 4) 일회성 처리
+        if (member == null || codeEntry == null || !codesMatch) {
+            throw new CustomException(MemberError.INVALID_VERIFICATION_CODE);
+        }
         codeEntry.setUsed(true);
-        // codeEntry.setUsedAt(LocalDateTime.now()); // 필드가 있다면 사용
         verificationCodeRepository.save(codeEntry);
-
-        // 5) 비밀번호 변경
         member.setPassword(passwordEncoder.encode(newPassword));
-        // 영속 상태이므로 @Transactional 커밋 시 반영
-
-        // 6) 커밋 후 SMS 안내 발송(원하면 사용)
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // smsResetPasswordCode.send("비밀번호가 성공적으로 재설정되었습니다.", phone);
-            }
-        });
     }
 
     private String normalizeCode(String code) {

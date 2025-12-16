@@ -30,7 +30,7 @@ public class Member {
     @NotBlank
     private String username;
 
-    @Column(length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String email;
 
     @JsonIgnore
@@ -42,7 +42,6 @@ public class Member {
     private String name;
 
     @Column(nullable = false, unique = true, length = 11)
-    @Pattern(regexp = "^\\d{10,11}$")
     @NotBlank
     private String phone;
 

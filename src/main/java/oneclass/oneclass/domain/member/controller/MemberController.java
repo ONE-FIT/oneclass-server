@@ -111,9 +111,9 @@ public class MemberController {
     public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         memberService.resetPassword(
                 request.phone(),
+                request.verificationCode(), // 없으면 발급, 있으면 검증/변경
                 request.newPassword(),
-                request.checkPassword(),
-                request.verificationCode()
+                request.checkPassword()
         );
         return ResponseEntity.ok(ApiResponse.success(null));
     }
