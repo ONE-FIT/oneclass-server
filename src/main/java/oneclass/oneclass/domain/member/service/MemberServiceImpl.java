@@ -326,16 +326,6 @@ public class MemberServiceImpl implements MemberService {
         stored.setUsed(true);
         verificationCodeRepository.save(stored);
 
-        if (memberRepository.existsByUsername(request.username())) {
-            throw new CustomException(MemberError.CONFLICT, "이미 사용중인 아이디입니다.");
-        }
-        if (memberRepository.existsByEmail(request.email())) {
-            throw new CustomException(MemberError.DUPLICATE_EMAIL,"이미 사용중인 이메일입니다.");
-        }
-        if (memberRepository.existsByPhone(request.phone())) {
-            throw new CustomException(MemberError.DUPLICATE_PHONE,"이미 사용중인 전화번호입니다.");
-        }
-
 
         Member admin = Member.builder()
                 .username(request.username())
