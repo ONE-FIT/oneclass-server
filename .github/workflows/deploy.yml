@@ -138,7 +138,7 @@ jobs:
               echo "⚠️ Java process not found"
             fi
             echo "=== Last 50 lines of app.log ==="
-            tail -n 50 ~/app.log || echo "⚠️ Log file not found"
+            tail -n 50 ~/logs/application.log || echo "⚠️ Log file not found"
           '
 
       - name: Deployment completed
