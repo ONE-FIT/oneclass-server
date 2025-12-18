@@ -29,7 +29,7 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
             // member
-            "/member/signup",
+            "/member/**",
             "/member/signup-code",
             "/member/login",
             "/member/find-username",
@@ -37,14 +37,20 @@ public class SecurityConfig {
             "/member/reset-password",
 
             // academy
-            "/academy/login",
+            "/academy/**",
             "/academy/signup",
             "/academy/send-reset-password",
             "/academy/reset-password",
 
             // consultations
-            "/consultations/request",
+            "/consultations/**",
             "/consultations/detail",
+
+            "/attendance/**",
+            "/announcements/**",
+            "/lessons/**",
+            "/tasks/**",
+            "/lms/**",
 
             // swagger
             "/v3/api-docs/**",
