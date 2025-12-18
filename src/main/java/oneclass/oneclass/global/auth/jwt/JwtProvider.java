@@ -179,4 +179,10 @@ public class JwtProvider {
             return true;
         }
     }
+
+    // ✅ 이 메서드가 누락되어 에러가 발생했습니다. 아래 내용을 추가하세요.
+    public String generateAccessTokenByUsername(Long id, String username, String roleValue, String phoneOrNull, String nameOrNull) {
+        return buildJwtByUsername(id, username, roleValue, phoneOrNull, nameOrNull,
+                System.currentTimeMillis() + accessValidityMillis, true);
+    }
 }

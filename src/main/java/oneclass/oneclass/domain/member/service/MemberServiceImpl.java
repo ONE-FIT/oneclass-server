@@ -107,19 +107,30 @@ public class MemberServiceImpl implements MemberService {
             throw new CustomException(MemberError.UNAUTHORIZED);
         }
 
-        String roleClaim = "ROLE_" + member.getRole().name();
+        String roleClaim = member.getRole().name(); // "ROLE_"는 Provider나 Filter에서 처리하므로 권한명만 전달
         RefreshToken existing = refreshTokenRepository.findByUsername(request.username()).orElse(null);
 
-        ResponseToken pair;
-
         if (existing != null && !existing.isExpired()) {
-            // 기존 refresh 유지, access만 새로
-            String access = jwtProvider.generateAccessToken(request.username(), roleClaim);
+            // ✅ 수정: generateAccessTokenByUsername 사용 (ID 포함)
+            String access = jwtProvider.generateAccessTokenByUsername(
+                    member.getId(),
+                    member.getUsername(),
+                    roleClaim,
+                    member.getPhone(),
+                    member.getName()
+            );
             return new ResponseToken(access, existing.getToken());
         }
 
-        // 새 쌍(만료되었거나 최초)
-        pair = jwtProvider.generateToken(request.username(), roleClaim);
+        // ✅ 수정: generateTokenByUsername 사용 (ID 포함)
+        ResponseToken pair = jwtProvider.generateTokenByUsername(
+                member.getId(),
+                member.getUsername(),
+                roleClaim,
+                member.getPhone(),
+                member.getName()
+        );
+
         LocalDateTime newExpiry = LocalDateTime.now().plusDays(28);
 
         if (existing != null) {
@@ -133,7 +144,7 @@ public class MemberServiceImpl implements MemberService {
                             .build()
             );
         }
-        return new ResponseToken(pair.accessToken(), pair.refreshToken());
+        return pair;
     }
 
     // 로그아웃: username + 특정 refreshToken 폐기 (1번 스타일 유지)
@@ -153,22 +164,30 @@ public class MemberServiceImpl implements MemberService {
     // 재발급: 1번 스타일 유지, subject = username
     @Override
     public ResponseToken reissue(String refreshToken) {
-        String rt = cleanupToken(refreshToken); // 기존 유틸 사용 가정
+        String rt = cleanupToken(refreshToken);
         jwtProvider.validateToken(rt);
 
-        // subject = username
         String username = jwtProvider.getUsername(rt);
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(MemberError.NOT_FOUND));
 
         RefreshToken saved = refreshTokenRepository.findByUsername(username)
                 .orElseThrow(() -> new CustomException(TokenError.NOT_FOUND));
+
         if (!saved.getToken().equals(rt) || saved.isExpired()) {
             throw new CustomException(TokenError.TOKEN_EXPIRED, "리프레시 토큰이 유효하지 않습니다.");
         }
 
-        String roleClaim = "ROLE_" + member.getRole().name();
-        String newAccessToken = jwtProvider.generateAccessToken(username, roleClaim);
+        String roleClaim = member.getRole().name();
+
+        // ✅ 수정: generateAccessTokenByUsername 사용 (ID 포함)
+        String newAccessToken = jwtProvider.generateAccessTokenByUsername(
+                member.getId(),
+                member.getUsername(),
+                roleClaim,
+                member.getPhone(),
+                member.getName()
+        );
 
         return new ResponseToken(newAccessToken, rt);
     }
