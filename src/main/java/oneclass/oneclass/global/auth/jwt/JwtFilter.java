@@ -6,7 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import oneclass.oneclass.global.auth.CustomUserDetails; // ⬅️ 추가된 임포트
+import oneclass.oneclass.global.auth.CustomUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,6 +34,7 @@ public class JwtFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
 
+        // CORS 사전 요청(OPTIONS)은 토큰 검증 없이 통과
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             chain.doFilter(request, response);
             return;
@@ -46,50 +47,57 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         try {
+            // 1. 토큰 복호화 및 검증
             String candidate = isLikelyJwe(token) ? jwtProvider.decryptToken(token) : token;
             jwtProvider.validateToken(candidate);
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 Claims claims = jwtProvider.getAllClaims(candidate);
 
-                // 1. 정보 추출
+                // 2. 정보 추출
                 String phone = claims.getSubject();
                 String username = null;
                 Object uo = claims.get(JwtProvider.USERNAME_CLAIM_KEY);
                 if (uo != null) username = uo.toString();
 
-                // 2. 권한 추출 (ADMIN, STUDENT 등)
+                // 3. 권한 추출
                 Collection<? extends GrantedAuthority> authorities = toAuthorities(claims);
 
-                // 3. ⭐️ 핵심: CustomUserDetails 객체 생성
-                // principal 자리에 String이 아닌 'CustomUserDetails' 객체를 넣어야 합니다.
-                // 만약 claims에 'id'가 없다면 일단 0L 등을 넣고, 토큰 발급 시 id를 포함하도록 수정해야 합니다.
+                // 4. CustomUserDetails 생성 (Principal에 설정할 객체)
                 Long memberId = claims.get("id", Long.class);
-                if (memberId == null) memberId = 0L; // 임시 방편
+                if (memberId == null) memberId = 0L;
 
                 CustomUserDetails userDetails = CustomUserDetails.forMember(
                         memberId,
                         (username != null && !username.isBlank()) ? username : phone,
-                        "", // 비밀번호는 필요 없음
+                        "",
                         (List<GrantedAuthority>) authorities
                 );
 
-                // 4. 인증 토큰 생성 (Principal에 userDetails 객체 전달)
+                // 5. 인증 토큰 생성 및 컨텍스트 저장
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 
-                // 로그로 현재 들어온 권한 확인 (Access Denied 디버깅용)
-                log.info("Authenticated User: {}, Roles: {}", userDetails.getUsername(), authorities);
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+
+                // 성공 로그: 어떤 URI에 누가 접근했는지 출력
+                log.info("JWT Auth Success: [{} {}] User: {}, Roles: {}",
+                        request.getMethod(), request.getRequestURI(), userDetails.getUsername(), authorities);
 
                 request.setAttribute("auth.phone", phone);
                 if (username != null) request.setAttribute("auth.username", username);
-
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
         } catch (Exception e) {
-            log.error("JWT authentication failed: {}", e.getMessage());
+            // 🚨 핵심 수정: 에러 발생 시 메서드와 URI를 함께 로그로 남김
+            log.error("JWT Authentication Failed for [{} {}]: {}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    e.getMessage());
+
+            // 인증 실패 시 컨텍스트를 비워 보안 유지
+            SecurityContextHolder.clearContext();
         }
 
         chain.doFilter(request, response);
