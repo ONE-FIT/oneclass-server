@@ -9,7 +9,9 @@ import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
 import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.service.TaskService;
+import oneclass.oneclass.global.auth.CustomUserDetails;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -89,4 +91,12 @@ public class TaskController {
         return taskService.findAll();
     }
 
+    /** 🔹 선생님 전용: 본인이 담당하는 레슨의 과제들만 조회 */
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('TEACHER')")
+    @Operation(summary = "내 레슨 과제 조회", description = "로그인한 교사가 담당하는 레슨의 모든 과제를 조회합니다.")
+    public List<TaskResponse> findMyLessonTasks(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        // CustomUserDetails의 getUserId() 또는 getId()를 호출합니다.
+        return taskService.findMyLessonTasks(userDetails.getId());
+    }
 }

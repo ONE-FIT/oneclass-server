@@ -1,6 +1,6 @@
 package oneclass.oneclass.domain.task.service;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
 import oneclass.oneclass.domain.lesson.error.LessonError;
@@ -145,5 +145,13 @@ public class TaskService {
 
     public List<TaskResponse> findAll() {
         return taskRepository.findAll().stream().map(TaskResponse::of).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponse> findMyLessonTasks(Long teacherId) {
+        List<Task> tasks = taskRepository.findAllByLesson_Teacher_Id(teacherId);
+        return tasks.stream()
+                .map(TaskResponse::of) // Entity -> DTO 변환 과정 필요
+                .collect(Collectors.toList());
     }
 }
