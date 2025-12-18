@@ -1,5 +1,6 @@
 package oneclass.oneclass.domain.task.service;
 
+import oneclass.oneclass.domain.task.dto.response.StudentTaskResponse;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
@@ -152,6 +153,14 @@ public class TaskService {
         List<Task> tasks = taskRepository.findAllByLesson_Teacher_Id(teacherId);
         return tasks.stream()
                 .map(TaskResponse::of) // Entity -> DTO 변환 과정 필요
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<StudentTaskResponse> findMyTasksAsStudent(Long studentId) {
+        return taskAssignmentRepository.findAllByStudent_Id(studentId)
+                .stream()
+                .map(StudentTaskResponse::from)
                 .collect(Collectors.toList());
     }
 }

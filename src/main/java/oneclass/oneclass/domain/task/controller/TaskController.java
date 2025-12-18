@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import oneclass.oneclass.domain.task.dto.request.CreateEachTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.CreateTaskRequest;
 import oneclass.oneclass.domain.task.dto.request.UpdateTaskRequest;
+import oneclass.oneclass.domain.task.dto.response.StudentTaskResponse;
 import oneclass.oneclass.domain.task.dto.response.TaskResponse;
 import oneclass.oneclass.domain.task.entity.TaskStatus;
 import oneclass.oneclass.domain.task.service.TaskService;
@@ -89,5 +90,10 @@ public class TaskController {
     public List<TaskResponse> findMyLessonTasks(@AuthenticationPrincipal CustomUserDetails userDetails) {
         // CustomUserDetails의 getUserId() 또는 getId()를 호출합니다.
         return taskService.findMyLessonTasks(userDetails.getId());
+    }
+
+    @GetMapping("/student/my")
+    public List<StudentTaskResponse> findMyTasksAsStudent(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return taskService.findMyTasksAsStudent(userDetails.getId());
     }
 }
