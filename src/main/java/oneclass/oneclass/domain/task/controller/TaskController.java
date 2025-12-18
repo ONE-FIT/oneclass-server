@@ -93,7 +93,6 @@ public class TaskController {
 
     /** 🔹 선생님 전용: 본인이 담당하는 레슨의 과제들만 조회 */
     @GetMapping("/my")
-    @PreAuthorize("hasRole('TEACHER')")
     @Operation(summary = "내 레슨 과제 조회", description = "로그인한 교사가 담당하는 레슨의 모든 과제를 조회합니다.")
     public List<TaskResponse> findMyLessonTasks(@AuthenticationPrincipal CustomUserDetails userDetails) {
         // CustomUserDetails의 getUserId() 또는 getId()를 호출합니다.
