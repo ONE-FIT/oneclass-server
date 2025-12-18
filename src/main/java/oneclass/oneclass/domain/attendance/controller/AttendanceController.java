@@ -39,7 +39,6 @@ public class AttendanceController {
     }
 
     /** ✅ 학생이 QR을 스캔하면 nonce + lessonId만 전송 → 로그인 정보로 출석 처리 */
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
     @PostMapping("/check")
     @Operation(summary = "학생 출석",
             description = "Qr을 스캔하면 출석처리합니다.")
@@ -55,7 +54,6 @@ public class AttendanceController {
 
     // AttendanceController.java
     @GetMapping("/academy/{academyCode}/today")
-    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "학원별 오늘 출석 현황 조회", description = "특정 학원의 오늘자 전체 학생 출석 상태를 조회합니다.")
     public ResponseEntity<List<AttendanceResponse>> getTodayAttendanceByAcademy(
             @PathVariable String academyCode
@@ -71,7 +69,6 @@ public class AttendanceController {
     }
 
     /** Admin-only endpoints */
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/today/present/{lessonId}")
     @Operation(summary = "오늘 출석한 학생 목록 조회",
             description = "특정 수업에 대해 오늘 출석한 학생 목록을 반환합니다.")
@@ -83,7 +80,6 @@ public class AttendanceController {
         return ResponseEntity.ok(ApiResponse.success(presentList));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/today/absent/{lessonId}")
     @Operation(summary = "오늘 결석한 학생 목록 조회",
             description = "특정 수업에 대해 오늘 결석한 학생 목록을 반환합니다.")
@@ -95,7 +91,6 @@ public class AttendanceController {
         return ResponseEntity.ok(ApiResponse.success(absentList));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{lessonId}/date/{date}")
     @Operation(summary = "특정 날짜 출석 목록 조회",
             description = "특정 수업과 날짜에 대한 출석 목록을 반환합니다.")
@@ -114,7 +109,6 @@ public class AttendanceController {
         return ResponseEntity.ok(ApiResponse.success(attendanceList));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{lessonId}/all")
     @Operation(summary = "전체 출석 목록 조회",
             description = "특정 수업에 대한 전체 출석 기록을 반환합니다.")

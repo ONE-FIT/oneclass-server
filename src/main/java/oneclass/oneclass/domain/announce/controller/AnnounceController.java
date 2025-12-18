@@ -32,7 +32,6 @@ public class AnnounceController {
     @Operation(summary = "강의에 공지 생성",
             description = "강의를 고르고 공지를 만듭니다.")
     @PostMapping("/lesson/{lessonId}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<AnnounceResponse>> createLessonAnnounce(
             @PathVariable Long lessonId,
             @RequestBody CreateAnnounceRequest request
@@ -49,7 +48,6 @@ public class AnnounceController {
 
     @Operation(summary = "학생 전용 공지 생성", description = "특정 학생에게만 공지를 생성합니다.")
     @PostMapping("/member/{memberId}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<AnnounceResponse>> createAnnounceForMember(
             @PathVariable Long memberId,
             @RequestBody CreateAnnounceRequest request

@@ -63,7 +63,7 @@ public class MemberController {
             description = "Authorization(Access) 인증 후, 전달받은 Refresh 토큰만 폐기합니다. 헤더 X-Refresh-Token 사용."
     )
     @PostMapping("/logout")
-    @PreAuthorize("hasAnyRole('STUDENT','PARENT','TEACHER')")
+    @PreAuthorize("hasAnyAuthority('STUDENT','PARENT','TEACHER')")
     public ResponseEntity<ApiResponse<Void>> logout(
             Authentication authentication,
             @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
@@ -124,7 +124,6 @@ public class MemberController {
 
     @Operation(summary = "선생님 계정에 학생 추가", description = "학생을 추가합니다.")
     @PostMapping("/teachers/{teacherPhone}/students")
-    @PreAuthorize("hasAnyRole('TEACHER')")
     public ResponseEntity<ApiResponse<TeacherStudentsResponse>> addStudentsToTeacher(
             @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request
@@ -139,7 +138,6 @@ public class MemberController {
 
     @Operation(summary = "선생님 계정에 학생 제거", description = "학생을 제거합니다.")
     @DeleteMapping("/teachers/{teacherPhone}/students")
-    @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<ApiResponse<Void>> removeStudentsFromTeacher(
             @PathVariable String teacherPhone,
             @RequestBody @Valid TeacherStudentsRequest request,
@@ -152,7 +150,6 @@ public class MemberController {
 
     @Operation(summary = "학생추가(부모님)", description = "부모님 계정에 자식을 추가합니다.")
     @PostMapping("/parent/add-students")
-    @PreAuthorize("hasAnyRole('PARENT')")
     public ResponseEntity<ApiResponse<Void>> addStudentsToParent(@RequestBody @Valid AddStudentsRequest request) {
         memberService.addStudentsToParent(request.username(), request.password(), request.studentUsernames());
         return ResponseEntity.ok(ApiResponse.success(null));

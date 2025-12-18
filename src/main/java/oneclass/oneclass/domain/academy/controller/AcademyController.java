@@ -51,7 +51,6 @@ public class AcademyController {
 
     @Operation(summary = "학원 승인", description = "승인되지 않은 학원을 승인합니다.")
     @PostMapping("/{code}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> approveAcademy(@PathVariable String code, Principal principal, HttpServletRequest req) {
         log.info("Approve requested by user={} code={} UA={}", principal.getName(), code, req.getHeader("User-Agent"));
         academyService.approveAcademy(principal.getName(), code);
@@ -74,7 +73,6 @@ public class AcademyController {
 
     @Operation(summary = "로그아웃", description = "Authorization(Access) 인증 후, 전달받은 Refresh 토큰만 폐기합니다. 헤더 X-Refresh-Token 사용.")
     @PostMapping("/logout")
-    @PreAuthorize("hasRole('ACADEMY')")
     public ResponseEntity<ApiResponse<Void>> logout(
             Authentication authentication,
             @RequestHeader(name = "X-Refresh-Token", required = false) String refreshToken
@@ -104,7 +102,6 @@ public class AcademyController {
     }
 
     @Operation(summary = "비승인 학원 조회",description = "승인되지 않은 학원들을 조회합니다.")
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/pending-academies")
     public ResponseEntity<ApiResponse<List<PendingAcademyResponse>>> pendingAcademies() {
         List<PendingAcademyResponse> pendingAcademies = academyService.getPendingAcademies();
