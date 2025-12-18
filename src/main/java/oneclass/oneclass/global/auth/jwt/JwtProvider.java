@@ -23,13 +23,12 @@ public class JwtProvider {
 
     private static final Logger log = LoggerFactory.getLogger(JwtProvider.class);
 
-    // common claim keys
     public static final String ROLE_CLAIM_KEY = "role";
     public static final String ROLES_CLAIM_KEY = "roles";
     public static final String PHONE_CLAIM_KEY = "phone";
     public static final String USERNAME_CLAIM_KEY = "username";
     public static final String NAME_CLAIM_KEY = "name";
-    public static final String ID_CLAIM_KEY = "id"; // ✅ 추가: 회원 PK 식별용
+    public static final String ID_CLAIM_KEY = "id"; // 추가된 키
 
     private final String secret;
     private final String jweSecret;
@@ -61,7 +60,24 @@ public class JwtProvider {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // ===== 발급 (Long id 추가) =====
+    // ===== 기존 서비스(Academy, Member) 호환용 메서드 (수정 금지) =====
+    public ResponseToken generateToken(String subject, String roleValue) {
+        String access = generateAccessToken(subject, roleValue);
+        String refresh = generateRefreshToken(subject);
+        return new ResponseToken(access, refresh);
+    }
+
+    public String generateAccessToken(String subject, String roleValue) {
+        long exp = System.currentTimeMillis() + accessValidityMillis;
+        return buildJwt(subject, Map.of(), roleValue, exp);
+    }
+
+    private String generateRefreshToken(String subject) {
+        long exp = System.currentTimeMillis() + refreshValidityMillis;
+        return buildJwt(subject, Map.of(), null, exp);
+    }
+
+    // ===== 새로운 ID 포함 메서드 (로그인용) =====
     public ResponseToken generateTokenByUsername(Long id, String username, String roleValue, String phoneOrNull, String nameOrNull) {
         long now = System.currentTimeMillis();
         String access = buildJwtByUsername(id, username, roleValue, phoneOrNull, nameOrNull, now + accessValidityMillis, true);
@@ -69,31 +85,23 @@ public class JwtProvider {
         return new ResponseToken(access, refresh);
     }
 
-    public String generateAccessTokenByUsername(Long id, String username, String roleValue, String phoneOrNull, String nameOrNull) {
-        return buildJwtByUsername(id, username, roleValue, phoneOrNull, nameOrNull,
-                System.currentTimeMillis() + accessValidityMillis, true);
-    }
-
-    // 공통 빌더 호출부 수정
+    // 내부 빌더 (ID 포함)
     private String buildJwtByUsername(Long id, String username, String roleValue, String phoneOrNull, String nameOrNull,
                                       long expiryEpochMillis, boolean access) {
         Map<String, Object> claims = new HashMap<>();
+        if (id != null) claims.put(ID_CLAIM_KEY, id); // ID 삽입
 
-        // Access Token 발급 시 id와 부가 정보 포함
         if (access) {
-            if (id != null) claims.put(ID_CLAIM_KEY, id); // ✅ ID 저장
             if (phoneOrNull != null && !phoneOrNull.isBlank()) claims.put(PHONE_CLAIM_KEY, phoneOrNull);
             if (nameOrNull != null && !nameOrNull.isBlank()) claims.put(NAME_CLAIM_KEY, nameOrNull);
             if (username != null && !username.isBlank()) claims.put(USERNAME_CLAIM_KEY, username);
-        } else {
-            // Refresh Token에도 식별을 위해 ID 포함 권장
-            if (id != null) claims.put(ID_CLAIM_KEY, id);
         }
 
         String roleToInclude = access ? roleValue : null;
         return buildJwt(username, claims, roleToInclude, expiryEpochMillis);
     }
 
+    // 최하단 공통 빌더
     private String buildJwt(String subject, Map<String, Object> extraClaims, String roleValue, long expiryEpochMillis) {
         Date now = new Date();
         Date exp = new Date(expiryEpochMillis);
@@ -115,16 +123,18 @@ public class JwtProvider {
         return builder.signWith(key, SignatureAlgorithm.HS256).compact();
     }
 
-    // ===== 검증/클레임 =====
+    // ===== 검증 및 정보 추출 (기존 에러 해결용) =====
+    public String getUsername(String token) {
+        return getAllClaims(token).getSubject();
+    }
+
     public boolean validateToken(String token) {
         try {
             parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
-            log.debug("JWT expired: {}", e.getMessage());
             throw new CustomException(TokenError.TOKEN_EXPIRED);
-        } catch (JwtException | IllegalArgumentException e) {
-            log.debug("JWT invalid: {}", e.getMessage());
+        } catch (Exception e) {
             throw new CustomException(TokenError.UNAUTHORIZED);
         }
     }
@@ -133,10 +143,8 @@ public class JwtProvider {
         try {
             return parseClaimsJws(token).getBody();
         } catch (ExpiredJwtException e) {
-            log.debug("JWT expired while reading claims: {}", e.getMessage());
             throw new CustomException(TokenError.TOKEN_EXPIRED);
-        } catch (JwtException | IllegalArgumentException e) {
-            log.debug("JWT invalid while reading claims: {}", e.getMessage());
+        } catch (Exception e) {
             throw new CustomException(TokenError.UNAUTHORIZED);
         }
     }
@@ -150,11 +158,9 @@ public class JwtProvider {
             String useKey = (jweSecret != null && !jweSecret.isBlank()) ? jweSecret : secret;
             byte[] aesKeyBytes = useKey.getBytes(StandardCharsets.UTF_8);
             JWEObject jweObject = JWEObject.parse(jweToken);
-            var decrypter = new DirectDecrypter(aesKeyBytes);
-            jweObject.decrypt(decrypter);
+            jweObject.decrypt(new DirectDecrypter(aesKeyBytes));
             return jweObject.getPayload().toString();
         } catch (Exception e) {
-            log.debug("JWE decrypt failed: {}", e.getMessage());
             throw new CustomException(TokenError.UNAUTHORIZED);
         }
     }
@@ -165,11 +171,6 @@ public class JwtProvider {
         return null;
     }
 
-    private String normalizeRole(String raw) {
-        if (raw == null || raw.isBlank()) return "ROLE_USER";
-        return raw.startsWith("ROLE_") ? raw : "ROLE_" + raw;
-    }
-
     public boolean isTokenInvalid(String token) {
         try {
             parseClaimsJws(token);
@@ -178,6 +179,4 @@ public class JwtProvider {
             return true;
         }
     }
-
-    public record TokenPair(String accessToken, String refreshToken, long accessTokenExpiresAt, long refreshTokenExpiresAt) {}
 }

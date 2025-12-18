@@ -33,6 +33,7 @@ public class Lesson {
 
     // 수업을 듣는 학생들
 
+    @Builder.Default // ✅ 추가
     @OneToMany(mappedBy = "lesson")
     private Set<Member> students = new HashSet<>();
 

@@ -42,6 +42,7 @@ public class VerificationCode {
     @Column(nullable = false)
     private LocalDateTime expiry;
 
+    @Builder.Default // ✅ 추가
     @Column(nullable = false)
     private boolean used = false;
 
