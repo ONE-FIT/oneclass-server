@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import oneclass.oneclass.global.auth.CustomUserDetails; // ⬅️ 추가된 임포트
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,7 +27,6 @@ import java.util.stream.Collectors;
 public class JwtFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
-
     private final JwtProvider jwtProvider;
 
     @Override
@@ -47,48 +47,49 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             String candidate = isLikelyJwe(token) ? jwtProvider.decryptToken(token) : token;
-
             jwtProvider.validateToken(candidate);
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 Claims claims = jwtProvider.getAllClaims(candidate);
 
-                // subject는 phone
+                // 1. 정보 추출
                 String phone = claims.getSubject();
-
-                // 선택적 username/name 클레임
                 String username = null;
                 Object uo = claims.get(JwtProvider.USERNAME_CLAIM_KEY);
-                if (uo != null) {
-                    String s = uo.toString();
-                    if (!s.isBlank()) username = s;
-                }
-                String name = null;
-                Object no = claims.get(JwtProvider.NAME_CLAIM_KEY);
-                if (no != null) {
-                    String s = no.toString();
-                    if (!s.isBlank()) name = s;
-                }
+                if (uo != null) username = uo.toString();
 
-                // principal: username이 있으면 username, 없으면 phone
-                String principalName = (username != null && !username.isBlank()) ? username : phone;
-
+                // 2. 권한 추출 (ADMIN, STUDENT 등)
                 Collection<? extends GrantedAuthority> authorities = toAuthorities(claims);
 
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(principalName, null, authorities);
+                // 3. ⭐️ 핵심: CustomUserDetails 객체 생성
+                // principal 자리에 String이 아닌 'CustomUserDetails' 객체를 넣어야 합니다.
+                // 만약 claims에 'id'가 없다면 일단 0L 등을 넣고, 토큰 발급 시 id를 포함하도록 수정해야 합니다.
+                Long memberId = claims.get("id", Long.class);
+                if (memberId == null) memberId = 0L; // 임시 방편
 
-                // 필요하다면 phone/username/name을 리퀘스트 어트리뷰트로 내려서 컨트롤러/서비스에서 사용 가능하게 함
+                CustomUserDetails userDetails = CustomUserDetails.forMember(
+                        memberId,
+                        (username != null && !username.isBlank()) ? username : phone,
+                        "", // 비밀번호는 필요 없음
+                        (List<GrantedAuthority>) authorities
+                );
+
+                // 4. 인증 토큰 생성 (Principal에 userDetails 객체 전달)
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+
+                // 로그로 현재 들어온 권한 확인 (Access Denied 디버깅용)
+                log.info("Authenticated User: {}, Roles: {}", userDetails.getUsername(), authorities);
+
                 request.setAttribute("auth.phone", phone);
                 if (username != null) request.setAttribute("auth.username", username);
-                if (name != null) request.setAttribute("auth.name", name);
 
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
         } catch (Exception e) {
-            log.debug("JWT invalid or parsing failed: {}", e.getMessage());
+            log.error("JWT authentication failed: {}", e.getMessage());
         }
 
         chain.doFilter(request, response);

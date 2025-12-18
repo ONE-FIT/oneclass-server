@@ -29,9 +29,10 @@ public class JwtProvider {
     public static final String PHONE_CLAIM_KEY = "phone";
     public static final String USERNAME_CLAIM_KEY = "username";
     public static final String NAME_CLAIM_KEY = "name";
+    public static final String ID_CLAIM_KEY = "id"; // ✅ 추가: 회원 PK 식별용
 
-    private final String secret;       // JWS(HMAC)용
-    private final String jweSecret;    // JWE(AES-*-GCM)용(선택)
+    private final String secret;
+    private final String jweSecret;
     private final long accessValidityMillis;
     private final long refreshValidityMillis;
     private final String issuer;
@@ -60,40 +61,39 @@ public class JwtProvider {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // ===== 발급 (subject는 호출부에서 결정) =====
-    public ResponseToken generateToken(String subject, String roleValue) {
-        String access = generateAccessToken(subject, roleValue);
-        String refresh = generateRefreshToken(subject);
-        return new ResponseToken(access, refresh);
-    }
-
-    public String generateAccessToken(String subject, String roleValue) {
-        long exp = System.currentTimeMillis() + accessValidityMillis;
-        return buildJwt(subject, Map.of(), roleValue, exp);
-    }
-
-    private String generateRefreshToken(String subject) {
-        long exp = System.currentTimeMillis() + refreshValidityMillis;
-        return buildJwt(subject, Map.of(), null, exp);
-    }
-
-    // ===== 전화번호 로그인 전용(권장) =====
-    public ResponseToken generateTokenByUsername(String username, String roleValue, String phoneOrNull, String nameOrNull) {
+    // ===== 발급 (Long id 추가) =====
+    public ResponseToken generateTokenByUsername(Long id, String username, String roleValue, String phoneOrNull, String nameOrNull) {
         long now = System.currentTimeMillis();
-        String access = buildJwtByUsername(username, roleValue, phoneOrNull, nameOrNull, now + accessValidityMillis, true);
-        String refresh = buildJwtByUsername(username, null, phoneOrNull, nameOrNull, now + refreshValidityMillis, false);
+        String access = buildJwtByUsername(id, username, roleValue, phoneOrNull, nameOrNull, now + accessValidityMillis, true);
+        String refresh = buildJwtByUsername(id, username, null, phoneOrNull, nameOrNull, now + refreshValidityMillis, false);
         return new ResponseToken(access, refresh);
     }
-    public String generateAccessTokenByUsername(String username, String roleValue, String phoneOrNull, String nameOrNull) {
-        return buildJwtByUsername(username, roleValue, phoneOrNull, nameOrNull,
+
+    public String generateAccessTokenByUsername(Long id, String username, String roleValue, String phoneOrNull, String nameOrNull) {
+        return buildJwtByUsername(id, username, roleValue, phoneOrNull, nameOrNull,
                 System.currentTimeMillis() + accessValidityMillis, true);
     }
-    public String generateRefreshTokenByUsername(String username, String phoneOrNull, String nameOrNull) {
-        return buildJwtByUsername(username, null, phoneOrNull, nameOrNull,
-                System.currentTimeMillis() + refreshValidityMillis, false);
+
+    // 공통 빌더 호출부 수정
+    private String buildJwtByUsername(Long id, String username, String roleValue, String phoneOrNull, String nameOrNull,
+                                      long expiryEpochMillis, boolean access) {
+        Map<String, Object> claims = new HashMap<>();
+
+        // Access Token 발급 시 id와 부가 정보 포함
+        if (access) {
+            if (id != null) claims.put(ID_CLAIM_KEY, id); // ✅ ID 저장
+            if (phoneOrNull != null && !phoneOrNull.isBlank()) claims.put(PHONE_CLAIM_KEY, phoneOrNull);
+            if (nameOrNull != null && !nameOrNull.isBlank()) claims.put(NAME_CLAIM_KEY, nameOrNull);
+            if (username != null && !username.isBlank()) claims.put(USERNAME_CLAIM_KEY, username);
+        } else {
+            // Refresh Token에도 식별을 위해 ID 포함 권장
+            if (id != null) claims.put(ID_CLAIM_KEY, id);
+        }
+
+        String roleToInclude = access ? roleValue : null;
+        return buildJwt(username, claims, roleToInclude, expiryEpochMillis);
     }
 
-    // 공통 빌더
     private String buildJwt(String subject, Map<String, Object> extraClaims, String roleValue, long expiryEpochMillis) {
         Date now = new Date();
         Date exp = new Date(expiryEpochMillis);
@@ -113,23 +113,6 @@ public class JwtProvider {
         }
 
         return builder.signWith(key, SignatureAlgorithm.HS256).compact();
-    }
-
-    // access=true → 부가 클레임 포함, access=false(refresh) → 부가 클레임 제외
-    private String buildJwtByUsername(String username, String roleValue, String phoneOrNull, String nameOrNull,
-                                      long expiryEpochMillis, boolean access) {
-        Map<String, Object> claims;
-        if (access) {
-            Map<String, Object> c = new HashMap<>();
-            if (phoneOrNull != null && !phoneOrNull.isBlank()) c.put(PHONE_CLAIM_KEY, phoneOrNull);
-            if (nameOrNull != null && !nameOrNull.isBlank()) c.put(NAME_CLAIM_KEY, nameOrNull);
-            claims = c;
-        } else {
-            claims = Map.of();
-        }
-
-        String roleToInclude = access ? roleValue : null;
-        return buildJwt(username, claims, roleToInclude, expiryEpochMillis);
     }
 
     // ===== 검증/클레임 =====
@@ -158,34 +141,10 @@ public class JwtProvider {
         }
     }
 
-    // 현재 subject는 phone
-    public String getUsername(String token) {
-        return getAllClaims(token).getSubject();
-    }
-
-    public String getPhone(String token) {
-        return getAllClaims(token).getSubject();
-    }
-
-    public Optional<String> getEmbeddedUsername(String token) {
-        Object v = getAllClaims(token).get(USERNAME_CLAIM_KEY);
-        if (v == null) return Optional.empty();
-        String s = v.toString();
-        return (s.isBlank() ? Optional.empty() : Optional.of(s));
-    }
-
-    public Optional<String> getEmbeddedName(String token) {
-        Object v = getAllClaims(token).get(NAME_CLAIM_KEY);
-        if (v == null) return Optional.empty();
-        String s = v.toString();
-        return (s.isBlank() ? Optional.empty() : Optional.of(s));
-    }
-
     private Jws<Claims> parseClaimsJws(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
     }
 
-    // ===== JWE 복호화(필요 시) =====
     public String decryptToken(String jweToken) {
         try {
             String useKey = (jweSecret != null && !jweSecret.isBlank()) ? jweSecret : secret;
@@ -200,35 +159,10 @@ public class JwtProvider {
         }
     }
 
-    // ===== 편의 =====
     public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) return bearerToken.substring(7);
         return null;
-    }
-
-    public List<String> extractRoleStrings(String token) {
-        Claims claims = getAllClaims(token);
-        return extractRoleStrings(claims);
-    }
-
-    public List<String> extractRoleStrings(Claims claims) {
-        Set<String> roleSet = new LinkedHashSet<>();
-        Object single = claims.get(ROLE_CLAIM_KEY);
-        if (single instanceof String s) roleSet.add(normalizeRole(s));
-
-        Object multi = claims.get(ROLES_CLAIM_KEY);
-        if (multi instanceof Collection<?> col) {
-            for (Object o : col) if (o != null) roleSet.add(normalizeRole(o.toString()));
-        } else if (multi instanceof String csv) {
-            Arrays.stream(csv.split(","))
-                    .map(String::trim)
-                    .filter(v -> !v.isEmpty())
-                    .forEach(v -> roleSet.add(normalizeRole(v)));
-        }
-
-        if (roleSet.isEmpty()) roleSet.add("ROLE_USER");
-        return new ArrayList<>(roleSet);
     }
 
     private String normalizeRole(String raw) {
@@ -236,17 +170,14 @@ public class JwtProvider {
         return raw.startsWith("ROLE_") ? raw : "ROLE_" + raw;
     }
 
-    public record TokenPair(String accessToken, String refreshToken, long accessTokenExpiresAt, long refreshTokenExpiresAt) {}
-
-    // ===== 최소 추가: 토큰이 만료되었거나 파싱 불가하면 true =====
     public boolean isTokenInvalid(String token) {
         try {
             parseClaimsJws(token);
-            return false; // 유효
-        } catch (ExpiredJwtException e) {
-            return true;  // 만료
-        } catch (JwtException | IllegalArgumentException e) {
-            return true;  // 기타 무효
+            return false;
+        } catch (Exception e) {
+            return true;
         }
     }
+
+    public record TokenPair(String accessToken, String refreshToken, long accessTokenExpiresAt, long refreshTokenExpiresAt) {}
 }
