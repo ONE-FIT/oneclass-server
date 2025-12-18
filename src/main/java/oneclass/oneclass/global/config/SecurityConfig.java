@@ -102,7 +102,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,  "/consultations/schedule").hasAnyRole("TEACHER","ACADEMY")
 
                         // 레슨
-                        .requestMatchers(HttpMethod.POST,   "/lesson/create").hasAnyRole("TEACHER","ACADEMY")
+                        .requestMatchers(HttpMethod.POST,   "/lesson/**").hasAnyRole("TEACHER","ACADEMY")
                         .requestMatchers(HttpMethod.PATCH,  "/lesson").hasAnyRole("TEACHER","ACADEMY")
                         .requestMatchers(HttpMethod.DELETE, "/lesson/*").hasAnyRole("TEACHER","ACADEMY")
                         // 학생이 수업 등록 (현재 컨트롤러 시그니처에 맞춤)
