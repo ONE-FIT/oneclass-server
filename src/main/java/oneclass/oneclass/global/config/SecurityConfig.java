@@ -30,21 +30,21 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             // member
             "/member/**",
-            "/member/signup-code",
-            "/member/login",
-            "/member/find-username",
-            "/member/send-reset-password-email",
-            "/member/reset-password",
+//            "/member/signup-code",
+//            "/member/login",
+//            "/member/find-username",
+//            "/member/send-reset-password-email",
+//            "/member/reset-password",
 
             // academy
             "/academy/**",
-            "/academy/signup",
-            "/academy/send-reset-password",
-            "/academy/reset-password",
+//            "/academy/signup",
+//            "/academy/send-reset-password",
+//            "/academy/reset-password",
 
             // consultations
             "/consultations/**",
-            "/consultations/detail",
+//            "/consultations/detail",
 
             "/attendance/**",
             "/announcements/**",
@@ -59,7 +59,7 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/swagger-ui/index.html",
             "/.well-known/acme-challenge/**",
-            "/member/admin/signup",
+//            "/member/admin/signup",
 
     };
 
@@ -86,58 +86,7 @@ public class SecurityConfig {
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
 
 
-                        // 멤버 로그아웃: 멤버(학생/부모/교사)
-                        .requestMatchers("/member/logout").hasAnyRole("STUDENT","PARENT","TEACHER","ADMIN")
-                      // 학원 로그아웃
-                        // 역할별 접근 제어
-
-                        .requestMatchers("/academy/logout").hasRole("ACADEMY")
-
-                        // 부모 전용: 자녀 추가 (POST /member/add-students) — 주체 일치 @PreAuthorize로 추가 검증
-                        .requestMatchers(HttpMethod.POST, "/member/add-students").hasRole("PARENT")
-                        // 부모 삭제 API(경로상 학생에 등록된 부모 삭제): TEACHER 또는 ACADEMY가 관리할 수 있게 제한
-                        .requestMatchers(HttpMethod.DELETE, "/member/parent/**").hasAnyRole("TEACHER","ACADEMY")
-
-                        // 교사-학생(다대다)
-                        // 추가/삭제는 교사 본인 또는 학원에서만 가능 — 세부는 @PreAuthorize에서 teacherUsername 일치 검사
-                        .requestMatchers(HttpMethod.POST,   "/member/teachers/*/students").hasAnyRole("TEACHER","ACADEMY")
-                        .requestMatchers(HttpMethod.DELETE, "/member/teachers/*/students").hasAnyRole("TEACHER","ACADEMY")
-
-                        // 상담
-                        .requestMatchers(HttpMethod.POST, "/consultations/change-status").hasAnyRole("TEACHER","ACADEMY")
-                        .requestMatchers(HttpMethod.GET,  "/consultations/schedule").hasAnyRole("TEACHER","ACADEMY")
-
-                        // 레슨
-                        .requestMatchers(HttpMethod.POST,   "/lesson/**").hasAnyRole("TEACHER","ACADEMY")
-                        .requestMatchers(HttpMethod.PATCH,  "/lesson").hasAnyRole("TEACHER","ACADEMY")
-                        .requestMatchers(HttpMethod.DELETE, "/lesson/*").hasAnyRole("TEACHER","ACADEMY")
-                        // 학생이 수업 등록 (현재 컨트롤러 시그니처에 맞춤)
-                        .requestMatchers(HttpMethod.POST, "/lesson/*/students/*").hasRole("STUDENT")
-                        // 레슨 조회는 로그인 사용자
-                        .requestMatchers(HttpMethod.GET, "/lesson/**").authenticated()
-
-                        // 출석: 교사만
-                        .requestMatchers("/attendance/**").hasRole("TEACHER")
-
-                        // 공지: 생성/수정/삭제는 교사 또는 학원, 조회는 인증 사용자
-                        .requestMatchers(HttpMethod.POST,   "/announce/create").hasAnyRole("TEACHER","ACADEMY")
-                        .requestMatchers(HttpMethod.PATCH,  "/announce").hasAnyRole("TEACHER","ACADEMY")
-                        .requestMatchers(HttpMethod.DELETE, "/announce/*").hasAnyRole("TEACHER","ACADEMY")
-                        .requestMatchers(HttpMethod.GET,    "/announce/**").authenticated()
-
-                        // 과제: 관리자성(교사/학원) 조회는 제한, 나머지 조회는 인증 사용자
-                        .requestMatchers(HttpMethod.GET, "/task/*/members").hasAnyRole("TEACHER","ACADEMY")
-                        .requestMatchers("/task/**").authenticated()
-
-                        //계정 탈퇴
-                        .requestMatchers("/member/delete-user").hasAnyRole("STUDENT","TEACHER","PARENT")
-                                       
-                        .requestMatchers(HttpMethod.POST, "/task/sms/send").hasAnyRole("TEACHER", "PARENT")
-                        .requestMatchers(HttpMethod.POST, "/lms/schedule").hasAnyRole("TEACHER", "PARENT")
-
-                        //ADMIN
-                        .requestMatchers("/academy/{code}/approve").hasRole("ADMIN")
-
+//
                         // 그 외 전부 인증 필요
                         .anyRequest().authenticated()
                 )
