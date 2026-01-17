@@ -3,7 +3,11 @@ package oneclass.oneclass.domain.academy.service;
 import oneclass.oneclass.domain.academy.dto.request.AcademySignupRequest;
 import oneclass.oneclass.domain.academy.dto.request.ResetAcademyPasswordRequest;
 import oneclass.oneclass.domain.academy.dto.response.AcademySignupResponse;
+import oneclass.oneclass.domain.academy.dto.response.PendingAcademyResponse;
+import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.member.dto.response.ResponseToken;
+
+import java.util.List;
 
 public interface AcademyService {
     AcademySignupResponse academySignup(AcademySignupRequest request);
@@ -13,4 +17,7 @@ public interface AcademyService {
 
     // 로그아웃: 특정 refresh 토큰만 폐기
     void logout(String academyCode, String refreshToken);
+
+    void approveAcademy(String adminUsername, String academyCode);
+    List<PendingAcademyResponse> getPendingAcademies();//승인되지 않은 학원들 조회
 }

@@ -7,8 +7,6 @@ import oneclass.oneclass.domain.attendance.entity.Attendance;
 import oneclass.oneclass.domain.attendance.entity.AttendanceStatus;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Getter
 public class AttendanceResponse {
@@ -21,9 +19,6 @@ public class AttendanceResponse {
 
     @Enumerated(EnumType.STRING)
     private final AttendanceStatus attendanceStatus; // PRESENT / ABSENT / LATE / EXCUSED
-
-    private LocalDateTime checkInTime;
-    private LocalDateTime checkOutTime;
 
     public AttendanceResponse(Long studentId, String studentName, String username, AttendanceStatus attendanceStatus, LocalDate date) {
         this.studentId = studentId;

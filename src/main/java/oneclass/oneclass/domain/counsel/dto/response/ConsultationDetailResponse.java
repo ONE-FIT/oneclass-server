@@ -4,6 +4,7 @@ import oneclass.oneclass.domain.counsel.entity.Consultation;
 import oneclass.oneclass.domain.counsel.entity.Gender;
 
 public record ConsultationDetailResponse(
+        String title,
         String name,
         String phone,
         String type,
@@ -14,6 +15,7 @@ public record ConsultationDetailResponse(
 ) {
     public static ConsultationDetailResponse from(Consultation consultation) {
         return new ConsultationDetailResponse(
+                consultation.getTitle(),
                 consultation.getName(),
                 consultation.getPhone(),
                 consultation.getType(),

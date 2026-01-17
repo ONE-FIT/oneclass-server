@@ -2,24 +2,18 @@ package oneclass.oneclass.domain.member.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import oneclass.oneclass.domain.academy.entity.Academy;
 import oneclass.oneclass.domain.lesson.entity.Lesson;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -36,6 +30,9 @@ public class Member {
     @NotBlank
     private String username;
 
+    @Column(nullable = false, length = 100, unique = true)
+    private String email;
+
     @JsonIgnore
     @Column(nullable = false)
     private String password;
@@ -45,7 +42,6 @@ public class Member {
     private String name;
 
     @Column(nullable = false, unique = true, length = 11)
-    @Pattern(regexp = "^\\d{10,11}$")
     @NotBlank
     private String phone;
 
